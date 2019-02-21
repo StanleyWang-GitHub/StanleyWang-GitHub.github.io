@@ -1,0 +1,97 @@
+title: 实验文档1：BIND9的安装部署
+author: Stanley Wang
+categories: Web DNS技术
+date: 2018-02-15 10:29:41
+---
+- - -
+{% cq %}欢迎加入王导的VIP学习qq群：==>[<font color="FF7F50">932194668</font>](http://shang.qq.com/wpa/qunwpa?idkey=78869fddc5a661acb0639315eb52997c108de6625df5f0ee2f0372f176a032a6)<=={% endcq %}
+- - -
+# 安装部署BIND9
+## 操作系统版本和内核版本
+```
+#cat /etc/redhat-release 
+CentOS Linux release 7.5.1804 (Core) 
+
+#uname -a
+Linux node 3.10.0-862.el7.x86_64 #1 SMP Fri Apr 20 16:44:24 UTC 2018 x86_64 x86_64 x86_64 GNU/Linux
+```
+## 使用yum安装BIND9
+```
+#yum install bind
+=============================================================================================================================================================
+ Package                                       Arch                          Version                                    Repository                      Size
+=============================================================================================================================================================
+Installing:
+ bind                                          x86_64                        32:9.9.4-73.el7_6                          updates                        1.8 M
+
+```
+安装的版本为`9.9.4`
+## BIND9主配置文件/etc/named.conf
+1. 主配置文件的格式
+```
+   options{
+        //全局选项
+   }
+   zone　"zone name" {
+      //定于区域
+   }
+   logging{
+       //日志文件
+   }
+   include：加载别的文件
+```
+2. 主配置文件的配置注意事项
+>- 语法严格，分号，空格
+>- 文件的权限，属主：root，属组：named，640
+3. 主配置文件范例
+```
+options {
+	listen-on port 53 { 10.4.7.11; };
+	directory 	"/var/named";
+	dump-file 	"/var/named/data/cache_dump.db";
+	statistics-file "/var/named/data/named_stats.txt";
+	memstatistics-file "/var/named/data/named_mem_stats.txt";
+	allow-query     { any; };
+
+	/* 
+	 - If you are building an AUTHORITATIVE DNS server, do NOT enable recursion.
+	 - If you are building a RECURSIVE (caching) DNS server, you need to enable 
+	   recursion. 
+	 - If your recursive DNS server has a public IP address, you MUST enable access 
+	   control to limit queries to your legitimate users. Failing to do so will
+	   cause your server to become part of large scale DNS amplification 
+	   attacks. Implementing BCP38 within your network would greatly
+	   reduce such attack surface 
+	*/
+	recursion yes;
+
+	dnssec-enable no;
+   dnssec-validation no;
+
+	/* Path to ISC DLV key */
+	bindkeys-file "/etc/named.iscdlv.key";
+
+	managed-keys-directory "/var/named/dynamic";
+
+	pid-file "/run/named/named.pid";
+	session-keyfile "/run/named/session.key";
+};
+
+
+logging {
+        channel default_debug {
+                file "data/named.run";
+                severity dynamic;
+        };
+};
+
+zone "." IN {
+	type hint;
+	file "named.ca";
+};
+
+include "/etc/named.rfc1912.zones";
+include "/etc/named.root.key";
+```
+
+
