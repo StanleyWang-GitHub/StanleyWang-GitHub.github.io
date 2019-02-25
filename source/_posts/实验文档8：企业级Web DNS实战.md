@@ -346,8 +346,12 @@ udp        0      0 10.4.7.11:53            0.0.0.0:*                           
 #### Server Domain Settings
 勾选
 - Nameserver Group *
+> default -- Default Nameserver Group
 - Primary Nameserver *
+> Make this server the primary one used for DNS SOA records.
+不勾选
 - Use as NS Record *
+> Adds this name server to all domains as a public NS record.
 ### Save Changes
 
 ## 配置Domain/Zones选项卡
