@@ -171,7 +171,7 @@ Error: Unable to authenticate with NamedManager API - check that auth API key an
 ```
 有报错，所以需要继续配置
 ### 改inc_soap_api.php
-```vi /usr/share/namedmanager/htdocs/bind/include/application/inc_soap_api.php
+```vi /usr/share/namedmanager/bind/include/application/inc_soap_api.php
 preg_match("/^http:\/\/(\S*?)[:0-9]*\//", $GLOBALS["config"]["api_url"], $matches);
 ```
 ### 重启namedmanager_logpush.rcsysinit
