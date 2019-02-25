@@ -223,7 +223,7 @@ options {
     memstatistics-file "/var/named/data/named_mem_stats.txt";
     allow-query     { any; };
     allow-transfer { 10.4.7.12; };
-    also-notify { 10.4.7.12 };
+    also-notify { 10.4.7.12; };
 
     /* 
      - If you are building an AUTHORITATIVE DNS server, do NOT enable recursion.
