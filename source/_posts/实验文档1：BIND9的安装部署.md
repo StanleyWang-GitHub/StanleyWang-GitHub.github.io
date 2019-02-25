@@ -66,7 +66,7 @@ options {
 	recursion yes;
 
 	dnssec-enable no;
-   dnssec-validation no;
+  dnssec-validation no;
 
 	/* Path to ISC DLV key */
 	bindkeys-file "/etc/named.iscdlv.key";
