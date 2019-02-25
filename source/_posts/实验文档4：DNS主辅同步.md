@@ -11,6 +11,7 @@ IP|主机名|功能
 -|-|-
 10.4.7.11|HDSS7-11.host.com|DNS主
 10.4.7.12|HDSS7-12.host.com|DNS辅
+**注意**：所有资源记录的增、删、改的操作，均在主DNS上进行，辅助DNS仅提供查询功能
 
 # 辅助DNS主机上安装部署BIND9
 ## 安装BIND9软件
@@ -61,10 +62,10 @@ options {
 
 
 logging {
-        channel default_debug {
-                file "data/named.run";
-                severity dynamic;
-        };
+    channel default_debug {
+        file "data/named.run";
+        severity dynamic;
+    };
 };
 
 zone "." IN {

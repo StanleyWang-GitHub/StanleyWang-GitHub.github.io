@@ -146,7 +146,7 @@ nginx: configuration file /etc/nginx/nginx.conf test is successful
 
 ## 继续改namedmanager的配置
 ### 改namedmanager_bind_configwriter.php
-```vi /usr/share/namedmanager/htdocs/bind/namedmanager_bind_configwriter.php
+```vi /usr/share/namedmanager/bind/namedmanager_bind_configwriter.php
 if (flock($fh_lock, LOCK_EX ))
 {
 	log_write("debug", "script", "Obtained filelock");
@@ -216,60 +216,60 @@ options {
 ## BIND9主配置文件
 ```vi /etc/named.conf
 options {
-	listen-on port 53 { 10.4.7.11; };
-	directory 	"/var/named";
-	dump-file 	"/var/named/data/cache_dump.db";
-	statistics-file "/var/named/data/named_stats.txt";
-	memstatistics-file "/var/named/data/named_mem_stats.txt";
-	allow-query     { any; };
+    listen-on port 53 { 10.4.7.11; };
+    directory 	"/var/named";
+    dump-file 	"/var/named/data/cache_dump.db";
+    statistics-file "/var/named/data/named_stats.txt";
+    memstatistics-file "/var/named/data/named_mem_stats.txt";
+    allow-query     { any; };
     allow-transfer { 10.4.7.12; };
     also-notify { 10.4.7.12 };
 
-	/* 
-	 - If you are building an AUTHORITATIVE DNS server, do NOT enable recursion.
-	 - If you are building a RECURSIVE (caching) DNS server, you need to enable 
-	   recursion. 
-	 - If your recursive DNS server has a public IP address, you MUST enable access 
-	   control to limit queries to your legitimate users. Failing to do so will
-	   cause your server to become part of large scale DNS amplification 
-	   attacks. Implementing BCP38 within your network would greatly
-	   reduce such attack surface 
-	*/
-	recursion yes;
+    /* 
+     - If you are building an AUTHORITATIVE DNS server, do NOT enable recursion.
+     - If you are building a RECURSIVE (caching) DNS server, you need to enable 
+       recursion. 
+     - If your recursive DNS server has a public IP address, you MUST enable access 
+       control to limit queries to your legitimate users. Failing to do so will
+       cause your server to become part of large scale DNS amplification 
+       attacks. Implementing BCP38 within your network would greatly
+       reduce such attack surface 
+    */
+    recursion yes;  
 
-	dnssec-enable no;
+    dnssec-enable no;
     dnssec-validation no;
 
 
-	/* Path to ISC DLV key */
-	bindkeys-file "/etc/named.iscdlv.key";
+    /* Path to ISC DLV key */
+    bindkeys-file "/etc/named.iscdlv.key";
 
-	managed-keys-directory "/var/named/dynamic";
+    managed-keys-directory "/var/named/dynamic";
 
-	pid-file "/run/named/named.pid";
-	session-keyfile "/run/named/session.key";
+    pid-file "/run/named/named.pid";
+    session-keyfile "/run/named/session.key";
 };
 
 key "rndc-key" {
-	algorithm hmac-sha256;
-	secret "CD/4vqb9l0WiMy5TXjfeu1cMhyRerQ9kL2jwdBFWwa4=";
+    algorithm hmac-sha256;
+    secret "CD/4vqb9l0WiMy5TXjfeu1cMhyRerQ9kL2jwdBFWwa4=";
 };
 
 controls {
-      inet 10.4.7.11 port 953
-               allow { 10.4.7.11;} keys { "rndc-key"; };
+    inet 10.4.7.11 port 953
+        allow { 10.4.7.11;} keys { "rndc-key"; };
 };
 
 logging {
-        channel default_debug {
-                file "data/named.run";
-                severity dynamic;
-        };
+    channel default_debug {
+        file "data/named.run";
+        severity dynamic;
+    };
 };
 
 zone "." IN {
-	type hint;
-	file "named.ca";
+    type hint;
+    file "named.ca";
 };
 
 include "/etc/named.rfc1912.zones";
@@ -305,7 +305,7 @@ udp        0      0 10.4.7.11:53            0.0.0.0:*                           
 ```
 
 # 配置Web DNS页面
-浏览器打开dns-manager.od.com（提前绑好host）
+浏览器打开<http://dns-manager.od.com>（提前绑好host），用户名/密码：setup/setup123
 ## 配置Configuration选项卡
 ### Zone Configuration Defaults
 - DEFAULT_HOSTMASTER
@@ -495,3 +495,50 @@ ns1	60 IN A 10.4.7.11
 ## 最后配置主辅同步
 略
 
+# 用户系统及操作审计功能
+## 用户系统
+可以创建不同的管理员用户
+### User Management选项卡
+### Create a new User Account
+#### User Details
+- Username *
+> wangdao
+- Real Name *
+> StanleyWang
+- Contact Email *
+> stanley.wang.m@qq.com
+#### User Password
+- password *
+> 123456
+- password_confirm *
+> 123456
+#### Save Changes
+### User's Permissions选项卡
+#### User Permissions
+- disabled
+> 勾上，用户不生效
+> 不勾，用户生效
+> 这里不勾
+- admin（超级管理员）
+> 勾上，可以创建用户管理用户权限
+> 不勾，不可以创建用户管理用户权限
+> 这里不勾
+- namedadmins（管理员）
+> 勾上，dns管理员，可以管理zone和资源记录
+> 不勾，不可以管理zone和资源记录
+> 这里勾选
+#### Save Changes
+### 使用wangdao用户登录
+可以进行DNS服务管理，但无法管理用户
+
+## 审计
+### 使用wangdao用户在页面增加一条资源记录
+操作过程略
+### Changelog选项卡
+可以看到wangdao用户的操作记录，实现审计功能，做到操作可溯
+
+### Tips
+- 生产上强烈建议新生成一个超级管理员用户并将setup用户删除！
+- 超级管理员用户不要轻易外泄，可以创建多个管理员账户。（一般根据业务而定，每个管理员负责一个子域）
+- 管理员账户创建好后，可自行登录修改密码。
+- 超级管理员用户密码的复杂度要足够高，定期更换超级管理员用户密码。
