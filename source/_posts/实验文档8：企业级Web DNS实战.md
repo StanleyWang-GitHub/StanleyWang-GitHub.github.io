@@ -558,9 +558,10 @@ PTR|60|10.4.7.11|HDSS7-12.host.com|no|[delete]()
 ## 返回Name Servers选项卡
 ### 查看页面DNS服务器状态
 - Logging Status
-> status_synced
+> {% label success@status_synced %}
 - Zonefile Status
-> status_synced
+> {% label success@status_synced %}
+
 全部变绿且为`status_synced`即为正常
 
 ## 查看服务器上配置文件（都是由namedmanager服务自动生成的）
@@ -593,7 +594,7 @@ zone "7.4.10.in-addr.arpa" IN {
 $ORIGIN od.com.
 $TTL 60
 @		IN SOA dns-manager.od.com. 87527941.qq.com. (
-			2019022610 ; serial
+			2018121610 ; serial
 			21600 ; refresh
 			3600 ; retry
 			604800 ; expiry
@@ -623,7 +624,7 @@ eshop	60 IN A 10.4.7.11
 $ORIGIN host.com.
 $TTL 60
 @		IN SOA dns-manager.od.com. 87527941.qq.com. (
-			2019022604 ; serial
+			2018121604 ; serial
 			10800 ; refresh
 			900 ; retry
 			604800 ; expiry
@@ -653,7 +654,7 @@ HDSS7-12	60 IN A 10.4.7.12
 $ORIGIN 7.4.10.in-addr.arpa.
 $TTL 60
 @		IN SOA dns-manager.od.com. 87527941.qq.com. (
-			2019022603 ; serial
+			2018121603 ; serial
 			10800 ; refresh
 			900 ; retry
 			604800 ; expiry
