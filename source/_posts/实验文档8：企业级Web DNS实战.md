@@ -726,25 +726,36 @@ nameserver 10.4.7.12
 ```
 
 # 用户系统及操作审计功能
+
 ## 用户系统
 可以创建不同的管理员用户
+
 ### User Management选项卡
+
 ### Create a new User Account
+
 #### User Details
+
 - Username *
 > wangdao
 - Real Name *
 > StanleyWang
 - Contact Email *
 > stanley.wang.m@qq.com
+
 #### User Password
+
 - password *
 > 123456
 - password_confirm *
 > 123456
+
 #### Save Changes
+
 ### User's Permissions选项卡
+
 #### User Permissions
+
 - disabled
 > 勾上，用户不生效
 > 不勾，用户生效
@@ -757,7 +768,9 @@ nameserver 10.4.7.12
 > 勾上，dns管理员，可以管理zone和资源记录
 > 不勾，不可以管理zone和资源记录
 > 这里勾选
+
 #### Save Changes
+
 ### 使用wangdao用户登录
 可以进行DNS服务管理，但无法管理用户
 
