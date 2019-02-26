@@ -475,6 +475,7 @@ $TTL 60	; 1 minute
 **注意：**
 - `Domain Type *`应为`Reverse Domain (IPv4)`
 - `IPv4 Network Address *`应为`10.4.7.0`/24
+
 ###### Start of Authority Record
 配置SOA记录
 ###### Domain Records
