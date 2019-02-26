@@ -195,7 +195,7 @@ key "rndc-key" {
 ```
 如果没有，使用如下命令生成rndc.key
 ```
-[root@hdss7-11 ~]# rndc-keygen -r /dev/urandom
+[root@hdss7-11 ~]# rndc-confgen -r /dev/urandom
 ```
 ### 配rndc.conf
 ```vi /etc/rndc.conf
