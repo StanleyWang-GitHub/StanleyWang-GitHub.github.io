@@ -108,6 +108,12 @@ $config["api_server_name"]      = "dns-manager.od.com";                         
 $config["api_auth_key"]         = "verycloud";                                  // API authentication key
 ```
 
+### php.ini，修改一条配置
+```vi /etc/php.ini
+; How many GET/POST/COOKIE input variables may be accepted
+max_input_vars = 10000
+```
+
 ### 绑host（临时）
 ```vi /etc/hosts
 10.4.7.11   dns-manager.od.com
