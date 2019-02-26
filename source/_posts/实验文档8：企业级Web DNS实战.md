@@ -731,8 +731,9 @@ nameserver 10.4.7.12
 可以创建不同的管理员用户
 
 ### User Management选项卡
+该页面下可以查看所有的系统用户，并可以进行用户管理
 
-### Create a new User Account
+### Create a new User Account 增加用户
 
 #### User Details
 
@@ -752,10 +753,7 @@ nameserver 10.4.7.12
 
 #### Save Changes
 
-### User's Permissions选项卡
-
-#### User Permissions
-
+### User Permissions 用户权限
 - disabled
 > 勾上，用户不生效
 > 不勾，用户生效
@@ -771,6 +769,26 @@ nameserver 10.4.7.12
 
 #### Save Changes
 
+### delete
+删除用户，略
+
+### details
+这里可以配置用户的基本信息
+
+#### User Password
+超级管理员可以帮助用户修改密码
+
+#### User Options
+- option_shrink_tableoptions
+> Automatically hide the options table when using defaults
+> 默认勾选，高级查询框显示与否
+- option_debug
+> Enable debug logging - this will impact performance a bit but will show a full trail of all functions and SQL queries made
+> 默认不勾，勾选上可以在页面显示debug日志，建议部署时使用，投产后关闭
+- option_concurrent_logins
+> Permit this user to make multiple simultaneous logins
+> 默认不勾，允许该用户在多点同时登录，应该严格禁止（审计）
+
 ### 使用wangdao用户登录
 可以进行DNS服务管理，但无法管理用户
 
@@ -780,11 +798,11 @@ nameserver 10.4.7.12
 操作过程略
 
 ### Changelog选项卡
-可以看到wangdao用户的操作记录，实现审计功能，做到操作可溯
+可以看到所有用户的操作记录，实现审计功能，做到操作可溯
 
 ### Tips
 
 - 生产上强烈建议新生成一个超级管理员用户并将setup用户删除！
-- 超级管理员用户不要轻易外泄，可以创建多个管理员账户。（一般根据业务而定，每个管理员负责一个子域）
-- 管理员账户创建好后，可自行登录修改密码。
+- 超级管理员用户应只有一个且不要轻易外泄，可以创建多个管理员账户。（一般根据业务而定，每个管理员负责一个子域）
+- 管理员账户创建好后，应由各人自行登录修改密码。
 - 超级管理员用户密码的复杂度要足够高，定期更换超级管理员用户密码。
