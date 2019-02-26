@@ -85,6 +85,11 @@ You can now login with the default username/password of setup/setup123 at http:/
 ```
 
 ## 配置namedmanager
+### 改config.php，增加一条配置
+```vi /etc/namedmanager/config.php
+$_SERVER['HTTPS'] = "TRUE";
+```
+
 ### 改config-bind.php
 ```vi /etc/namedmanager/config-bind.php
 $config["api_url"]              = "http://dns-manager.od.com/namedmanager";     // Application Install Location
