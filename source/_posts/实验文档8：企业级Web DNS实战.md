@@ -512,12 +512,13 @@ NS|120|od.com|dns-manager.od.com|-
 > 略，暂不配置MX记录
 - Host Records Configuration
 > 这里是配置重点，A记录、CNAME记录、TXT记录等都在这个里配置
-> 这里增加两条A记录解析
+> 这里增加两条A记录解析，增加一条CNAME解析
 
 Type|TTL|Name|Content|ReversePTR|-
 -|-|-|-|-|-
 A|60|dns-manager|10.4.7.11|no|[delete]()
-A|60|eshop|10.4.7.11|no|[delete]()
+A|60|www|10.4.7.11|no|[delete]()
+CNAME|60|eshop|www.od.com|no|[delete]()
 
 ###### Save Changes
 
@@ -631,7 +632,8 @@ od.com.	120 IN NS dns-manager.od.com.
 ; HOST RECORDS
 
 dns-manager	60 IN A 10.4.7.11
-eshop	60 IN A 10.4.7.11
+www	60 IN A 10.4.7.11
+eshop 60 IN CNAME www.od.com.
 ```
 ### host.com.zone
 ```vi /var/named/host.com.zone
@@ -694,7 +696,7 @@ $TTL 60
 ```
 ## 检查资源记录解析是否生效
 ```
-# dig -t A eshop.od.com @10.4.7.11 +short
+# dig -t A www.od.com @10.4.7.11 +short
 10.4.7.11
 
 #dig -t A HDSS7-12.host.com @10.4.7.11 +short
