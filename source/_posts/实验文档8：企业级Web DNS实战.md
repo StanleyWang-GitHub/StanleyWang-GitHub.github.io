@@ -85,10 +85,6 @@ You can now login with the default username/password of setup/setup123 at http:/
 ```
 
 ## 配置namedmanager
-### 改config.php
-```vi /etc/namedmanager/config.php
-$_SERVER['HTTPS'] = "TRUE";
-```
 ### 改config-bind.php
 ```vi /etc/namedmanager/config-bind.php
 $config["api_url"]              = "http://dns-manager.od.com/namedmanager";     // Application Install Location
@@ -104,28 +100,28 @@ $config["api_auth_key"]         = "verycloud";                                  
 ### 配apache
 ```vi /etc/httpd/conf/httpd.conf
 Listen 10.4.7.11:8080
-	ServerName dns-manager.od.com
-	<Directory />
-		AllowOverride none
-		allow from all
-		#Require all denied
-	</Directory>
+ServerName dns-manager.od.com
+<Directory />
+    AllowOverride none
+    allow from all
+    #Require all denied
+</Directory>
 ```
 
 ### 配nginx
 ```vi /etc/nginx/conf.d/dns-manager.od.com.conf
 server {
-		server_name dns-manager.od.com;
+    Server_name dns-manager.od.com;
    
-		location =/ {
-			rewrite ^/(.*) http://dns-manager.od.com/namedmanager  permanent;
-		}
-		location / {
-			proxy_pass http://10.4.7.11:8080;
-			proxy_set_header Host       $http_host;
-			proxy_set_header x-forwarded-for $proxy_add_x_forwarded_for;
-		}
+	location =/ {
+		rewrite ^/(.*) http://dns-manager.od.com/namedmanager  permanent;
 	}
+	location / {
+		proxy_pass http://10.4.7.11:8080;
+		proxy_set_header Host       $http_host;
+		proxy_set_header x-forwarded-for $proxy_add_x_forwarded_for;
+	}
+}
 ```
 
 ## 启动apache和nginx
@@ -304,7 +300,7 @@ tcp        0      0 10.4.7.11:953           0.0.0.0:*               LISTEN      
 udp        0      0 10.4.7.11:53            0.0.0.0:*                           10922/named 
 ```
 
-# 配置Web DNS页面
+# 配置NamedManager页面
 浏览器打开<http://dns-manager.od.com>（提前绑好host），用户名/密码：setup/setup123
 ## 配置Configuration选项卡
 ### Zone Configuration Defaults
@@ -336,6 +332,7 @@ udp        0      0 10.4.7.11:53            0.0.0.0:*                           
 #### Server Details
 - Name Server FQDN *
 > dns-manager.od.com
+> **注意**：这里一定要填`config-bind.php`里对应`$config["api_server_name"]`项配置的值
 - Description
 > dns server for od.com
 #### Server Type
@@ -344,22 +341,25 @@ udp        0      0 10.4.7.11:53            0.0.0.0:*                           
 - API Authentication Key *
 > verycloud
 #### Server Domain Settings
-勾选
+必须勾选以下三项
 - Nameserver Group *
 > default -- Default Nameserver Group
 - Primary Nameserver *
 > Make this server the primary one used for DNS SOA records.
-不勾选
 - Use as NS Record *
 > Adds this name server to all domains as a public NS record.
-### Save Changes
+
+#### Save Changes
+保存后`View Name Servers`选项卡下，`Logging Status`应变绿且成为`status_synced`，如一直不变绿，需要进行排错，不要继续往下做了。
 
 ## 配置Domain/Zones选项卡
+### 添加Domain/Zone
 两种方式
 - 手动添加域
 - 自动导入域
-### Add Domain（手动）
-#### Domain Details
+
+#### Add Domain（手动添加）
+##### Domain Details
 - Domain Type * 
 > Standard Domain
 > Reverse Domain (IPv4)
@@ -368,11 +368,13 @@ udp        0      0 10.4.7.11:53            0.0.0.0:*                           
 - Domain Name *
 > od.com
 - Description
-> od.com domain
-#### Domain Server Groups
+> od.com domain 
+
+##### Domain Server Groups
 **注意**：一定要勾选域服务器组
 > default -- Default Nameserver Group
-#### Start of Authority Record
+
+##### Start of Authority Record
 - Email Administrator Address *
 > Email Administrator Address *
 - Domain Serial *
@@ -385,63 +387,176 @@ udp        0      0 10.4.7.11:53            0.0.0.0:*                           
 > 604800
 - Default Record TTL *
 > 60
+>**注意**：这里配置SOA记录最后一个参数值没有按套路出牌，配置的**并不是**否定应答超时时间（NegativeAnswerTTL），而是默认资源记录的过期时间
 
-### Save Changes
+##### Save Changes
 
-### View Domains 
-#### domian records
-- Nameserver Configuration
-- Mailserver Configuration
-- Host Records Configuration
-Type|TTL|Name|Content|ReversePTR|
--|-|-|-|-|-
-A|60|dns-manager|10.4.7.11|no|-
-
-### Save Changes
-
-### Import Domain（自动导入）
-#### Upload
+#### Import Domain（自动导入）
 - Import Source
 > Bind 8/9 Compatible Zonefile
 - Zone File
-> 选择文件host.txt
-附：host.txt
+> 选择文件host.com.txt
+
+##### 导入一个正解域
+附1：host.com.txt
 ```
 $ORIGIN .
 $TTL 600	; 10 minutes
-host.com			IN SOA	dns-manager.host.com. 87527941.qq.com. (
+host.com			IN SOA	dns-manager.od.com. 87527941.qq.com. (
 				2019013106 ; serial
 				10800      ; refresh (3 hours)
 				900        ; retry (15 minutes)
 				604800     ; expire (1 week)
 				86400      ; minimum (1 day)
 				)
-			   NS   ns1.host.com.
 $ORIGIN host.com.
 $TTL 60	; 1 minute
-ns1                        A    10.4.7.11
-dns-manager                A	10.4.7.11
+HDSS7-11                   A	10.4.7.11
+HDSS7-12                   A    10.4.7.12
 ```
-#### Save Changes
-#### Domain Details
-#### Start of Authority Record
-#### Domain Records
-#### Save Changes
-#### Domain Details
-#### Domain Server Groups
-**注意**：这里一定要勾选服务器组
-#### Start of Authority Record
-#### Save Changes
+**注意**：这里可以不用给NS记录和对应的A记录了，会默认生成
+###### Save Changes
+点保存进入下一个配置页面
+###### Domain Details
+这里可以配置域的信息和描述，我们这里先配一个`Standard Domain`（正解域）
+###### Start of Authority Record
+这里注意SOA记录的最后一个选项`Default Record TTL *`
+###### Domain Records
+检查一下和导入文件里的记录是否一致
+###### Save Changes
+先点一次保存
+###### Domain Details
+检查一遍域信息和描述
+###### Domain Server Groups
+**注意**：这里一定要勾选服务器组（上个页面没有，这里新出来的选项）
+###### Start of Authority Record
+检查一遍SOA记录
+###### Save Changes
+最后点一下保存，导入成功
 
-### 再导入一个反解域
-略
+##### 导入一个反解域
+附2：7.4.10.in-addr.arpa.txt
+```
+$TTL 600	; 10 minutes
+@	     		IN SOA	dns-manager.od.com. 87527941.qq.com. (
+				2018121603 ; serial
+				10800      ; refresh (3 hours)
+				900       ; retry (15 minutes)
+				604800     ; expire (1 week)
+				86400      ; minimum (1 day)
+				)
+$ORIGIN 7.4.10.in-addr.arpa.
+$TTL 60	; 1 minute
+11			PTR		 HDSS7-11.host.com.
+12			PTR		 HDSS7-12.host.com.
+```
+**注意**：这里可以不用给NS记录和对应的A记录了，会默认生成
+###### Save Changes
+点保存进入下一个配置页面
+###### Domain Details
+**注意：**
+- `Domain Type *`应为`Reverse Domain (IPv4)`
+- `IPv4 Network Address *`应为`10.4.7.0`/24
+###### Start of Authority Record
+配置SOA记录
+###### Domain Records
+检查一下和导入文件里的记录是否一致
+###### Save Changes
+先点一次保存
+###### Domain Details
+检查一遍域信息和描述
+###### Domain Server Groups
+**注意**：这里一定要勾选服务器组（上个页面没有，这里新出来的选项）
+###### Start of Authority Record
+检查一遍SOA记录
+###### Save Changes
+最后点一下保存，导入成功
+
+### 在对应的Zone里操作资源记录（增、删、改）
+#### View Domains选项卡
+##### details 按钮
+维护domain的基本配置，略
+##### delete 按钮
+删除domain，略
+##### domain record(od.com)
+###### 配置页面
+- Domain Details
+> Domain od.com selected for adjustment
+- Nameserver Configuration
+> 这里是配置NS记录的配置区，默认会生成一条
+
+Type|TTL|Name/Origin|Content|ReversePTR|-
+-|-|-|-|-|-
+NS|120|dns-manager|10.4.7.11|no|[delete]()
+
+- Mailserver Configuration
+> 略，暂不配置MX记录
+- Host Records Configuration
+> 这里是配置重点，A记录、CNAME记录、TXT记录等都在这个里配置
+> 这里增加两条A记录解析
+
+Type|TTL|Name|Content|ReversePTR|-
+-|-|-|-|-|-
+A|60|dns-manager|10.4.7.11|no|[delete]()
+A|60|eshop|10.4.7.11|no|[delete]()
+
+###### Save Changes
+
+##### domain record(host.com)
+###### 配置页面
+- Domain Details
+> Domain host.com selected for adjustment
+- Nameserver Configuration
+> 这里是配置NS记录的配置区，默认会生成一条
+
+Type|TTL|Name/Origin|Content|ReversePTR|-
+-|-|-|-|-|-
+NS|120|dns-manager|10.4.7.11|no|[delete]()
+
+- Mailserver Configuration
+> 略，暂不配置MX记录
+- Host Records Configuration
+> 这里是配置重点，A记录、CNAME记录、TXT记录等都在这个里配置
+> 因为是从文件导入的域，默认会有记录
+
+Type|TTL|Name|Content|ReversePTR|-
+-|-|-|-|-|-
+A|60|HDSS7-11|10.4.7.11|no|[delete]()
+A|60|HDSS7-12|10.4.7.12|no|[delete]()
+
+###### Save Changes
+
+##### domain record(7.4.10.in-addr.arpa)
+###### 配置页面
+- Domain Details
+> Domain 7.4.10.in-addr.arpa selected for adjustment
+- Nameserver Configuration
+> 这里是配置NS记录的配置区，默认会生成一条
+
+Type|TTL|Name/Origin|Content|ReversePTR|-
+-|-|-|-|-|-
+NS|120|dns-manager|10.4.7.11|no|[delete]()
+
+- Mailserver Configuration
+> 略，暂不配置MX记录
+- Host Records Configuration
+> 这里是配置重点，A记录、CNAME记录、TXT记录等都在这个里配置
+> 因为是从文件导入的域，默认会有记录
+
+Type|TTL|Name|Content|ReversePTR|-
+-|-|-|-|-|-
+PTR|60|10.4.7.11|HDSS7-11.host.com|no|[delete]()
+PTR|60|10.4.7.11|HDSS7-12.host.com|no|[delete]()
+
+###### Save Changes
 
 ## 返回Name Servers选项卡
-### 查看页面状态
+### 查看页面DNS服务器状态
 - Logging Status
 > status_synced
 - Zonefile Status
 > status_synced
+全部变绿且为`status_synced`即为正常
 
 ## 查看服务器上配置文件（都是由namedmanager服务自动生成的）
 ### named.namedmanager.conf
@@ -456,23 +571,33 @@ zone "od.com" IN {
 	file "od.com.zone";
 	allow-update { none; };
 };
+zone "host.com" IN {
+	type master;
+	file "host.com.zone";
+	allow-update { none; };
+};
+zone "7.4.10.in-addr.arpa" IN {
+	type master;
+	file "7.4.10.in-addr.arpa.zone";
+	allow-update { none; };
+};
 ```
+这里生成了三个zone，两个正解域，一个反解域，依次检查三个域的区域数据库文件：
 ### od.com.zone
 ```vi /var/named/od.com.zone
 $ORIGIN od.com.
-$TTL 86400
+$TTL 60
 @		IN SOA dns-manager.od.com. 87527941.qq.com. (
-			2019020202 ; serial
-			10800 ; refresh
-			900 ; retry
+			2019022610 ; serial
+			21600 ; refresh
+			3600 ; retry
 			604800 ; expiry
-			86400 ; minimum ttl
+			60 ; minimum ttl
 		)
 
 ; Nameservers
 
-@	120 IN NS ns1.od.com.
-od.com.	86400 IN NS dns-manager.od.com.
+od.com.	120 IN NS dns-manager.od.com.
 
 ; Mailservers
 
@@ -486,18 +611,91 @@ od.com.	86400 IN NS dns-manager.od.com.
 ; HOST RECORDS
 
 dns-manager	60 IN A 10.4.7.11
-ns1	60 IN A 10.4.7.11
+eshop	60 IN A 10.4.7.11
 ```
-## 检查资源记录是否生效
+### host.com.zone
+```vi /var/named/host.com.zone
+$ORIGIN host.com.
+$TTL 60
+@		IN SOA dns-manager.od.com. 87527941.qq.com. (
+			2019022604 ; serial
+			10800 ; refresh
+			900 ; retry
+			604800 ; expiry
+			60 ; minimum ttl
+		)
+
+; Nameservers
+
+host.com.	120 IN NS dns-manager.od.com.
+
+; Mailservers
+
+
+; Reverse DNS Records (PTR)
+
+
+; CNAME
+
+
+; HOST RECORDS
+
+HDSS7-11	60 IN A 10.4.7.11
+HDSS7-12	60 IN A 10.4.7.12
 ```
-[root@hdss7-11 named]# dig -t A dns-manager.od.com @10.4.7.11 +short
+### 7.4.10.in-addr.arpa.zone
+```vi /var/named/7.4.10.in-addr.arpa.zone
+$ORIGIN 7.4.10.in-addr.arpa.
+$TTL 60
+@		IN SOA dns-manager.od.com. 87527941.qq.com. (
+			2019022603 ; serial
+			10800 ; refresh
+			900 ; retry
+			604800 ; expiry
+			60 ; minimum ttl
+		)
+
+; Nameservers
+
+7.4.10.in-addr.arpa.	120 IN NS dns-manager.od.com.
+
+; Mailservers
+
+
+; Reverse DNS Records (PTR)
+
+11	60 IN PTR HDSS7-11.host.com.
+12	60 IN PTR HDSS7-12.host.com.
+
+; CNAME
+
+
+; HOST RECORDS
+```
+## 检查资源记录解析是否生效
+```
+# dig -t A eshop.od.com @10.4.7.11 +short
 10.4.7.11
+
+#dig -t A HDSS7-12.host.com @10.4.7.11 +short
+10.4.7.12
+
+#dig -x 10.4.7.11 @10.4.7.11 +short
+HDSS7-11.host.com.
 ```
 ## 验证页面增、删、改是否均生效
 **注意**：这里在页面上操作资源记录，会先写mysql，再由php脚本定期刷到磁盘文件上，所以大概需要1分钟的时间生效
 
 ## 最后配置主辅同步
 略
+
+## 配置客户端DNS服务器
+```vi /etc/resolv.conf
+# Generated by NetworkManager
+search od.com host.com
+nameserver 10.4.7.11
+nameserver 10.4.7.12
+```
 
 # 用户系统及操作审计功能
 ## 用户系统
@@ -536,12 +734,15 @@ ns1	60 IN A 10.4.7.11
 可以进行DNS服务管理，但无法管理用户
 
 ## 审计
+
 ### 使用wangdao用户在页面增加一条资源记录
 操作过程略
+
 ### Changelog选项卡
 可以看到wangdao用户的操作记录，实现审计功能，做到操作可溯
 
 ### Tips
+
 - 生产上强烈建议新生成一个超级管理员用户并将setup用户删除！
 - 超级管理员用户不要轻易外泄，可以创建多个管理员账户。（一般根据业务而定，每个管理员负责一个子域）
 - 管理员账户创建好后，可自行登录修改密码。
