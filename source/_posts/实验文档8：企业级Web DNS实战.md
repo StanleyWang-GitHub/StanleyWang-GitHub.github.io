@@ -504,9 +504,9 @@ $TTL 60	; 1 minute
 - Nameserver Configuration
 > 这里是配置NS记录的配置区，默认会生成一条
 
-Type|TTL|Name/Origin|Content|ReversePTR|-
--|-|-|-|-|-
-NS|120|dns-manager|10.4.7.11|no|[delete]()
+Type|TTL|Name/Origin|Content|-
+-|-|-|-|-
+NS|120|od.com|dns-manager.od.com|-
 
 - Mailserver Configuration
 > 略，暂不配置MX记录
@@ -528,9 +528,9 @@ A|60|eshop|10.4.7.11|no|[delete]()
 - Nameserver Configuration
 > 这里是配置NS记录的配置区，默认会生成一条
 
-Type|TTL|Name/Origin|Content|ReversePTR|-
--|-|-|-|-|-
-NS|120|dns-manager|10.4.7.11|no|[delete]()
+Type|TTL|Name/Origin|Content|-
+-|-|-|-|-
+NS|120|host.com|dns-manager.od.com|-
 
 - Mailserver Configuration
 > 略，暂不配置MX记录
@@ -540,8 +540,8 @@ NS|120|dns-manager|10.4.7.11|no|[delete]()
 
 Type|TTL|Name|Content|ReversePTR|-
 -|-|-|-|-|-
-A|60|HDSS7-11|10.4.7.11|no|[delete]()
-A|60|HDSS7-12|10.4.7.12|no|[delete]()
+A|60|HDSS7-11|10.4.7.11|√|[delete]()
+A|60|HDSS7-12|10.4.7.12|√|[delete]()
 
 ###### Save Changes
 
@@ -552,9 +552,9 @@ A|60|HDSS7-12|10.4.7.12|no|[delete]()
 - Nameserver Configuration
 > 这里是配置NS记录的配置区，默认会生成一条
 
-Type|TTL|Name/Origin|Content|ReversePTR|-
--|-|-|-|-|-
-NS|120|dns-manager|10.4.7.11|no|[delete]()
+Type|TTL|Name/Origin|Content|-
+-|-|-|-|-
+NS|120|7.4.10.in-addr.arpa|dns-manager.od.com|-
 
 - Mailserver Configuration
 > 略，暂不配置MX记录
@@ -562,10 +562,10 @@ NS|120|dns-manager|10.4.7.11|no|[delete]()
 > 这里是配置重点，A记录、CNAME记录、TXT记录等都在这个里配置
 > 因为是从文件导入的域，默认会有记录
 
-Type|TTL|Name|Content|ReversePTR|-
--|-|-|-|-|-
-PTR|60|10.4.7.11|HDSS7-11.host.com|no|[delete]()
-PTR|60|10.4.7.11|HDSS7-12.host.com|no|[delete]()
+Type|TTL|Name|Content|-
+-|-|-|-|-
+PTR|60|11|HDSS7-11.host.com|[delete]()
+PTR|60|12|HDSS7-12.host.com|[delete]()
 
 ###### Save Changes
 
@@ -704,9 +704,13 @@ $TTL 60
 HDSS7-11.host.com.
 ```
 ## 验证页面增、删、改是否均生效
-**注意**：这里在页面上操作资源记录，会先写mysql，再由php脚本定期刷到磁盘文件上，所以大概需要1分钟的时间生效
+**注意：**
+- 增、删、改资源记录时，对应域的SOA记录的serial序列号会自动滚动，非常方便
+- 这里在页面上操作资源记录，会先写mysql，再由php脚本定期刷到磁盘文件上，所以大概需要1分钟的时间生效
+- 在维护主机域时，添加正解记录，并勾选后面的reverse选项，将同时生成一条反解记录，简化了操作
+- 由于服务器上的区域数据库文件是由php进程定期更新的（根据mysql数据库里的数据），所以手动在服务器上修改资源记录是无法生效的，应该严格禁止
 
-## 最后配置主辅同步
+## 配置DNS主辅同步
 略
 
 ## 配置客户端的DNS服务器
