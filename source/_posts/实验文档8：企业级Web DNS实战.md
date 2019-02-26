@@ -414,7 +414,7 @@ udp        0      0 10.4.7.11:53            0.0.0.0:*                           
 > 选择文件host.com.txt
 
 ##### 导入一个正解域
-#### upload，选择文件
+###### upload，选择文件
 附1：host.com.txt
 ```vi host.com.txt
 $ORIGIN .
@@ -452,7 +452,7 @@ HDSS7-12                   A    10.4.7.12
 最后点一下保存，导入成功
 
 ##### 导入一个反解域
-#### upload，选择文件
+###### upload，选择文件
 附2：7.4.10.in-addr.arpa.txt
 ```vi 7.4.10.in-addr.arpa.txt
 $TTL 600	; 10 minutes
