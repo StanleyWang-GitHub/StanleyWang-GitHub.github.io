@@ -328,4 +328,7 @@ CNAME 8 3 60 20190330063503 20190228053503 53901 bkjf-inc.com. 9ONt81AjpHFrM8YwD
 ## 在第三方网站验证
 <https://en.internet.nl/site/www.bkjf-inc.com/473349/>
 
+## 浏览器插件
+<https://www.dnssec-validator.cz/>
+
 [参考文献](https://ftp.isc.org/isc/kb-files/DNSSEC-QR-B4.pdf)
