@@ -130,7 +130,12 @@ include "/etc/named.root.key";
 ```
 
 # 使用dnssec技术维护一个业务域
-在公网上提供权威解析的域，最好使用dnssec技术加数字签名，避免被
+在公网上使用BIND9维护的业务域，最好使用dnssec技术对该域添加数字签名
+DNSSEC（DNS Security Extension）----DNS安全扩展，主要是为了解决DNS欺骗和缓存污染问题而设计的一种安全机制。
+
+[DNSSEC技术参考文献1](https://www.cloudxns.net/Support/detail/id/1309.html)
+[DNSSEC技术参考文献2](https://blog.csdn.net/zhu_tianwei/article/details/45082015)
+
 ## 打开dnssec支持选项
 ```vi /etc/named.conf
 dnssec-enable yes;
