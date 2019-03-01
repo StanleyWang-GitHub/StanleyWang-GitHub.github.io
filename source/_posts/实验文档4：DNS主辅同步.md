@@ -29,48 +29,48 @@ Installing:
 修改主配置文件，并加入`masterfile-format text;`
 ```vi /etc/named.conf
 options {
-	listen-on port 53 { 10.4.7.12; };
-	directory 	"/var/named";
-	dump-file 	"/var/named/data/cache_dump.db";
-	statistics-file "/var/named/data/named_stats.txt";
-	memstatistics-file "/var/named/data/named_mem_stats.txt";
-	allow-query     { any; };
-    masterfile-format text;
-	/* 
-	 - If you are building an AUTHORITATIVE DNS server, do NOT enable recursion.
-	 - If you are building a RECURSIVE (caching) DNS server, you need to enable 
-	   recursion. 
-	 - If your recursive DNS server has a public IP address, you MUST enable access 
-	   control to limit queries to your legitimate users. Failing to do so will
-	   cause your server to become part of large scale DNS amplification 
-	   attacks. Implementing BCP38 within your network would greatly
-	   reduce such attack surface 
-	*/
-	recursion yes;
+  listen-on port 53 { 10.4.7.12; };
+  directory 	"/var/named";
+  dump-file 	"/var/named/data/cache_dump.db";
+  statistics-file "/var/named/data/named_stats.txt";
+  memstatistics-file "/var/named/data/named_mem_stats.txt";
+  allow-query     { any; };
+  masterfile-format text;
+  /* 
+   - If you are building an AUTHORITATIVE DNS server, do NOT enable recursion.
+   - If you are building a RECURSIVE (caching) DNS server, you need to enable 
+     recursion. 
+   - If your recursive DNS server has a public IP address, you MUST enable access 
+     control to limit queries to your legitimate users. Failing to do so will
+     cause your server to become part of large scale DNS amplification 
+     attacks. Implementing BCP38 within your network would greatly
+     reduce such attack surface 
+  */
+  recursion yes;
 
-	dnssec-enable no;
-    dnssec-validation no;
+  dnssec-enable no;
+  dnssec-validation no;
 
-	/* Path to ISC DLV key */
-	bindkeys-file "/etc/named.iscdlv.key";
+  /* Path to ISC DLV key */
+  bindkeys-file "/etc/named.iscdlv.key";
 
-	managed-keys-directory "/var/named/dynamic";
+  managed-keys-directory "/var/named/dynamic";
 
-	pid-file "/run/named/named.pid";
-	session-keyfile "/run/named/session.key";
+  pid-file "/run/named/named.pid";
+  session-keyfile "/run/named/session.key";
 };
 
 
 logging {
-    channel default_debug {
-        file "data/named.run";
-        severity dynamic;
-    };
+  channel default_debug {
+    file "data/named.run";
+    severity dynamic;
+  };
 };
 
 zone "." IN {
-	type hint;
-	file "named.ca";
+  type hint;
+  file "named.ca";
 };
 
 include "/etc/named.rfc1912.zones";

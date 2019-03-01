@@ -98,7 +98,7 @@ options {
 	   attacks. Implementing BCP38 within your network would greatly
 	   reduce such attack surface 
 	*/
-	recursion yes;
+	recursion no;
 
 	dnssec-enable yes;
 	dnssec-validation yes;
