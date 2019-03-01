@@ -181,8 +181,8 @@ Address:	10.4.7.11#53
   - 远程管理有安全隐患，需要加强审计
   - 动态域在rndc管理上多一步
 
-## rndc远程管理DNS
-### 生成rndc-key
+# rndc远程管理DNS
+## 生成rndc-key
 ```
 #rndc-confgen -r /dev/urandom
 # Start of rndc.conf
@@ -211,7 +211,7 @@ options {
 # End of named.conf
 ```
 
-### 把rndc-key和controls配置到bind的主配置文件的options段里
+## 把rndc-key和controls配置到bind的主配置文件的options段里
 ```vi /etc/named.conf
 key "rndc-key" {
 	algorithm hmac-md5;
@@ -225,10 +225,10 @@ controls {
 ```
 **注意：**这里要配置一下controls段的acl，限定好哪些主机可以使用rndc管理DNS服务
 
-### 在远程管理主机上安装bind
+## 在远程管理主机上安装bind
 rndc命令在bind包里，所以远程管理主机需要安装bind
 
-### 在远程管理主机上做rndc.conf
+## 在远程管理主机上做rndc.conf
 ```vi /etc/rndc.conf
 key "rndc-key" {
 	algorithm hmac-md5;
@@ -242,8 +242,8 @@ options {
 }; 
 ```
 
-### 使用rndc命令远程管理DNS
-#### 查询DNS服务状态（可以取值做监控）
+## 使用rndc命令远程管理DNS
+### 查询DNS服务状态（可以取值做监控）
 ```
 #rndc status 
 version: 9.9.4-RedHat-9.9.4-73.el7_6 <id:8f9657aa>
@@ -260,7 +260,7 @@ recursive clients: 0/0/1000
 tcp clients: 0/100
 server is up and running
 ```
-#### 管理静态域(allow-update { none; };)
+### 管理静态域(allow-update { none; };)
 ```vi 静态域zone文件
 zone "od.com" IN {
 	type master;
@@ -274,7 +274,7 @@ zone "od.com" IN {
 zone reload up-to-date
 ```
 
-#### 管理动态域（allow-update { 10.4.7.11; };）
+### 管理动态域（allow-update { 10.4.7.11; };）
 ```vi 动态域zone文件
 zone "host.com" IN {
 	type master;
