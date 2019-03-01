@@ -225,10 +225,21 @@ controls {
 ```
 **注意：**这里要配置一下controls段的acl，限定好哪些主机可以使用rndc管理DNS服务
 
+## 重启bind9服务
+```
+# systemctl restart named
+```
+rndc的服务端监听在953端口，检查一下端口是否起来
+```
+# netstat -luntp|grep 953
+tcp        0      0 10.4.7.11:953           0.0.0.0:*               LISTEN      11136/named 
+```
+
 ## 在远程管理主机上安装bind
-rndc命令在bind包里，所以远程管理主机需要安装bind
+rndc命令在bind包里，所以远程管理主机需要安装bind（不需要启动named）
 
 ## 在远程管理主机上做rndc.conf
+使用rndc进行远程管理的主机上，都需要配置rndc.conf，且rndc-key要和DNS服务器上的key一致
 ```vi /etc/rndc.conf
 key "rndc-key" {
 	algorithm hmac-md5;
