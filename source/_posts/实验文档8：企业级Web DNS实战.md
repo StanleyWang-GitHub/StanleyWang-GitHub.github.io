@@ -133,7 +133,7 @@ ServerName dns-manager.od.com
 ### 配nginx
 ```vi /etc/nginx/conf.d/dns-manager.od.com.conf
 server {
-    Server_name dns-manager.od.com;
+    server_name dns-manager.od.com;
    
 	location =/ {
 		rewrite ^/(.*) http://dns-manager.od.com/namedmanager  permanent;
