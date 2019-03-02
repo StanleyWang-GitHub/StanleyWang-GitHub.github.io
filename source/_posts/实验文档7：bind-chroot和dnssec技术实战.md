@@ -269,7 +269,7 @@ A 8 3 60 20190330063017 20190228053309 53901 bkjf-inc.com. aKI5N4y6eqN/xunC7+4vY
 ```
 
 ## DS记录
-在生成证书的目录执行`dnssec-dsfromkey`命令，得到`bkjf-inc.com`的DS记录，这里我们使用比较长的那个
+在生成证书的目录对`ZSK`执行`dnssec-dsfromkey`命令，得到`bkjf-inc.com`的DS记录，这里我们使用比较长的那个
 ```cd /var/named/chroot/var/named/dnssec-key/bkjf-inc.com
 [root@VM_0_13_centos bkjf-inc.com]#  dnssec-dsfromkey `grep -l zone-signing *key`
 bkjf-inc.com. IN DS 53901 8 1 5E13F6C0ECEE84248C2543693CE7D8617920983B
@@ -278,7 +278,7 @@ bkjf-inc.com. IN DS 53901 8 2 3006068B784AFBBC67133F123A0C389514959FCB6CAB0032DB
 其中：
 - 53901：关键标签，用于标识域名的DNSSEC记录，一个小于65535的整数值
 - 8：生成签名的加密算法，8对应RSA/SHA-256
-- 2：构建摘要的加密算法：2对应SHA-256
+- 2：构建摘要的加密算法，2对应SHA-256
 - 最后一段：摘要值，就是DS记录值
 
 参考万网（阿里云）上关于dnssec配置的文档：[参考文档](https://help.aliyun.com/document_detail/101717.html?spm=a2c4g.11186623.6.626.37c01e9bzbyBGq)
