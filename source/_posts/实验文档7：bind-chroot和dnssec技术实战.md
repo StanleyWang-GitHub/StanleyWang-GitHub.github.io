@@ -161,7 +161,7 @@ zone "bkjf-inc.com" IN {
 [root@VM_0_13_centos bkjf-inc.com]# dnssec-keygen -a RSASHA256 -b 1024 bkjf-inc.com
 Generating key pair..................................++++++ .++++++ 
 Kbkjf-inc.com.+008+53901
-[root@VM_0_13_centos bkjf-inc.com]# dnssec-keygen -a RSASHA256 -b 2048 -f bkjf-inc.com                                                                           KSK bkjf-inc.com
+[root@VM_0_13_centos bkjf-inc.com]# dnssec-keygen -a RSASHA256 -b 2048 -f KSK bkjf-inc.com                                                                           KSK bkjf-inc.com
 Generating key pair..........................................................................................+++ ............................................
 .....+++ 
 Kbkjf-inc.com.+008+40759
