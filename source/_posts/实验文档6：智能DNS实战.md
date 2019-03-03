@@ -63,7 +63,7 @@ acl "env-pre" {
 };
 acl "env-prd" {
     10.4.9.0/24;
-}
+};
 view "env-test" {
     match-clients { "env-test"; };
     recursion yes;
