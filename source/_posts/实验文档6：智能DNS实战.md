@@ -56,28 +56,18 @@ view view_name [class] {
 **注：**以下是内网DNS的view使用范例
 ```
 acl "env-test" {
-    10.4.7.0/24;
-};
-acl "env-pre" {
-    10.4.8.0/24;
+    10.4.7.11;
 };
 acl "env-prd" {
-    10.4.9.0/24;
+    10.4.7.12;
 };
+
 view "env-test" {
     match-clients { "env-test"; };
     recursion yes;
     zone "od.com" {
         type master;
         file "env-test.od.com.zone";
-    };
-};
-view "env-pre" {
-    match-clients { "env-pre"; };
-    recursion yes;
-    zone "od.com" {
-        type master;
-        file "env-pre.od.com.zone";
     };
 };
 view "env-prd" {
@@ -87,6 +77,15 @@ view "env-prd" {
         type master;
         file "env-prd.od.com.zone";
     };
+};
+view "default" {
+    match-clients { any; };
+    recursion yes;
+    zone "." IN {
+	type hint;
+	file "named.ca";
+    };
+    include "/etc/named.rfc1912.zones";
 };
 ```
 
