@@ -9,7 +9,7 @@ date: 2018-12-16 6:12:56
 # 系统环境
 ```
 #cat /etc/redhat-release 
-CentOS Linux release 7.5.1804 (Core) 
+CentOS Linux release 7.6.1810 (Core)
 
 #uname -a
 Linux node 3.10.0-862.el7.x86_64 #1 SMP Fri Apr 20 16:44:24 UTC 2018 x86_64 x86_64 x86_64 GNU/Linux
