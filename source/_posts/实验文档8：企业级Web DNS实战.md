@@ -171,17 +171,103 @@ if (flock($fh_lock, LOCK_EX ))
 }
 ```
 ### 启动namedmanager_logpush.rcsysinit
+#### 加执行权限
+```vi /usr/share/namedmanager/resources/namedmanager_logpush.rcsysinit
+[root@hdss7-11 resources]# chmod u+x namedmanager_logpush.rcsysinit
+```
+
 #### 启动该脚本
 ```vi /usr/share/namedmanager/resources/namedmanager_logpush.rcsysinit
 [root@hdss7-11 resources]# sh namedmanager_logpush.rcsysinit start
 Starting namedmanager_logpush service:
 [root@hdss7-11 resources]# nohup: redirecting stderr to stdout
 ```
+
 #### 检查是否启动
 ```
 [root@hdss7-11 resources]# ps -ef|grep php|egrep -v grep
 root      10738      1  0 10:49 pts/1    00:00:00 php -q /usr/share/namedmanager/bind/namedmanager_logpush.php
 ```
+
+#### 用supervisor管理起来
+这个脚本非常重要，是整个namedmanager软件的**核心**，所以要保证它一直在后台启动，这里我们用`supervisor`这个软件把它管理起来
+##### 先安装supervisor软件
+```
+[root@hdss7-11 resources]# yum install supervisor -y
+ependencies Resolved
+
+=============================================================================================================================================================
+ Package                                     Arch                             Version                                   Repository                      Size
+=============================================================================================================================================================
+Installing:
+ supervisor                                  noarch                           3.1.4-1.el7                               epel                           446 k
+Installing for dependencies:
+ python-meld3                                x86_64                           0.6.10-1.el7                              epel                            73 k
+ python-setuptools                           noarch                           0.9.8-7.el7                               base                           397 k
+
+Transaction Summary
+=============================================================================================================================================================
+Install  1 Package (+2 Dependent packages)
+
+Total download size: 916 k
+Installed size: 4.4 M
+...
+Installed:
+  supervisor.noarch 0:3.1.4-1.el7                                                                                                                            
+
+Dependency Installed:
+  python-meld3.x86_64 0:0.6.10-1.el7                                          python-setuptools.noarch 0:0.9.8-7.el7                                         
+
+Complete!
+```
+
+##### 创建脚本启动的配置文件
+```vi /etc/supervisord.d/namedmanager_logpush.ini
+[program:namedmanager_logpush]
+command=php -q /usr/share/namedmanager/bind/namedmanager_logpush.php 2>&1 > /var/log/namedmanager_logpush
+numprocs=1                                                     
+directory=/usr/share/namedmanager/resources                           
+autostart=true                                                 
+autorestart=true                                               
+startsecs=22                                                   
+startretries=4                                             
+exitcodes=0,2                                                  
+stopsignal=QUIT                                                
+stopwaitsecs=10                                                
+user=root                                                      
+redirect_stderr=false                                          
+stdout_logfile=/var/log/namedmanager_logpush.out
+stdout_logfile_maxbytes=64MB                                   
+stdout_logfile_backups=4                                       
+stdout_capture_maxbytes=1MB                                    
+stdout_events_enabled=false                                    
+stderr_logfile=/var/log/namedmanager_logpush.err
+stderr_logfile_maxbytes=64MB                                   
+stderr_logfile_backups=4                                       
+stderr_capture_maxbytes=1MB                                    
+stderr_events_enabled=false 
+```
+
+##### 启动supservisord服务
+```
+[root@hdss7-11 resources]# systemctl start supervisord 
+```
+
+##### 开机自启
+```
+[root@hdss7-11 resources]# systemctl enable supervisord
+Created symlink from /etc/systemd/system/multi-user.target.wants/supervisord.service to /usr/lib/systemd/system/supervisord.service.
+```
+
+#### 查看脚本启动情况
+```
+[root@hdss7-11 resources]# supervisorctl status
+namedmanager_logpush             RUNNING   pid 9194, uptime 0:01:44
+[root@hdss7-11 resources]# ps -ef|grep -v grep|grep php
+root       9194   8979  0 11:14 ?        00:00:00 php -q /usr/share/namedmanager/bind/namedmanager_logpush.php 2>&1 > /var/log/namedmanager_logpush
+```
+这样脚本就可以保证高可用性了
+
 #### 检查日志
 ```vi /var/log/namedmanager_logpush
 [root@hdss7-11 resources]# tail -fn 200 /var/log/namedmanager_logpush
@@ -193,6 +279,15 @@ Error: Unable to authenticate with NamedManager API - check that auth API key an
 preg_match("/^http:\/\/(\S*?)[:0-9]*\//", $GLOBALS["config"]["api_url"], $matches);
 ```
 ### 重启namedmanager_logpush.rcsysinit
+如果已经用`supervisor`软件管理起来了，只需要kill掉脚本进程即可
+```
+[root@hdss7-11 resources]# ps -ef|grep -v grep|grep php|awk '{print $2}'|xargs kill -9
+[root@hdss7-11 resources]# ps -ef|grep -v grep|grep php
+root       9295   8979  1 11:18 ?        00:00:00 php -q /usr/share/namedmanager/bind/namedmanager_logpush.php 2>&1 > /var/log/namedmanager_logpush 
+[root@hdss7-11 resources]# supervisorctl       
+namedmanager_logpush             RUNNING   pid 9295, uptime 0:00:23
+```
+否则需要手动重启脚本
 ```vi /usr/share/namedmanager/resources/namedmanager_logpush.rcsysinit
 [root@hdss7-11 resources]# sh namedmanager_logpush.rcsysinit restart
 Stopping namedmanager_logpush services:

@@ -57,7 +57,7 @@ bind-chroot本质上是使用chroot方式给bind软件换了个“根”，这�
 把yum安装的bind-chroot在/etc下的产生的配置文件硬链接到/var/named/chroot/etc下
 ```cd /var/named/chroot/etc/
 [root@VM_0_13_centos ~]# cd /var/named/chroot/etc/
-[root@VM_0_13_centos etc]# ln /etc/named
+[root@VM_0_13_centos etc]# ls /etc/named
 named/               named.conf           named.iscdlv.key     named.rfc1912.zones  named.root.key       
 [root@VM_0_13_centos etc]# ln /etc/named.* .
 ```
