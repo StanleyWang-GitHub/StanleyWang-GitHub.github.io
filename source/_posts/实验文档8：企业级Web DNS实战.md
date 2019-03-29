@@ -106,6 +106,7 @@ $_SERVER['HTTPS'] = "TRUE";
 $config["api_url"]              = "http://dns-manager.od.com/namedmanager";     // Application Install Location
 $config["api_server_name"]      = "dns-manager.od.com";                         // Name of the DNS server (important: part of the authentication process)
 $config["api_auth_key"]         = "verycloud";                                  // API authentication key
+$config["log_file"]             = "/var/log/namedmanager_bind_configwriter";
 ```
 
 ### php.ini，修改一条配置
