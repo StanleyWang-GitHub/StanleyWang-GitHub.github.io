@@ -1171,7 +1171,8 @@ Digest: sha256:9314554780673b821cb7113d8c048a90d15077c6e7bfeebddb92a054a1f84843
 Status: Downloaded newer image for docker.io/xplenty/rhel7-pod-infrastructure:v3.4
 ```
 ###### 提交至私有仓库（harbor）中
-配置主机登录私有仓库
+- 配置主机登录私有仓库
+
 ```vi /root/.docker/config.json
 {
 	"auths": {
@@ -1181,16 +1182,22 @@ Status: Downloaded newer image for docker.io/xplenty/rhel7-pod-infrastructure:v3
 	}
 }
 ```
-> 用户名：admin
-> 密码：Harbor12345
-**注意：**也可以使用docker login命令
-给镜像打tag
+> 这里代表：用户名admin，密码Harbor12345
+> [root@hdss7-21 ~]# echo YWRtaW46SGFyYm9yMTIzNDU=|base64 -d
+> admin:Harbor12345
+
+**注意：**也可以在各运算节点使用docker login harbor.od.com，输入用户名，密码
+
+- 给镜像打tag
+
 ```
 [root@hdss7-21 conf]# docker images|grep v3.4
 xplenty/rhel7-pod-infrastructure   v3.4                34d3450d733b        2 years ago         205 MB
 [root@hdss7-21 conf]# docker tag 34d3450d733b harbor.od.com/k8s/pod:v3.4
 ```
-push到harbor
+
+- push到harbor
+
 ```
 [root@hdss7-21 conf]# docker push harbor.od.com/k8s/pod:v3.4
 ```
@@ -1393,10 +1400,10 @@ directory=/opt/kubernetes/server/bin                                     ; direc
 autostart=true                                                           ; start at supervisord start (default: true)
 autorestart=true                                                         ; retstart at unexpected quit (default: true)
 startsecs=22                                                             ; number of secs prog must stay running (def. 1)
-startretries=3                											 ; max # of serial start failures (default 3)
-exitcodes=0,2                 									  		 ; 'expected' exit codes for process (default 0,2)
-stopsignal=QUIT             										     ; signal used to kill process (default TERM)
-stopwaitsecs=10            											     ; max num secs to wait b4 SIGKILL (default 10)
+startretries=3                                                           ; max # of serial start failures (default 3)
+exitcodes=0,2                                                            ; 'expected' exit codes for process (default 0,2)
+stopsignal=QUIT                                                          ; signal used to kill process (default TERM)
+stopwaitsecs=10                                                          ; max num secs to wait b4 SIGKILL (default 10)
 user=root                                                		         ; setuid to this UNIX account to run the program
 redirect_stderr=false                                           		 ; redirect proc stderr to stdout (default false)
 stdout_logfile=/data/logs/kubernetes/kube-proxy/proxy.stdout.log         ; stdout log path, NONE for none; default AUTO
@@ -1407,8 +1414,8 @@ stdout_events_enabled=false                                     		 ; emit events
 stderr_logfile=/data/logs/kubernetes/kube-proxy/proxy.stderr.log         ; stderr log path, NONE for none; default AUTO
 stderr_logfile_maxbytes=64MB                                    		 ; max # logfile bytes b4 rotation (default 50MB)
 stderr_logfile_backups=4                                        		 ; # of stderr logfile backups (default 10)
-stderr_capture_maxbytes=1MB   											 ; number of bytes in 'capturemode' (default 0)
-stderr_events_enabled=false   											 ; emit events on stderr writes (default false)
+stderr_capture_maxbytes=1MB   						                     ; number of bytes in 'capturemode' (default 0)
+stderr_events_enabled=false   						                     ; emit events on stderr writes (default false)
 ```
 #### 启动服务并检查
 ```
@@ -1656,10 +1663,22 @@ nginx-ds     NodePort    192.168.62.22   <none>        80:5801/TCP   18h
 ```
 #### 运算节点上准备资源配置清单
 ```
-[root@hdss7-21 data]# mkdir -p /data/k8s-yaml/coredns
+[root@hdss7-21 data]# mkdir -p /data/k8s-yaml/coredns && cd /data/k8s-yaml/coredns
 ```
-##### rolebinding
-```vi /data/k8s-yaml/coredns/rolebinding.yaml
+
+{% tabs coredns%}
+<!-- tab RoleBinding -->
+vi /data/k8s-yaml/coredns/rolebinding.yaml
+{% code %}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: coredns
+  namespace: kube-system
+  labels:
+      kubernetes.io/cluster-service: "true"
+      addonmanager.kubernetes.io/mode: Reconcile
+\--\-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -1678,7 +1697,7 @@ rules:
   verbs:
   - list
   - watch
----
+\--\-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -1696,9 +1715,11 @@ subjects:
 - kind: ServiceAccount
   name: coredns
   namespace: kube-system
-```
-##### configmap
-```vi /data/k8s-yaml/coredns/configmap.yaml
+{% endcode %}
+<!-- endtab -->
+<!-- tab ConfigMap-->
+vi /data/k8s-yaml/coredns/configmap.yaml
+{% code %}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -1714,9 +1735,11 @@ data:
         proxy . /etc/resolv.conf
         cache 30
        }
-```
-##### deployment
-```vi /data/k8s-yaml/coredns/deployment.yaml
+{% endcode %}
+<!-- endtab -->
+<!-- tab Deployment-->
+vi /data/k8s-yaml/coredns/deployment.yaml
+{% code %}
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -1768,20 +1791,11 @@ spec:
             items:
             - key: Corefile
               path: Corefile
-```
-##### ServiceAccount
-```vi /data/k8s-yaml/coredns/sva.yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: coredns
-  namespace: kube-system
-  labels:
-      kubernetes.io/cluster-service: "true"
-      addonmanager.kubernetes.io/mode: Reconcile
-```
-##### Service
-```vi /data/k8s-yaml/coredns/svc.yaml
+{% endcode %}
+<!-- endtab -->
+<!-- tab Service-->
+vi /data/k8s-yaml/coredns/svc.yaml
+{% code %}
 apiVersion: v1
 kind: Service
 metadata:
@@ -1801,7 +1815,10 @@ spec:
     protocol: UDP
   - name: dns-tcp
     port: 53
-```
+{% endcode %}
+<!-- endtab -->
+{% endtabs %}
+
 #### 依次执行创建
 ```pwd /data/k8s-yaml/coredns
 [root@hdss7-21 coredns]# kubectl create -f rolebinding.yaml
@@ -1829,16 +1846,18 @@ coredns   ClusterIP   192.168.0.2   <none>        53/UDP,53/TCP   29s
 ```
 #### 运算节点上准备资源配置清单
 ```
-[root@hdss7-21 data]# mkdir -p /data/k8s-yaml/traefik
+[root@hdss7-21 data]# mkdir -p /data/k8s-yaml/traefik && cd /data/k8s-yaml/traefik
 ```
-##### rolebinding
-```vi /data/k8s-yaml/traefik/rolebinding.yaml
+{% tabs traefik%}
+<!-- tab Rolebinding -->
+vi /data/k8s-yaml/traefik/rolebinding.yaml
+{% code %}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: traefik-ingress-controller
   namespace: kube-system
----
+\--\-
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
 metadata:
@@ -1862,7 +1881,7 @@ rules:
       - get
       - list
       - watch
----
+\--\-
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
@@ -1875,9 +1894,11 @@ subjects:
 - kind: ServiceAccount
   name: traefik-ingress-controller
   namespace: kube-system
-```
-##### daemonset
-```vi /data/k8s-yaml/traefik/daemonset.yaml
+{% endcode %}
+<!-- endtab -->
+<!-- tab DaemonSet-->
+vi /data/k8s-yaml/traefik/daemonset.yaml
+{% code %}
 apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
@@ -1914,7 +1935,11 @@ spec:
         - --kubernetes
         - --logLevel=INFO
 		- --insecureskipverify=true
----
+{% endcode %}
+<!-- endtab -->
+<!-- tab Service-->
+vi /data/k8s-yaml/traefik/svc.yaml
+{% code %}
 kind: Service
 apiVersion: v1
 metadata:
@@ -1930,9 +1955,11 @@ spec:
     - protocol: TCP
       port: 8080
       name: admin
-```
-##### ingress
-```vi /data/k8s-yaml/traefik/ingress.yaml
+{% endcode %}
+<!-- endtab -->
+<!-- tab Ingress-->
+vi /data/k8s-yaml/traefik/ingress.yaml
+{% code %}
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
@@ -1948,7 +1975,10 @@ spec:
       - backend:
           serviceName: traefik-ingress-service
           servicePort: 8080
-```
+{% endcode %}
+<!-- endtab -->
+{% endtabs %}
+
 #### 依次执行创建
 ```pwd /data/k8s-yaml/traefik
 [root@hdss7-21 traefik]# kubectl create -f rolebinding.yaml 
@@ -1958,6 +1988,8 @@ clusterrolebinding.rbac.authorization.k8s.io/traefik-ingress-controller created
 
 [root@hdss7-21 traefik]# kubectl create -f daemonset.yaml 
 daemonset.extensions/traefik-ingress-controller created
+
+[root@hdss7-21 traefik]# kubectl create -f svc.yaml 
 service/traefik-ingress-service created
 
 [root@hdss7-21 traefik]# kubectl create -f ingress.yaml 
@@ -1988,7 +2020,8 @@ server {
 } 
 ```
 
-#### 浏览器访问http://traefik.od.com
+#### 浏览器访问
+http://traefik.od.com
 
 ### 部署dashboard
 #### 运维主机上准备dashboard镜像
@@ -2007,17 +2040,28 @@ The push refers to a repository [harbor.od.com/k8s/dashboard]
 ```
 #### 运算节点上准备资源配置清单
 ```
-[root@hdss7-21 data]# mkdir -p /data/k8s-yaml/dashboard
+[root@hdss7-21 data]# mkdir -p /data/k8s-yaml/dashboard && cd /data/k8s-yaml/dashboard
 ```
-##### rolebinding
-```vi /data/k8s-yaml/dashboard/rolebinding.yaml
+{% tabs dashboard%}
+<!-- tab RoleBinding -->
+vi /data/k8s-yaml/dashboard/rolebinding.yaml
+{% code %}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    k8s-app: kubernetes-dashboard
+    addonmanager.kubernetes.io/mode: Reconcile
+  name: kubernetes-dashboard
+  namespace: kube-system
+\--\-
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   labels:
     k8s-app: kubernetes-dashboard
     addonmanager.kubernetes.io/mode: Reconcile
-  name: kubernetes-dashboard-minimal
+  name: kubernetes-dashboard-admin
   namespace: kube-system
 rules:
   # Allow Dashboard to get, update and delete Dashboard exclusive secrets.
@@ -2039,11 +2083,11 @@ rules:
   resources: ["services/proxy"]
   resourceNames: ["heapster", "http:heapster:", "https:heapster:"]
   verbs: ["get"]
----
+\--\-
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: kubernetes-dashboard-minimal
+  name: kubernetes-dashboard-admin
   namespace: kube-system
   labels:
     k8s-app: kubernetes-dashboard
@@ -2056,9 +2100,11 @@ subjects:
 - kind: ServiceAccount
   name: kubernetes-dashboard
   namespace: kube-system
-```
-##### secret
-```vi /data/k8s-yaml/dashboard/secret.yaml
+{% endcode %}
+<!-- endtab -->
+<!-- tab Secret-->
+vi /data/k8s-yaml/dashboard/secret.yaml
+{% code %}
 apiVersion: v1
 kind: Secret
 metadata:
@@ -2069,7 +2115,7 @@ metadata:
   name: kubernetes-dashboard-certs
   namespace: kube-system
 type: Opaque
----
+\--\-
 apiVersion: v1
 kind: Secret
 metadata:
@@ -2080,9 +2126,11 @@ metadata:
   name: kubernetes-dashboard-key-holder
   namespace: kube-system
 type: Opaque
-```
-##### configmap
-```vi /data/k8s-yaml/dashboard/configmap.yaml
+{% endcode %}
+<!-- endtab -->
+<!-- tab ConfigMap-->
+vi /data/k8s-yaml/dashboard/configmap.yaml
+{% code %}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -2092,9 +2140,11 @@ metadata:
     addonmanager.kubernetes.io/mode: EnsureExists
   name: kubernetes-dashboard-settings
   namespace: kube-system
-```
-##### Service
-```vi /data/k8s-yaml/dashboard/svc.yaml
+{% endcode %}
+<!-- endtab -->
+<!-- tab Service-->
+vi /data/k8s-yaml/dashboard/svc.yaml
+{% code %}
 apiVersion: v1
 kind: Service
 metadata:
@@ -2110,9 +2160,11 @@ spec:
   ports:
   - port: 443
     targetPort: 8443
-```
-##### ingress
-```vi /data/k8s-yaml/dashboard/ingress.yaml
+{% endcode %}
+<!-- endtab -->
+<!-- tab Ingress-->
+vi /data/k8s-yaml/dashboard/ingress.yaml
+{% code %}
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
@@ -2128,18 +2180,11 @@ spec:
       - backend:
           serviceName: kubernetes-dashboard
           servicePort: 443
-```
-##### deployment
-```vi /data/k8s-yaml/dashboard/deployment.yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    k8s-app: kubernetes-dashboard
-    addonmanager.kubernetes.io/mode: Reconcile
-  name: kubernetes-dashboard
-  namespace: kube-system
----
+{% endcode %}
+<!-- endtab -->
+<!-- tab Deployment-->
+vi /data/k8s-yaml/dashboard/deployment.yaml
+{% code %}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -2199,12 +2244,16 @@ spec:
       tolerations:
       - key: "CriticalAddonsOnly"
         operator: "Exists"
-```
+{% endcode %}
+<!-- endtab -->
+{% endtabs %}
+
 #### 依次执行创建
 ```pwd /data/k8s-yaml/dashboard
 [root@hdss7-21 dashboard]# kubectl create -f rolebinding.yaml 
-role.rbac.authorization.k8s.io/kubernetes-dashboard-minimal created
-rolebinding.rbac.authorization.k8s.io/kubernetes-dashboard-minimal created
+serviceaccount/kubernetes-dashboard created
+role.rbac.authorization.k8s.io/kubernetes-dashboard-admin created
+rolebinding.rbac.authorization.k8s.io/kubernetes-dashboard-admin created
 
 [root@hdss7-21 dashboard]# kubectl create -f secret.yaml 
 secret/kubernetes-dashboard-certs created
@@ -2220,7 +2269,6 @@ service/kubernetes-dashboard created
 ingress.extensions/kubernetes-dashboard created
 
 [root@hdss7-21 dashboard]# kubectl create -f deployment.yaml 
-serviceaccount/kubernetes-dashboard created
 deployment.apps/kubernetes-dashboard created
 ```
 #### 解析域名
@@ -2229,4 +2277,5 @@ deployment.apps/kubernetes-dashboard created
 dashboard	60 IN A 10.4.7.10
 ```
 
-#### 浏览器打开http://dashboard.od.com
+#### 浏览器访问
+http://dashboard.od.com
