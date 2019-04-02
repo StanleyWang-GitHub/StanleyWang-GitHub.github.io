@@ -1,4 +1,4 @@
-title: 实验文档1：跟我一步步安装kubernetes
+title: 实验文档1：跟我一步步安装部署kubernetes集群
 author: Stanley Wang
 categories: Kubernetes容器云专题
 date: 2019-1-16 22:12:56
@@ -7,6 +7,15 @@ date: 2019-1-16 22:12:56
 {% cq %}欢迎加入王导的VIP学习qq群：==>[<font color="FF7F50">932194668</font>](http://shang.qq.com/wpa/qunwpa?idkey=78869fddc5a661acb0639315eb52997c108de6625df5f0ee2f0372f176a032a6)<=={% endcq %}
 - - -
 # 实验环境
+## 基础架构
+主机名|角色|ip
+-|-|-
+HDSS7-11.host.com|k8s代理节点1|10.4.7.11
+HDSS7-12.host.com|k8s代理节点2|10.4.7.12
+HDSS7-21.host.com|k8s运算节点1|10.4.7.21
+HDSS7-22.host.com|k8s运算节点2|10.4.7.22
+HDSS7-200.host.com|k8s运维节点(docker仓库)|10.4.7.200
+
 ## 硬件环境
 - 5台vm，每台至少2c2g
 
@@ -15,7 +24,7 @@ date: 2019-1-16 22:12:56
 - docker: v1.12.6
 > [docker引擎官方下载地址](https://yum.dockerproject.org/repo/main/centos/7/Packages/docker-engine-1.12.6-1.el7.centos.x86_64.rpm)
 > [docker引擎官方selinux包](https://yum.dockerproject.org/repo/main/centos/7/Packages/docker-engine-selinux-1.12.6-1.el7.centos.noarch.rpm)
-- kubernetes: v1.13.x
+- kubernetes: v1.13.2
 > [kubernetes官方下载地址](https://github.com/kubernetes/kubernetes/releases)
 - etcd: v3.1.18
 > [etcd官方下载地址](https://github.com/etcd-io/etcd/releases)
@@ -31,15 +40,6 @@ date: 2019-1-16 22:12:56
 > [cfssl-certinfo下载地址](https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64)
 - 其他
 > 其他可能用到的软件，均使用操作系统自带的yum源和epel源进行安装
-
-## 基础架构
-主机名|角色|ip
--|-|-
-HDSS7-11.host.com|k8s代理节点1|10.4.7.11
-HDSS7-12.host.com|k8s代理节点2|10.4.7.12
-HDSS7-21.host.com|k8s运算节点1|10.4.7.21
-HDSS7-22.host.com|k8s运算节点2|10.4.7.22
-HDSS7-200.host.com|k8s运维节点(docker仓库)|10.4.7.200
 
 # 安装部署
 ## BIND9安装部署
@@ -115,8 +115,8 @@ WantedBy=multi-user.target
 **`HDSS7-200.host.com`上**
 ### 下载软件二进制包并解压
 ```pwd /opt/harbor
-[root@hdss7-200 harbor]# pwd
-/opt/harbor
+[root@hdss7-200 harbor]# tar xf harbor-offline-installer-v1.7.1.tgz -C /opt/harbor
+
 [root@hdss7-200 harbor]# ll
 total 583848
 drwxr-xr-x 3 root root       242 Jan 23 15:28 harbor
@@ -1577,7 +1577,7 @@ kube-scheduler                   RUNNING   pid 37803, uptime 0:55:47
 ### 验证kubernetes集群
 #### 在任意一个运算节点，创建一个资源配置清单
 这里我们选择`HDSS7-21.host.com`主机
-```vi /data/nginx-ds.yaml
+```vi /root/nginx-ds.yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -1614,9 +1614,9 @@ spec:
         - containerPort: 80
 ```
 #### 应用资源配置，并检查
-```pwd /data
-[root@hdss7-21 data]# kubectl create -f nginx-ds.yaml
-[root@hdss7-21 data]# kubectl get pods
+```pwd /root
+[root@hdss7-21 ~]# kubectl create -f nginx-ds.yaml
+[root@hdss7-21 ~]# kubectl get pods
 NAME             READY   STATUS    RESTARTS   AGE
 nginx-ds-6hnc7   1/1     Running   0          99m
 nginx-ds-m5q6j   1/1     Running   0          18h
@@ -1624,7 +1624,7 @@ nginx-ds-m5q6j   1/1     Running   0          18h
 
 #### 验证
 ```
-[root@hdss7-21 data]# docker exec -ti 63c0 bash
+[root@hdss7-21 ~]# docker exec -ti 63c0 bash
 root@nginx-ds-m5q6j:/# ping 172.7.22.2
 PING 172.7.22.2 (172.7.22.2): 48 data bytes
 56 bytes from 172.7.22.2: icmp_seq=0 ttl=62 time=24.438 ms
@@ -1634,7 +1634,7 @@ PING 172.7.22.2 (172.7.22.2): 48 data bytes
 3 packets transmitted, 3 packets received, 0% packet loss
 round-trip min/avg/max/stddev = 0.325/8.486/24.438/11.281 ms
 
-[root@hdss7-22 data]# docker exec -ti 1964 bash
+[root@hdss7-22 ~]# docker exec -ti 1964 bash
 root@nginx-ds-6hnc7:/# ping 172.7.21.2
 PING 172.7.21.2 (172.7.21.2): 48 data bytes
 56 bytes from 172.7.21.2: icmp_seq=0 ttl=62 time=455.370 ms
@@ -1644,14 +1644,38 @@ PING 172.7.21.2 (172.7.21.2): 48 data bytes
 13 packets transmitted, 13 packets received, 0% packet loss
 round-trip min/avg/max/stddev = 0.309/61.144/455.370/136.546 ms
 
-[root@hdss7-21 data]# kubectl get nodes
+[root@hdss7-21 ~]# kubectl get nodes
 NAME        STATUS   ROLES    AGE    VERSION
 10.4.7.21   Ready    <none>   21h    v1.13.2
 10.4.7.22   Ready    <none>   101m   v1.13.2
-[root@hdss7-21 data]# kubectl get svc
+[root@hdss7-21 ~]# kubectl get svc
 NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)       AGE
 kubernetes   ClusterIP   192.168.0.1     <none>        443/TCP       45h
 nginx-ds     NodePort    192.168.62.22   <none>        80:5801/TCP   18h
+```
+
+### 部署k8s资源配置清单的内网http服务
+#### 在运维主机`HDSS7-200.host.com`上，配置一个nginx虚拟主机，用以提供k8s统一的资源配置清单访问入口
+```vi /etc/nginx/conf.d/k8s-yaml.od.com.conf
+server {
+    listen       80;
+    server_name  k8s-yaml.od.com;
+
+    location / {
+        autoindex on;
+        default_type text/plain;
+        root /data/k8s-yaml;
+    }
+}
+```
+#### 配置内网DNS解析
+`HDSS7-11.host.com`上
+```vi /var/named/od.com.zone
+k8s-yaml	60 IN A 10.4.7.200
+```
+以后所有的资源配置清单统一放置在运维主机的`/data/k8s-yaml`目录下即可
+```
+[root@hdss7-200 ~]# nginx -s reload
 ```
 
 ### 部署kube-dns(coredns)
@@ -1661,9 +1685,9 @@ nginx-ds     NodePort    192.168.62.22   <none>        80:5801/TCP   18h
 [root@hdss7-200 ~]# docker tag eb516548c180 harbor.od.com/k8s/coredns:1.3.1
 [root@hdss7-200 ~]# docker push harbor.od.com/k8s/coredns:1.3.1
 ```
-#### 运算节点上准备资源配置清单
+#### 运维主机上准备资源配置清单
 ```
-[root@hdss7-21 data]# mkdir -p /data/k8s-yaml/coredns && cd /data/k8s-yaml/coredns
+[root@hdss7-200 ~]# mkdir -p /data/k8s-yaml/coredns && cd /data/k8s-yaml/coredns
 ```
 
 {% tabs coredns%}
@@ -1820,16 +1844,18 @@ spec:
 {% endtabs %}
 
 #### 依次执行创建
-```pwd /data/k8s-yaml/coredns
-[root@hdss7-21 coredns]# kubectl create -f rolebinding.yaml
-[root@hdss7-21 coredns]# kubectl create -f configmap.yaml
-[root@hdss7-21 coredns]# kubectl create -f deployment.yaml
-[root@hdss7-21 coredns]# kubectl create -f sva.yaml
-[root@hdss7-21 coredns]# kubectl create -f svc.yaml
+浏览器打开：http://k8s-yaml.od.com/coredns 检查资源配置清单文件是否正确创建
+在任意运算节点应用资源配置清单
+```
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/coredns/rolebinding.yaml
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/coredns/configmap.yaml
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/coredns/deployment.yaml
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/coredns/sva.yaml
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/coredns/svc.yaml
 ```
 #### 检查
 ```
-[root@hdss7-21 coredns]# kubectl get pods -n kube-system
+[root@hdss7-21 ~]# kubectl get pods -n kube-system
 NAME                       READY   STATUS    RESTARTS   AGE
 coredns-7ccccdf57c-5b9ch   1/1     Running   0          3m4s
 [root@hdss7-21 coredns]# kubectl get svc -n kube-system
@@ -1844,9 +1870,9 @@ coredns   ClusterIP   192.168.0.2   <none>        53/UDP,53/TCP   29s
 [root@hdss7-200 ~]# docker tag a8958b0d0447 harbor.od.com/k8s/traefik:1.7       
 [root@hdss7-200 ~]# docker push harbor.od.com/k8s/traefik:1.7
 ```
-#### 运算节点上准备资源配置清单
+#### 运维主机上准备资源配置清单
 ```
-[root@hdss7-21 data]# mkdir -p /data/k8s-yaml/traefik && cd /data/k8s-yaml/traefik
+[root@hdss7-200 ~]# mkdir -p /data/k8s-yaml/traefik && cd /data/k8s-yaml/traefik
 ```
 {% tabs traefik%}
 <!-- tab Rolebinding -->
@@ -1980,19 +2006,21 @@ spec:
 {% endtabs %}
 
 #### 依次执行创建
-```pwd /data/k8s-yaml/traefik
-[root@hdss7-21 traefik]# kubectl create -f rolebinding.yaml 
+浏览器打开：http://k8s-yaml.od.com/traefik 检查资源配置清单文件是否正确创建
+在任意运算节点应用资源配置清单
+```
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/traefik/rolebinding.yaml 
 serviceaccount/traefik-ingress-controller created
 clusterrole.rbac.authorization.k8s.io/traefik-ingress-controller created
 clusterrolebinding.rbac.authorization.k8s.io/traefik-ingress-controller created
 
-[root@hdss7-21 traefik]# kubectl create -f daemonset.yaml 
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/traefik/daemonset.yaml 
 daemonset.extensions/traefik-ingress-controller created
 
-[root@hdss7-21 traefik]# kubectl create -f svc.yaml 
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/traefik/svc.yaml 
 service/traefik-ingress-service created
 
-[root@hdss7-21 traefik]# kubectl create -f ingress.yaml 
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/traefik/ingress.yaml 
 ingress.extensions/traefik-web-ui created
 ```
 
@@ -2038,9 +2066,9 @@ The push refers to a repository [harbor.od.com/k8s/dashboard]
 23ddb8cbb75a: Pushed 
 1.8.3: digest: sha256:e76c5fe6886c99873898e4c8c0945261709024c4bea773fc477629455631e472 size: 529
 ```
-#### 运算节点上准备资源配置清单
+#### 运维主机上准备资源配置清单
 ```
-[root@hdss7-21 data]# mkdir -p /data/k8s-yaml/dashboard && cd /data/k8s-yaml/dashboard
+[root@hdss7-200 ~]# mkdir -p /data/k8s-yaml/dashboard && cd /data/k8s-yaml/dashboard
 ```
 {% tabs dashboard%}
 <!-- tab RoleBinding -->
@@ -2249,26 +2277,28 @@ spec:
 {% endtabs %}
 
 #### 依次执行创建
-```pwd /data/k8s-yaml/dashboard
-[root@hdss7-21 dashboard]# kubectl create -f rolebinding.yaml 
+浏览器打开：http://k8s-yaml.od.com/dashboard 检查资源配置清单文件是否正确创建
+在任意运算节点应用资源配置清单
+```
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dashboard/rolebinding.yaml 
 serviceaccount/kubernetes-dashboard created
 role.rbac.authorization.k8s.io/kubernetes-dashboard-admin created
 rolebinding.rbac.authorization.k8s.io/kubernetes-dashboard-admin created
 
-[root@hdss7-21 dashboard]# kubectl create -f secret.yaml 
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dashboard/secret.yaml 
 secret/kubernetes-dashboard-certs created
 secret/kubernetes-dashboard-key-holder created
 
-[root@hdss7-21 dashboard]# kubectl create -f configmap.yaml 
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dashboard/configmap.yaml 
 configmap/kubernetes-dashboard-settings created
 
-[root@hdss7-21 dashboard]# kubectl create -f svc.yaml 
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dashboard/svc.yaml 
 service/kubernetes-dashboard created
 
-[root@hdss7-21 dashboard]# kubectl create -f ingress.yaml 
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dashboard/ingress.yaml 
 ingress.extensions/kubernetes-dashboard created
 
-[root@hdss7-21 dashboard]# kubectl create -f deployment.yaml 
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dashboard/deployment.yaml 
 deployment.apps/kubernetes-dashboard created
 ```
 #### 解析域名
