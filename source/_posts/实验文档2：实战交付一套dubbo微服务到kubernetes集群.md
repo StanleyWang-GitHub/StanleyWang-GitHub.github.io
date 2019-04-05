@@ -859,8 +859,6 @@ spec:
 ```
 **注意：**这里没有使用k8s的pv/pvc，可以进一步改善
 
-## 安装maven工具
-
 ## 应用资源配置清单
 任意一个k8s运算节点上
 ```
@@ -991,35 +989,30 @@ http://jenkins.od.com
 ## Pipeline Script
 ```
 pipeline {
-    agent any 
+  agent any 
     stages {
-        stage('check') { //check image exist in registry
-            steps {
-                sh "/var/jenkins_home/check_image_noexist.py harbor.od.com/${params.image_name}:${params.git_ver}_${params.add_tag}"
-            }
-        }
-        stage('pull') { //get project code from repo 
-            steps {
+      stage('pull') { //get project code from repo 
+        steps {
 			    sh "git clone ${params.git_repo} ${params.app_name}/${env.BUILD_NUMBER} && cd ${params.app_name}/${env.BUILD_NUMBER} && git checkout ${params.git_ver}"
-            }
         }
-        stage('build') { //exec mvn cmd
-            steps {
-                sh "cd ${params.app_name}/${env.BUILD_NUMBER}  && /var/jenkins_home/maven-${params.maven}/bin/${params.mvn_cmd}"
-            }
+      }
+      stage('build') { //exec mvn cmd
+        steps {
+          sh "cd ${params.app_name}/${env.BUILD_NUMBER}  && /var/jenkins_home/maven-${params.maven}/bin/${params.mvn_cmd}"
         }
-        stage('package') { //move jar file into project_dir
-            steps {
-                 sh "cd ${params.app_name}/${env.BUILD_NUMBER} && cd ${params.target_dir} && mkdir project_dir && mv *.jar ./project_dir"
-            }
+      }
+      stage('package') { //move jar file into project_dir
+        steps {
+          sh "cd ${params.app_name}/${env.BUILD_NUMBER} && cd ${params.target_dir} && mkdir project_dir && mv *.jar ./project_dir"
         }
-        stage('image') { //build image and push to registry
-            steps {
-                writeFile file: "${params.app_name}/${env.BUILD_NUMBER}/Dockerfile", text: """FROM harbor.od.com/${params.base_image}
+      }
+      stage('image') { //build image and push to registry
+        steps {
+          writeFile file: "${params.app_name}/${env.BUILD_NUMBER}/Dockerfile", text: """FROM harbor.od.com/${params.base_image}
 ADD ${params.target_dir}/project_dir /opt/project_dir"""
-                sh "cd  ${params.app_name}/${env.BUILD_NUMBER} && docker build -t harbor.od.com/${params.image_name}:${params.git_ver}_${params.add_tag} . && docker push harbor.od.com/${params.image_name}:${params.git_ver}_${params.add_tag}"
-            }
+          sh "cd  ${params.app_name}/${env.BUILD_NUMBER} && docker build -t harbor.od.com/${params.image_name}:${params.git_ver}_${params.add_tag} . && docker push harbor.od.com/${params.image_name}:${params.git_ver}_${params.add_tag}"
         }
+      }
     }
 }
 ```
@@ -1148,135 +1141,6 @@ fddd8887b725: Pushed
 8u112: digest: sha256:252e3e869039ee6242c39bdfee0809242e83c8c3a06830f1224435935aeded28 size: 2405
 ```
 **注意：**jre7底包制作类似，这里略
-
-## python脚本
-```vi /data/k8s-volume/jenkins/check_image_noexist.py
-#!/usr/bin/python
-import base64
-import httplib
-import json
-import sys
-import socket
-
-global_info = {
-    "harbor.od.com": {
-        "username": "admin",
-        "password": "Harbor12345",
-        "realm_host": "harbor.od.com",
-        "reg_host": "harbor.od.com",
-        "auth_url": "/service/token",
-        "service": "harbor-registry"
-    }
-}
-
-def get_basic_auth_str(username,password):
-    temp_str = username + ":" + password
-    bytesString = temp_str.encode(encoding="utf-8")
-    encodestr = base64.b64encode(bytesString)
-    decodestr = base64.b64decode(encodestr)
-    
-    return "Basic " + encodestr.decode()
-
-def get_bearer_token(realm_host,realm_url,service,scope,basic_token):
-    request_url = realm_url + "?service=" + service + "&scope=" + scope
-    header = {"Authorization": basic_token}
-
-    try:
-        conn = httplib.HTTPConnection(realm_host)
-        conn.request("GET",request_url,headers=header)
-    except socket.error, e:
-        return {"error": 1, "reason": e.message, "status": 500}
-
-    res_obj = conn.getresponse()
-    if res_obj.status == 200:
-        res_str = res_obj.read()
-        res_json = json.loads(res_str) 
-        return {"error": 0, "token": res_json["token"]}
-   
-    return {"error": 1, "reason": res_obj.reason, "status": res_obj.status} 
-
-def get_image_tag_list(reg_host,image_name,bearer_token):
-    image_name = image_name.strip("/")
-    request_url = "/v2/" + image_name + "/tags/list"
-    header = {"Authorization": bearer_token}
-
-    try:
-        conn = httplib.HTTPConnection(reg_host,timeout=1)
-        conn.request("GET",request_url,headers=header)
-    except socket.error, e:
-        return {"error": 1, "reason": e.message,"status": 500}
-    res_obj = conn.getresponse()
-    if res_obj.status == 200:
-        res_str = res_obj.read()
-        res_json = json.loads(res_str)
-        return {"error": 0,"tags": res_json["tags"]}
-    
-    return {"error": 1, "reason": res_obj.reason,"status": res_obj.status}
-
-def get_arg_from_image(image_name):
-    all_in_one = image_name.split(":")
-    try:
-        tag = all_in_one[1]
-        host_image = all_in_one[0].split("/")
-        host_name = host_image[0]
-        image_name = host_image[1] + "/" + host_image[2]
-    except IndexError,e:
-        return {"error": 1,"reason": e.message}
-
-    scope = "repository:" + image_name + ":pull"
- 
-    return {"error": 0, "host": host_name, "image": image_name, "tag": tag, "scope": scope}
-
-
-def check_image_notexist(image_name):
-    arg_dict = get_arg_from_image(image_name)
-    if arg_dict["error"] == 1:
-        return {"error": 1, "reason": image_name + " image is invaild"} 
-    
-    try:
-        username = global_info[arg_dict["host"]]["username"]
-        password = global_info[arg_dict["host"]]["password"]
-        realm_host = global_info[arg_dict["host"]]["realm_host"]
-        realm_url = global_info[arg_dict["host"]]["auth_url"]
-        service = global_info[arg_dict["host"]]["service"]
-    except KeyError,e:
-        return {"error": 1, "reason": arg_dict["host"] + " is invaild"}
-    
-    basic_token = get_basic_auth_str(username,password)
-    tag = arg_dict["tag"]
-    scope = arg_dict["scope"]
-    
-    bearer_token_json = get_bearer_token(realm_host,realm_url,service,scope,basic_token)
-    if bearer_token_json["error"] == 1:
-        print bearer_token_json
-        return {"error": 1, "reason": bearer_token_json["reason"] + "bearer_token"}
-    
-    bearer_token = "Bearer " +  bearer_token_json["token"]
-
-    tag_json = get_image_tag_list(arg_dict["host"],arg_dict["image"],bearer_token)
-
-    if tag_json["error"] == 1:
-        if tag_json["status"] == 404:
-            return {"error": 0}
-        else:
-            return {"error": 1, "reason": tag_json["reason"]}
-    
-    tag_list = tag_json["tags"]
-    if tag in tag_list:
-        return {"error": 1, "reason": image_name + " is exist in registry" }
-  
-    return {"error": 0}
-
-if __name__ == "__main__":
-    ret_json = check_image_notexist(sys.argv[1])
-    if ret_json["error"] == 1:
-        print ret_json  # ret_json["reason"]
-        sys.exit(1)
-```
-加执行权限
-```
-[root@hdss7-22 ~]# chmod +x /data/k8s-volume/jenkins/check_image_noexist.py
-```
 
 # 进行第一次CI
 万事具备，打开jenkins页面，准备构建`dubbo-demo-service`项目
