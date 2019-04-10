@@ -1,7 +1,7 @@
 title: 实验文档1：跟我一步步安装部署kubernetes集群
 author: Stanley Wang
 categories: Kubernetes容器云技术专题
-date: 2019-1-16 22:12:56
+date: 2019-1-18 22:12:56
 ---
 - - -
 {% cq %}欢迎加入王导的VIP学习qq群：==>[<font color="FF7F50">932194668</font>](http://shang.qq.com/wpa/qunwpa?idkey=78869fddc5a661acb0639315eb52997c108de6625df5f0ee2f0372f176a032a6)<=={% endcq %}

@@ -1,7 +1,7 @@
 title: 实验文档2：实战交付一套dubbo微服务到kubernetes集群
 author: Stanley Wang
 categories: Kubernetes容器云技术专题
-date: 2019-1-16 21:12:56
+date: 2019-1-18 21:12:56
 ---
 # 基础架构
 主机名|角色|ip
@@ -52,7 +52,7 @@ server.1=zk1.od.com:2888:3888
 server.2=zk2.od.com:2888:3888
 server.3=zk3.od.com:2888:3888
 ```
-**注意：**各节点zk配置略有不同，注意修改。
+**注意：**各节点zk配置相同。
 
 ### 做dns解析
 `HDSS7-11.host.com`上
@@ -993,7 +993,7 @@ pipeline {
     stages {
       stage('pull') { //get project code from repo 
         steps {
-			    sh "git clone ${params.git_repo} ${params.app_name}/${env.BUILD_NUMBER} && cd ${params.app_name}/${env.BUILD_NUMBER} && git checkout ${params.git_ver}"
+          sh "git clone ${params.git_repo} ${params.app_name}/${env.BUILD_NUMBER} && cd ${params.app_name}/${env.BUILD_NUMBER} && git checkout ${params.git_ver}"
         }
       }
       stage('build') { //exec mvn cmd
@@ -1082,8 +1082,7 @@ wget https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0
 vi entrypoint.sh  (不要忘了给执行权限)
 {% code %}
 #!/bin/sh
-M_PORT=${E_PORT:-"12346"}
-M_OPTS="-Duser.timezone=Asia/Shanghai -javaagent:/opt/prom/jmx_javaagent-0.3.1.jar=$(hostname -i):${E_PORT}:/opt/prom/config.yml"
+M_OPTS="-Duser.timezone=Asia/Shanghai -javaagent:/opt/prom/jmx_javaagent-0.3.1.jar=$(hostname -i):${M_PORT:-"12346"}:/opt/prom/config.yml"
 C_OPTS=${C_OPTS}
 JAR_BALL=${JAR_BALL}
 exec java -jar ${M_OPS} ${C_OPTS} ${JAR_BALL}
@@ -1142,5 +1141,448 @@ fddd8887b725: Pushed
 ```
 **注意：**jre7底包制作类似，这里略
 
-# 进行第一次CI
-万事具备，打开jenkins页面，准备构建`dubbo-demo-service`项目
+# 交付dubbo微服务至kubernetes集群
+## dubbo服务提供者（dubbo-demo-service）
+### 通过jenkins进行一次CI
+打开jenkins页面，使用admin登录，准备构建`dubbo-demo`项目
+
+![jenkins构建](/images/jenkins-firstbuild.png "jenkins构建")
+点`Build with Parameters`
+
+![jenkins构建详情](/images/jenkins-builddetail.png "jenkins构建详情")
+依次填入/选择：
+- app_name
+> dubbo-demo-service
+
+- image_name
+> app/dubbo-demo-service
+
+- git_repo
+> git@gitee.com:stanleywang/dubbo-demo-service.git
+
+- git_ver
+> master
+
+- add_tag
+> 190117_1920
+
+- mvn_dir
+> /
+
+- target_dir
+> ./dubbo-server/target
+
+- mvn_cmd
+> mvn clean package -Dmaven.test.skip=true
+
+- base_image
+> base/jre8:8u112
+
+- maven
+> 3.6.0-8u181
+
+点击`Build`进行构建，等待构建完成。
+
+test $? -eq 0 && {% label success@成功，进行下一步 %} || {% label danger@失败，排错直到成功 %}
+
+### 检查harbor仓库内镜像
+![harbor仓库内镜像](/images/harbor-firstci.png "harbor仓库内镜像")
+
+### 准备k8s资源配置清单
+运维主机`HDSS7-200.host.com`上，准备资源配置清单：
+```vi /data/k8s-yaml/dubbo-demo-service/deployment.yaml
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: dubbo-demo-service
+  namespace: app
+  labels: 
+    name: dubbo-demo-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      name: dubbo-demo-service
+  template:
+    metadata:
+      labels: 
+        app: dubbo-demo-service
+        name: dubbo-demo-service
+    spec:
+      containers:
+      - name: dubbo-demo-service
+        image: harbor.od.com/app/dubbo-demo-service:master_190117_1920
+        ports:
+        - containerPort: 20880
+          protocol: TCP
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: Default
+      securityContext: 
+        runAsUser: 0
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: 
+      maxUnavailable: 1
+      maxSurge: 1
+  revisionHistoryLimit: 7
+  progressDeadlineSeconds: 600
+```
+
+### 应用资源配置清单
+在任意一台k8s运算节点执行：
+```
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-demo-service/deployment.yaml
+```
+
+### 检查docker运行情况及zk里的信息
+
+
+## dubbo-monitor工具
+[dubbo-monitor源码包](https://github.com/Jeromefromcn/dubbo-monitor.git)
+### 准备docker镜像
+#### 下载源码
+下载到运维主机`HDSS7-200.host.com`上
+```pwd /opt/src
+[root@hdss7-200 src]# ls -l|grep dubbo-monitor
+drwxr-xr-x 4 root root      81 Jan  17 13:58 dubbo-monitor
+```
+#### 修改配置
+```vi /opt/src/dubbo-monitor/dubbo-monitor-simple/conf/dubbo_origin.properties
+dubbo.registry.address=zookeeper://zk1.od.com:2181?backup=zk2.od.com:2181,zk3.od.com:2181
+dubbo.protocol.port=20880
+dubbo.jetty.port=8080
+dubbo.jetty.directory=/dubbo-monitor-simple/monitor
+dubbo.statistics.directory=/dubbo-monitor-simple/statistics
+dubbo.log4j.file=logs/dubbo-monitor.log
+```
+
+#### 制作镜像
+1. 准备环境
+```
+[root@hdss7-200 src]# mkdir /data/dockerfile/dubbo-monitor
+[root@hdss7-200 src]# cp -a dubbo-monitor/* /data/dockerfile/dubbo-monitor/
+[root@hdss7-200 src]# cd /data/dockerfile/dubbo-monitor/
+[root@hdss7-200 dubbo-monitor]# sed -r -i -e '/^nohup/{p;:a;N;$!ba;d}'  ./dubbo-monitor-simple/bin/start.sh && sed  -r -i -e "s%^nohup(.*)%exec \1%"  ./dubbo-monitor-simple/bin/start.sh
+```
+2. 准备Dockerfile
+```vi /data/dockerfile/dubbo-monitor/Dockerfile
+FROM jeromefromcn/docker-alpine-java-bash
+MAINTAINER Jerome Jiang
+COPY dubbo-monitor-simple/ /dubbo-monitor-simple/
+CMD /dubbo-monitor-simple/bin/start.sh
+```
+3. build镜像
+```
+[root@hdss7-200 dubbo-monitor]# docker build . -t harbor.od.com/infra/dubbo-monitor:190117_1930
+Sending build context to Docker daemon 26.21 MB
+Step 1 : FROM harbor.od.com/base/jre7:7u80
+ ---> dbba4641da57
+Step 2 : MAINTAINER Stanley Wang
+ ---> Running in 8851a3c55d4b
+ ---> 6266a6f15dc5
+Removing intermediate container 8851a3c55d4b
+Step 3 : COPY dubbo-monitor-simple/ /opt/dubbo-monitor/
+ ---> f4e0a9067c5c
+Removing intermediate container f1038ecb1055
+Step 4 : WORKDIR /opt/dubbo-monitor
+ ---> Running in 4056339d1b5a
+ ---> e496e2d3079e
+Removing intermediate container 4056339d1b5a
+Step 5 : CMD /opt/dubbo-monitor/bin/start.sh
+ ---> Running in c33b8fb98326
+ ---> 97e40c179bbe
+Removing intermediate container c33b8fb98326
+Successfully built 97e40c179bbe
+
+[root@hdss7-200 dubbo-monitor]# docker push harbor.od.com/infra/dubbo-monitor:190117_1930
+The push refers to a repository [harbor.od.com/infra/dubbo-monitor]
+750135a87545: Pushed 
+0b2b753b122e: Pushed 
+5b1f1b5295ff: Pushed 
+d54f1d9d76d3: Pushed 
+8d51c20d6553: Pushed 
+106b765202e9: Pushed 
+c6698ca565d0: Pushed 
+50ecb880731d: Pushed 
+fddd8887b725: Pushed 
+42052a19230c: Pushed 
+8d4d1ab5ff74: Pushed 
+190107_1930: digest: sha256:73007a37a55ecd5fd72bc5b36d2ab0bb639c96b32b7879984d5cdbc759778790 size: 2617
+```
+
+### 解析域名
+在DNS主机`HDSS7-11.host.com`上：
+```vi /var/named/od.com.zone
+dubbo-monitor IN A 60 10.9.7.10
+```
+
+### 准备k8s资源配置清单
+运维主机`HDSS7-200.host.com`上
+{% tabs dubbo-monitor%}
+<!-- tab deployment.yaml -->
+vi /data/k8s-yaml/dubbo-monitor/deployment.yaml
+{% code %}
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: dubbo-monitor
+  namespace: infra
+  labels: 
+    name: dubbo-monitor
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      name: dubbo-monitor
+  template:
+    metadata:
+      labels: 
+        app: dubbo-monitor
+        name: dubbo-monitor
+    spec:
+      containers:
+      - name: dubbo-monitor
+        image: harbor.od.com/infra/dubbo-monitor:190117_1930
+        ports:
+				- containerPort: 8080
+				  protocol: TCP
+        - containerPort: 20880
+          protocol: TCP
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: Default
+      securityContext: 
+        runAsUser: 0
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: 
+      maxUnavailable: 1
+      maxSurge: 1
+  revisionHistoryLimit: 7
+  progressDeadlineSeconds: 600
+{% endcode %}
+<!-- endtab -->
+<!-- tab svc.yaml-->
+vi /data/k8s-yaml/dubbo-monitor/svc.yaml
+{% code %}
+kind: Service
+apiVersion: v1
+metadata: 
+  name: dubbo-monitor, 
+	namespace: infra
+spec:
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+  selector: 
+    app: dubbo-monitor
+  clusterIP: None
+  type: ClusterIP
+  sessionAffinity: None
+{% endcode %}
+<!-- endtab -->
+<!-- tab ingress.yaml-->
+vi /data/k8s-yaml/dubbo-monitor/ingress.yaml
+{% code %}
+kind: Ingress
+apiVersion: extensions/v1beta1
+metadata: 
+  name: dubbo-monitor
+  namespace: infra
+spec:
+  rules:
+  - host: dubbo-monitor.od.com
+    http:
+      paths: /
+      - backend: 
+          serviceName: dubbo-monitor
+          servicePort: 8080
+{% endcode %}
+<!-- endtab -->
+{% endtabs %}
+
+### 应用资源配置清单
+在任意一台k8s运算节点执行：
+```
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-monitor/deployment.yaml
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-monitor/svc.yaml
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-monitor/ingress.yaml
+```
+
+### 浏览器访问
+http://dubbo-monitor.od.com
+
+## dubbo服务消费者（dubbo-demo-consumer）
+### 通过jenkins进行一次CI
+打开jenkins页面，使用admin登录，准备构建`dubbo-demo`项目
+
+![jenkins构建](/images/jenkins-firstbuild.png "jenkins构建")
+点`Build with Parameters`
+
+![jenkins构建详情](/images/jenkins-builddetail.png "jenkins构建详情")
+依次填入/选择：
+- app_name
+> dubbo-demo-consumer
+
+- image_name
+> app/dubbo-demo-consumer
+
+- git_repo
+> https://gitee.com/stanleywang/dubbo-demo-web.git
+
+- git_ver
+> master
+
+- add_tag
+> 190117_1950
+
+- mvn_dir
+> /
+
+- target_dir
+> ./dubbo-client/target
+
+- mvn_cmd
+> mvn clean package -Dmaven.test.skip=true
+
+- base_image
+> base/jre8:8u112
+
+- maven
+> 3.6.0-8u181
+
+点击`Build`进行构建，等待构建完成。
+
+test $? -eq 0 && {% label success@成功，进行下一步 %} || {% label danger@失败，排错直到成功 %}
+
+### 检查harbor仓库内镜像
+![harbor仓库内镜像](/images/harbor-firstci.png "harbor仓库内镜像")
+
+### 解析域名
+在DNS主机`HDSS7-11.host.com`上：
+```vi /var/named/od.com.zone
+demo IN A 60 10.9.7.10
+```
+
+### 准备k8s资源配置清单
+运维主机`HDSS7-200.host.com`上，准备资源配置清单
+{% tabs dubbo-demo-consumer%}
+<!-- tab deployment.yaml -->
+vi /data/k8s-yaml/dubbo-demo-consumer/deployment.yaml
+{% code %}
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: dubbo-demo-consumer
+  namespace: app
+  labels: 
+    name: dubbo-demo-consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      name: dubbo-demo-consumer
+  template:
+    metadata:
+      labels: 
+        app: dubbo-demo-consumer
+        name: dubbo-demo-consumer
+    spec:
+      containers:
+      - name: dubbo-monitor
+        image: harbor.od.com/app/dubbo-demo-consumer:190117_1950
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        - containerPort: 20880
+          protocol: TCP
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: Default
+      securityContext: 
+        runAsUser: 0
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: 
+      maxUnavailable: 1
+      maxSurge: 1
+  revisionHistoryLimit: 7
+  progressDeadlineSeconds: 600
+{% endcode %}
+<!-- endtab -->
+<!-- tab svc.yaml-->
+vi /data/k8s-yaml/dubbo-demo-consumer/svc.yaml
+{% code %}
+kind: Service
+apiVersion: v1
+metadata: 
+  name: dubbo-demo-consumer
+	namespace: app
+spec:
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+  selector: 
+    app: dubbo-demo-consumer
+  clusterIP: None
+  type: ClusterIP
+  sessionAffinity: None
+{% endcode %}
+<!-- endtab -->
+<!-- tab ingress.yaml-->
+vi /data/k8s-yaml/dubbo-demo-consumer/ingress.yaml
+{% code %}
+kind: Ingress
+apiVersion: extensions/v1beta1
+metadata: 
+  name: dubbo-demo-consumer
+  namespace: app
+spec:
+  rules:
+  - host: demo.od.com
+    http:
+      paths: /
+      - backend: 
+          serviceName: dubbo-demo-consumer
+          servicePort: 8080
+{% endcode %}
+<!-- endtab -->
+{% endtabs %}
+
+### 应用资源配置清单
+在任意一台k8s运算节点执行：
+```
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-demo-consumer/deployment.yaml
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-demo-consumer/svc.yaml
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-demo-consumer/ingress.yaml
+```
+### 检查docker运行情况及dubbo-monitor
+http://dubbo-monitor.od.com
+
+### 浏览器访问
+http://demo.od.com/hello?name=wangdao
+
+# 实战维护dubbo微服务集群
+## 更新（rolling update）
+- 修改代码提git（发版）
+- 使用jenkins进行CI
+- 修改并应用k8s资源配置清单
+> 或者在k8s的dashboard上直接操作
+
+## 扩容（scaling）
+- k8s的dashboard上直接操作
+
+## 节点宕机（failover）
+- 全自动故障转移
+
+## 增加节点
+略
