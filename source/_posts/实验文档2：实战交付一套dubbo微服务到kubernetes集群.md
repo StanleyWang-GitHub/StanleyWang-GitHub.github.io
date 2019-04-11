@@ -124,6 +124,11 @@ RUN /get-docker.sh
 - 加入了登录自建harbor仓库的config文件
 - 安装一个docker的客户端
 
+生成ssh密钥对：
+```
+[root@hdss7-200 ~]# ssh-keygen -t rsa -b 2048 -C "stanley.wang.m@qq.com" -N "" -f /root/.ssh/id_rsa
+```
+
 {% tabs jenkins-dockerfile%}
 <!-- tab config.json -->
 {% code %}
@@ -748,7 +753,7 @@ Successfully built 64c74242ee28
 ```
 {% tabs jenkins-yaml%}
 <!-- tab Deployment -->
-[root@hdss7-200 k8s-yaml]# vi deployment.yaml
+[root@hdss7-200 jenkins]# vi deployment.yaml
 {% code %}
 kind: Deployment
 apiVersion: extensions/v1beta1
@@ -818,22 +823,27 @@ spec:
 {% endcode %}
 <!-- endtab -->
 <!-- tab Service-->
-[root@hdss7-200 k8s-yaml]# vi svc.yaml
+[root@hdss7-200 jenkins]# vi svc.yaml
 {% code %}
 kind: Service
 apiVersion: v1
-metadata: {name: jenkins, namespace: infra}
+metadata: 
+  name: jenkins
+	namespace: infra
 spec:
   ports:
-  - {protocol: TCP, port: 8080, targetPort: 8080}
-  selector: {app: jenkins}
+  - protocol: TCP
+	  port: 8080
+		targetPort: 8080
+  selector:
+	  app: jenkins
   clusterIP: None
   type: ClusterIP
   sessionAffinity: None
 {% endcode %}
 <!-- endtab -->
 <!-- tab Ingress-->
-[root@hdss7-200 k8s-yaml]# vi ingress.yaml
+[root@hdss7-200 jenkins]# vi ingress.yaml
 {% code %}
 kind: Ingress
 apiVersion: extensions/v1beta1
