@@ -3,7 +3,10 @@ author: Stanley Wang
 categories: Kubernetes容器云技术专题
 date: 2019-1-18 20:12:56
 ---
-# 使用kubernetes的ConfigMap管理应用配置
+- - -
+{% cq %}欢迎加入王导的VIP学习qq群：==>[<font color="FF7F50">932194668</font>](http://shang.qq.com/wpa/qunwpa?idkey=78869fddc5a661acb0639315eb52997c108de6625df5f0ee2f0372f176a032a6)<=={% endcq %}
+- - -
+# 使用ConfigMap管理应用配置
 ## 拆分环境
 主机名|角色|ip
 -|-|-
@@ -19,7 +22,6 @@ syncLimit=5
 dataDir=/data/zookeeper/data
 dataLogDir=/data/zookeeper/logs
 clientPort=2181
-server.1=zk1.od.com:2888:3888
 ```
 `HDSS7-12.host.com`上：
 ```vi /opt/zookeeper/conf/zoo.cfg
@@ -29,7 +31,6 @@ syncLimit=5
 dataDir=/data/zookeeper/data
 dataLogDir=/data/zookeeper/logs
 clientPort=2181
-server.1=zk2.od.com:2888:3888
 ```
 重启zk(删除数据文件)
 ```
@@ -41,8 +42,8 @@ server.1=zk2.od.com:2888:3888
 ## 准备资源配置清单(dubbo-monitor)
 在运维主机`HDSS7-200.host.com`上：
 {% tabs dubbo-monitor%}
+<!-- tab ConfigMap -->
 vi /data/k8s-yaml/dubbo-monitor/configmap.yaml
-<!-- tab configmap.yaml -->
 {% code %}
 apiVersion: v1
 kind: ConfigMap
@@ -64,7 +65,7 @@ data:
     dubbo.log4j.level=WARN
 {% endcode %}
 <!-- endtab -->
-<!-- tab deployment.yaml-->
+<!-- tab Deployment-->
 vi /data/k8s-yaml/dubbo-monitor/deployment.yaml
 {% code %}
 kind: Deployment
@@ -126,7 +127,7 @@ spec:
 ```
 
 ## 重新发版，修改dubbo项目的配置文件
-### 修改源码，提git
+### 修改项目源代码
 - duboo-demo-service
 ```vi dubbo-server/src/main/java/config.properties
 dubbo.registry=zookeeper://zk1.od.com:2181
@@ -140,22 +141,25 @@ dubbo.registry=zookeeper://zk1.od.com:2181
 略
 
 ### 修改/应用资源配置清单
-k8s的dashboard上，修改deployment使用的容器版本，应用
+k8s的dashboard上，修改deployment使用的容器版本，提交应用
 
-# Apollo简介
+## 验证configmap的配置
+在K8S的dashboard上，修改dubbo-monitor的configmap配置为不同的zk，重启POD，浏览器打开http://dubbo-monitor.od.com 观察效果
+
+# 交付Apollo至Kubernetes集群
+## Apollo简介
 Apollo（阿波罗）是携程框架部门研发的分布式配置中心，能够集中化管理应用不同环境、不同集群的配置，配置修改后能够实时推送到应用端，并且具备规范的权限、流程治理等特性，适用于微服务配置管理场景。
 
-## 官方GitHub地址
+### 官方GitHub地址
 [Apollo官方地址](https://github.com/ctripcorp/apollo)
 [官方release包](https://github.com/ctripcorp/apollo/releases)
 
-## 基础架构
+### 基础架构
 ![apollo基础架构](/images/apollo.png "apollo基础架构")
 
-## 简化模型
+### 简化模型
 ![apollo简化架构](/images/apollo-simple.png "apollo简化架构")
 
-# 交付Apollo至Kubernetes集群
 ## 交付apollo-configservice
 ### 准备软件包
 在运维主机`HDSS7-200.host.com`上：
@@ -1053,17 +1057,413 @@ http://portal.od.com
 
 ![apollo-portal](/images/portal-ready.png "apollo-portal")
 
-# 改造dubbo微服务接入apollo配置中心
-## 改造dubbo-demo-service
+# 实战dubbo微服务接入Apollo配置中心
+## 改造dubbo-demo-service项目
+### 使用IDE拉取项目（这里使用git bash作为范例）
+```
+$ git clone git@gitee.com/stanleywang/dubbo-demo-service.git
+```
+### 切到apollo分支
+```
+$ git checkout -b apollo
+```
+### 修改pom.xml
+- 加入apollo客户端jar包的依赖
+
+```vi dubbo-server/pom.xml
+<dependency>
+  <groupId>com.ctrip.framework.apollo</groupId>
+  <artifactId>apollo-client</artifactId>
+  <version>1.1.0</version>
+</dependency>
+```
+- 修改resource段
+
+```vi dubbo-server/pom.xml
+<resource>
+  <directory>src/main/resources</directory>
+  <includes>
+  <include>**/*</include>
+  </includes>
+  <filtering>false</filtering>
+</resource>
+```
+### 增加resources目录
+```pwd /d/workspace/dubbo-demo-service/dubbo-server/src/main
+$ mkdir -pv resources/META-INF
+mkdir: created directory 'resources'
+mkdir: created directory 'resources/META-INF'
+```
+### 修改config.properties文件
+```vi /d/workspace/dubbo-demo-service/dubbo-server/src/main/resources/config.properties
+dubbo.registry=${dubbo.registry}
+dubbo.port=${dubbo.port}
+```
+### 修改srping-config.xml文件
+- beans段新增属性
+
+```vi /d/workspace/dubbo-demo-service/dubbo-server/src/main/resources/spring-config.xml
+xmlns:apollo="http://www.ctrip.com/schema/apollo"
+```
+- xsi:schemaLocation段内新增属性
+
+```vi /d/workspace/dubbo-demo-service/dubbo-server/src/main/resources/spring-config.xml
+http://www.ctrip.com/schema/apollo http://www.ctrip.com/schema/apollo.xsd
+```
+- 新增配置项
+
+```vi /d/workspace/dubbo-demo-service/dubbo-server/src/main/resources/spring-config.xml
+<apollo:config/>
+```
+- 删除配置项（注释）
+
+```vi /d/workspace/dubbo-demo-service/dubbo-server/src/main/resources/spring-config.xml
+<!-- <context:property-placeholder location="classpath:config.properties"/> -->
+```
+
+### 增加app.properties文件
+```vi /d/workspace/dubbo-demo-service/dubbo-server/src/main/resources/META-INF/app.properties
+app.id=dubbo-demo-service
+```
+
+### 提交git中心仓库（gitee）
+```
+$ git push origin apollo
+```
+
+## 配置apollo-portal
+### 创建项目
+- 部门
+> 样例部门1（TEST1）
+
+- **应用id**
+> dubbo-demo-service
+
+- 应用名称
+> dubbo服务提供者
+
+- 应用负责人
+> apollo|apollo
+
+- 项目管理员
+> apollo|apollo
+
+**提交**
+
+### 进入配置页面
+#### 新增配置项1
+- Key
+> dubbo.registry
+
+- Value
+> zookeeper://zk1.od.com:2181
+
+- 选择集群
+> DEV
+
+**提交**
+
+#### 新增配置项2
+- Key
+> dubbo.port
+
+- Value
+> 20880
+
+- 选择集群
+> DEV
+
+**提交**
+
+### 发布配置
+点击**发布**，配置生效
+![apollo-release](/images/apollo-release.png "apollo发布配置")
+
+## 使用jenkins进行CI
+略（注意记录镜像的tag）
+
+## 上线新构建的项目
+### 准备资源配置清单
+运维主机`HDSS7-200.host.com`上：
+```vi /data/k8s-yaml/dubbo-demo-service/deployment.yaml
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: dubbo-demo-service
+  namespace: app
+  labels: 
+    name: dubbo-demo-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      name: dubbo-demo-service
+  template:
+    metadata:
+      labels: 
+        app: dubbo-demo-service
+        name: dubbo-demo-service
+    spec:
+      containers:
+      - name: dubbo-demo-service
+        image: harbor.od.com/app/dubbo-demo-service:master_190118_1920
+        ports:
+        - containerPort: 20880
+          protocol: TCP
+        env:
+        - name: C_OPTS
+          value: -Denv=dev,-Dapollo.meta=http://config.od.com
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: Default
+      securityContext: 
+        runAsUser: 0
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: 
+      maxUnavailable: 1
+      maxSurge: 1
+  revisionHistoryLimit: 7
+  progressDeadlineSeconds: 600
+```
+
+**注意：**增加了env段配置
+**注意：**docker镜像新版的tag
+
+### 应用资源配置清单
+在任意一台k8s运算节点上执行：
+```
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-demo-service/deployment.yaml
+```
+### 观察项目运行情况
+http://dubbo-monitor.od.com
+
 ## 改造dubbo-demo-web
+略
 
-# 实战通过配置中心维护多套环境项目
-## TEST
-### kubernetes配置
-### apollo配置
+## 配置apollo-portal
+### 创建项目
+- 部门
+> 样例部门1（TEST1）
 
-## PRD
-### kubernetes配置
-### apollo配置
+- **应用id**
+> dubbo-demo-web
 
-# 附：改造dubbo-demo-web为tomcat启动项目
+- 应用名称
+> dubbo服务消费者
+
+- 应用负责人
+> apollo|apollo
+
+- 项目管理员
+> apollo|apollo
+
+**提交**
+
+### 进入配置页面
+#### 新增配置项1
+- Key
+> dubbo.registry
+
+- Value
+> zookeeper://zk1.od.com:2181
+
+- 选择集群
+> DEV
+
+**提交**
+
+### 发布配置
+点击**发布**，配置生效
+
+## 使用jenkins进行CI
+略（注意记录镜像的tag）
+
+## 上线新构建的项目
+### 准备资源配置清单
+运维主机`HDSS7-200.host.com`上：
+```vi /data/k8s-yaml/dubbo-demo-web/deployment.yaml
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: dubbo-demo-web
+  namespace: app
+  labels: 
+    name: dubbo-demo-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      name: dubbo-demo-web
+  template:
+    metadata:
+      labels: 
+        app: dubbo-demo-web
+        name: dubbo-demo-web
+    spec:
+      containers:
+      - name: dubbo-demo-web
+        image: harbor.od.com/app/dubbo-demo-web:master_190118_1920
+        ports:
+        - containerPort: 20880
+          protocol: TCP
+        - containerPort: 8080
+          protocol: TCP
+        env:
+        - name: C_OPTS
+          value: -Denv=dev,-Dapollo.meta=http://config.od.com
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: Default
+      securityContext: 
+        runAsUser: 0
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: 
+      maxUnavailable: 1
+      maxSurge: 1
+  revisionHistoryLimit: 7
+  progressDeadlineSeconds: 600
+```
+
+**注意：**增加了env段配置
+**注意：**docker镜像新版的tag
+
+### 应用资源配置清单
+在任意一台k8s运算节点上执行：
+```
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-demo-web/deployment.yaml
+```
+
+## 通过Apollo配置中心动态维护项目的配置
+以dubbo-demo-service项目为例，不用修改代码
+- 在http://portal.od.com 里修改dubbo.port配置项
+- 重启dubbo-demo-service项目
+- 配置生效
+
+# 实战维护多套dubbo微服务环境
+## 生产实践
+1. 迭代新需求/修复BUG（编码->提GIT）
+2. 测试环境发版，测试（应用通过编译打包发布至TEST命名空间）
+3. 测试通过，上线（应用镜像直接发布至PROD命名空间）
+
+## 系统架构
+- 物理架构
+
+主机名|角色|ip
+-|-|-
+HDSS7-11.host.com|zk-test(测试环境Test)|10.4.7.11
+HDSS7-12.host.com|zk-prod(生产环境Prod)|10.4.7.12
+HDSS7-21.host.com|kubernetes运算节点|10.4.7.21
+HDSS7-22.host.com|kubernetes运算节点|10.4.7.22
+HDSS7-200.host.com|运维主机，harbor仓库|10.4.7.200
+
+- K8S内系统架构
+
+环境|命名空间|应用
+-|-|-
+测试环境（TEST）|infra-test|apollo-config，apollo-admin
+测试环境（TEST）|app-test|dubbo-demo-service，dubbo-demo-web
+生产环境（PROD）|infra-prod|apollo-config，apollo-admin
+生产环境（PROD）|app-prod|dubbo-demo-service，dubbo-demo-web
+ops环境（infra）|infra|jenkins，dubbo-monitor，apollo-portal
+
+## 修改/添加域名解析
+DNS主机`HDSS7-11.host.com`上：
+```vi /var/named/od.com.zone
+zk-test 60 IN A 10.4.7.11
+zk-prod 60 IN A 10.4.7.12
+config-test	60 IN A 10.4.7.10
+config-prod	60 IN A 10.4.7.10
+demo-test 60 IN A 10.4.7.10
+demo-prod 60 IN A 10.4.7.10
+```
+
+## Apollo的k8s应用配置
+- 删除app命名空间内应用，创建infra-test命名空间，创建infra-prod命名空间
+- 删除infra命名空间内apollo-configservice，apollo-adminservice应用
+- 数据库内删除ApolloConfigDB，创建ApolloConfigTestDB，创建ApolloConfigProdDB
+
+```
+mysql> drop database ApolloConfigDB;
+
+mysql> create database ApolloConfigTestDB;
+mysql> use ApolloConfigTestDB;
+mysql> source ./apolloconfig.sql
+mysql> update ApolloConfigTestDB.ServerConfig set ServerConfig.Value="http://config-test.od.com/eureka" where ServerConfig.Key="eureka.service.url";
+mysql> grant INSERT,DELETE,UPDATE,SELECT on ApolloConfigTestDB.* to "apolloconfig"@"172.7.%" identified by "123456";
+
+mysql> create database ApolloConfigProdDB;
+mysql> use ApolloConfigProdDB;
+mysql> source ./apolloconfig.sql
+mysql> update ApolloConfigProdDB.ServerConfig set ServerConfig.Value="http://config-prod.od.com/eureka" where ServerConfig.Key="eureka.service.url";
+mysql> grant INSERT,DELETE,UPDATE,SELECT on ApolloConfigProdDB.* to "apolloconfig"@"172.7.%" identified by "123456";
+```
+- 准备apollo-config，apollo-admin的资源配置清单（各2套）
+
+**注：**apollo-config/apollo-admin的configmap配置要点
+- Test环境
+
+```
+application-github.properties: |
+    # DataSource
+    spring.datasource.url = jdbc:mysql://mysql.od.com:3306/ApolloConfigTestDB?characterEncoding=utf8
+    spring.datasource.username = apolloconfig
+    spring.datasource.password = 123456
+    eureka.service.url = http://config-test.od.com/eureka
+```
+- Prod环境
+
+```
+application-github.properties: |
+    # DataSource
+    spring.datasource.url = jdbc:mysql://mysql.od.com:3306/ApolloConfigProdDB?characterEncoding=utf8
+    spring.datasource.username = apolloconfig
+    spring.datasource.password = 123456
+    eureka.service.url = http://config-prod.od.com/eureka
+```
+
+- 依次应用，分别发布在infra-test和infra-prod命名空间
+- 修改apollo-portal的configmap并重启portal
+
+```
+apollo-env.properties: |
+    TEST.meta=http://config-test.od.com
+    PROD.meta=http://config-prod.od.com
+```
+
+## Apollo的portal配置
+### 管理员工具
+删除应用、集群、AppNamespace，将已配置应用删除
+### 系统参数
+- Key
+> apollo.portal.envs
+
+- Value
+> TEST,PROD
+
+**查询**
+- Value
+> TEST,PROD
+
+**保存**
+
+## 新建dubbo-demo-service和dubbo-demo-web项目
+在TEST/PROD环境分别增加配置项并发布
+
+## 发布dubbo微服务
+- 准备dubbo-demo-service和dubbo-demo-web的资源配置清单（各2套）
+- 依次应用，分别发布至app-test和app-prod命名空间
+- 使用dubbo-monitor查验
+
+# 互联网公司技术部的日常
+- 产品经理整理需求，需求评审，出产品原型
+- 开发同学夜以继日的开发，提测
+- 测试同学使用Jenkins持续集成，并发布至测试环境
+- 验证功能，通过->待上线or打回->修改代码
+- 提交发版申请，运维同学将测试后的包发往生产环境
+- 无尽的BUG修复（笑cry）

@@ -828,6 +828,7 @@ nameserver 10.4.7.12
 ```vi /etc/hosts
 #10.4.7.11   dns-manager.od.com
 ```
+[配置客户端DNS服务器的小技巧](https://www.jianshu.com/p/2c1c081cc521)
 
 # 用户系统及操作审计功能
 

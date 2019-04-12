@@ -954,7 +954,7 @@ http://jenkins.od.com
 3. Add Parameter -> String Parameter
 > Name : git_repo
 > Default Value : 
-> Description : project git repository. e.g: git@gitee.com:stanleywang/dubbo-demo-service.git
+> Description : project git repository. e.g: https://gitee.com/stanleywang/dubbo-demo-service.git
 
 4. Add Parameter -> String Parameter
 > Name : git_ver
@@ -1168,7 +1168,7 @@ fddd8887b725: Pushed
 > app/dubbo-demo-service
 
 - git_repo
-> git@gitee.com:stanleywang/dubbo-demo-service.git
+> https://gitee.com/stanleywang/dubbo-demo-service.git
 
 - git_ver
 > master
@@ -1248,7 +1248,11 @@ spec:
 ```
 
 ### 检查docker运行情况及zk里的信息
-
+```vi /opt/zookeeper/bin/zkCli.sh
+[root@hdss7-11 ~]# /opt/zookeeper/bin/zkCli.sh -server localhost
+[zk: localhost(CONNECTED) 0] ls /dubbo
+[com.od.dubbotest.api.HelloService]
+```
 
 ## dubbo-monitor工具
 [dubbo-monitor源码包](https://github.com/Jeromefromcn/dubbo-monitor.git)
@@ -1444,7 +1448,7 @@ http://dubbo-monitor.od.com
 > app/dubbo-demo-consumer
 
 - git_repo
-> https://gitee.com/stanleywang/dubbo-demo-web.git
+> git@gitee.com:stanleywang/dubbo-demo-web.git
 
 - git_ver
 > master
@@ -1472,7 +1476,7 @@ http://dubbo-monitor.od.com
 test $? -eq 0 && {% label success@成功，进行下一步 %} || {% label danger@失败，排错直到成功 %}
 
 ### 检查harbor仓库内镜像
-![harbor仓库内镜像](/images/harbor-firstci.png "harbor仓库内镜像")
+![harbor仓库内镜像](/images/harbor-secondci.png "harbor仓库内镜像")
 
 ### 解析域名
 在DNS主机`HDSS7-11.host.com`上：
