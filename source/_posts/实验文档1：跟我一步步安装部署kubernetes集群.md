@@ -41,24 +41,129 @@ HDSS7-200.host.com|k8s运维节点(docker仓库)|10.4.7.200
 - 其他
 > 其他可能用到的软件，均使用操作系统自带的yum源和epel源进行安装
 
-# 安装部署
-## BIND9安装部署
+# 前置准备工作
+## DNS服务安装部署
 - 创建主机域host.com
 - 创建业务域od.com
 - 主辅同步(10.4.7.11主、10.4.7.12辅)
 - 客户端配置指向自建DNS
 
 略
+## 准备签发证书环境
+运维主机`HDSS7-200.host.com`上：
+### 安装CFSSL
+- 证书签发工具CFSSL: R1.2
+> [cfssl下载地址](https://pkg.cfssl.org/R1.2/cfssl_linux-amd64)
+> [cfssljson下载地址](https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64)
+> [cfssl-certinfo下载地址](https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64)
 
-## k8s运算节点和运维节点安装docker环境(3台)
+```
+[root@hdss7-200 ~]# curl -s -L -o /bin/cfssl https://pkg.cfssl.org/R1.2/cfssl_linux-amd64 
+[root@hdss7-200 ~]# curl -s -L -o /bin/cfssljson https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64 
+[root@hdss7-200 ~]# curl -s -L -o /bin/cfssl-certinfo https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64 
+[root@hdss7-200 ~]# chmod +x /bin/cfssl*
+```
+### 创建生成CA证书的JSON配置文件
+```vi /opt/certs/ca-config.json
+{
+    "signing": {
+        "default": {
+            "expiry": "175200h"
+        },
+        "profiles": {
+            "server": {
+                "expiry": "175200h",
+                "usages": [
+                    "signing",
+                    "key encipherment",
+                    "server auth"
+                ]
+            },
+            "client": {
+                "expiry": "175200h",
+                "usages": [
+                    "signing",
+                    "key encipherment",
+                    "client auth"
+                ]
+            },
+            "peer": {
+                "expiry": "175200h",
+                "usages": [
+                    "signing",
+                    "key encipherment",
+                    "server auth",
+                    "client auth"
+                ]
+            }
+        }
+    }
+}
+```
+> 证书类型
+> client certificate： 用于服务端认证客户端,例如etcdctl、etcd proxy、fleetctl、docker客户端
+> server certificate: 服务端使用，客户端以此验证服务端身份,例如docker服务端、kube-apiserver
+> peer certificate: 双向证书，用于etcd集群成员间通信
+
+### 创建生成CA证书签名请求（csr）的JSON配置文件
+```vi /opt/certs/ca-csr.json
+{
+    "CN": "kubernetes-ca",
+    "hosts": [
+    ],
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [
+        {
+            "C": "CN",
+            "ST": "beijing",
+            "L": "beijing",
+            "O": "od",
+            "OU": "ops"
+        }
+    ],
+    "ca": {
+        "expiry": "175200h"
+    }
+}
+```
+> CN: Common Name，浏览器使用该字段验证网站是否合法，一般写的是域名。非常重要。浏览器使用该字段验证网站是否合法
+> C: Country， 国家
+> ST: State，州，省
+> L: Locality，地区，城市
+> O: Organization Name，组织名称，公司名称
+> OU: Organization Unit Name，组织单位名称，公司部门
+
+### 生成CA证书和私钥
+```pwd /opt/certs
+[root@hdss7-200 certs]# cfssl gencert -initca ca-csr.json | cfssljson -bare ca - 
+```
+生成ca.pem、ca.csr、ca-key.pem(CA私钥,需妥善保管)
+```pwd /opt/certs
+[root@hdss7-200 certs]# ls -l
+-rw-r--r-- 1 root root  836 Jan 16 11:04 ca-config.json
+-rw-r--r-- 1 root root  332 Jan 16 11:10 ca-csr.json
+-rw------- 1 root root 1675 Jan 16 11:17 ca-key.pem
+-rw-r--r-- 1 root root 1001 Jan 16 11:17 ca.csr
+-rw-r--r-- 1 root root 1354 Jan 16 11:17 ca.pem
+```
+
+## 部署docker环境
+`HDSS7-200.host.com`,`HDSS7-21.host.com`,`HDSS7-22.host.com`上：
+### 安装
+- docker: v1.12.6
+> [docker引擎官方下载地址](https://yum.dockerproject.org/repo/main/centos/7/Packages/docker-engine-1.12.6-1.el7.centos.x86_64.rpm)
+> [docker引擎官方selinux包](https://yum.dockerproject.org/repo/main/centos/7/Packages/docker-engine-selinux-1.12.6-1.el7.centos.noarch.rpm)
+
 ```
 # ls -l|grep docker-engine
--rw-r--r--  1 root root  20013304 Jan 22 18:16 docker-engine-1.12.6-1.el7.centos.x86_64.rpm
--rw-r--r--  1 root root     29112 Jan 22 18:15 docker-engine-selinux-1.12.6-1.el7.centos.noarch.rpm
+-rw-r--r--  1 root root  20013304 Jan 16 18:16 docker-engine-1.12.6-1.el7.centos.x86_64.rpm
+-rw-r--r--  1 root root     29112 Jan 16 18:15 docker-engine-selinux-1.12.6-1.el7.centos.noarch.rpm
 # yum localinstall *.rpm
 ```
 
-## 配置并启动docker(3台)
 ### 配置
 ```vi /etc/docker/daemon.json 
 # vi /etc/docker/daemon.json 
@@ -112,8 +217,9 @@ WantedBy=multi-user.target
 ```
 
 ## 部署docker镜像私有仓库harbor
-**`HDSS7-200.host.com`上**
+**`HDSS7-200.host.com`上：**
 ### 下载软件二进制包并解压
+[harbor下载地址](https://storage.googleapis.com/harbor-releases/release-1.7.0/harbor-offline-installer-v1.7.1.tgz)
 ```pwd /opt/harbor
 [root@hdss7-200 harbor]# tar xf harbor-offline-installer-v1.7.1.tgz -C /opt/harbor
 
@@ -219,121 +325,13 @@ tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      
 tcp        0      0 0.0.0.0:443             0.0.0.0:*               LISTEN      6590/nginx: master  
 ```
 
-### 浏览器打开`harbor.od.com`并登陆
+### 浏览器打开http://harbor.od.com
 - 用户名：admin
 - 密码： Harbor12345
 
-## 部署kubernetes
-kubernetes集群一共包含以下几个核心组件：
-- etcd（注册中心）
-- kube-apiserver（master）
-- controller-manager（master）
-- kube-scheduler（master）
-- kubelet（node）
-- kube-proxy（node）
-kubernetes集群的附件：
-- flannel（网络）
-- coredns（dns）
-- traefik（ingress）
-- dashboard（UI）
-
-### 准备工作，部署签发证书环境
-####  在运维主机安装CFSSL
-**HDSS7-200.host.com上**
-```
-[root@hdss7-200 ~]# curl -s -L -o /bin/cfssl https://pkg.cfssl.org/R1.2/cfssl_linux-amd64 
-[root@hdss7-200 ~]# curl -s -L -o /bin/cfssljson https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64 
-[root@hdss7-200 ~]# curl -s -L -o /bin/cfssl-certinfo https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64 
-[root@hdss7-200 ~]# chmod +x /bin/cfssl*
-```
-#### 创建生成CA证书的JSON配置文件
-```vi /opt/certs/ca-config.json
-{
-    "signing": {
-        "default": {
-            "expiry": "175200h"
-        },
-        "profiles": {
-            "server": {
-                "expiry": "175200h",
-                "usages": [
-                    "signing",
-                    "key encipherment",
-                    "server auth"
-                ]
-            },
-            "client": {
-                "expiry": "175200h",
-                "usages": [
-                    "signing",
-                    "key encipherment",
-                    "client auth"
-                ]
-            },
-            "peer": {
-                "expiry": "175200h",
-                "usages": [
-                    "signing",
-                    "key encipherment",
-                    "server auth",
-                    "client auth"
-                ]
-            }
-        }
-    }
-}
-```
-> 证书类型
-> client certificate： 用于服务端认证客户端,例如etcdctl、etcd proxy、fleetctl、docker客户端
-> server certificate: 服务端使用，客户端以此验证服务端身份,例如docker服务端、kube-apiserver
-> peer certificate: 双向证书，用于etcd集群成员间通信
-
-#### 创建生成CA证书签名请求（csr）的JSON配置文件
-```vi /opt/certs/ca-csr.json
-{
-    "CN": "kubernetes-ca",
-    "hosts": [
-    ],
-    "key": {
-        "algo": "rsa",
-        "size": 2048
-    },
-    "names": [
-        {
-            "C": "CN",
-            "ST": "beijing",
-            "L": "beijing",
-            "O": "od",
-            "OU": "ops"
-        }
-    ],
-    "ca": {
-        "expiry": "175200h"
-    }
-}
-```
-> CN: Common Name，浏览器使用该字段验证网站是否合法，一般写的是域名。非常重要。浏览器使用该字段验证网站是否合法
-> C: Country， 国家
-> ST: State，州，省
-> L: Locality，地区，城市
-> O: Organization Name，组织名称，公司名称
-> OU: Organization Unit Name，组织单位名称，公司部门
-
-#### 生成CA证书和私钥
-```pwd /opt/certs
-[root@hdss7-200 certs]# cfssl gencert -initca ca-csr.json | cfssljson -bare ca - 
-```
-生成ca.pem、ca.csr、ca-key.pem(CA私钥,需妥善保管)
-```pwd /opt/certs
-[root@hdss7-200 certs]# ls -l
--rw-r--r-- 1 root root  836 Jan 18 11:04 ca-config.json
--rw-r--r-- 1 root root  332 Jan 18 11:10 ca-csr.json
--rw------- 1 root root 1675 Jan 18 11:17 ca-key.pem
--rw-r--r-- 1 root root 1001 Jan 18 11:17 ca.csr
--rw-r--r-- 1 root root 1354 Jan 18 11:17 ca.pem
-```
-### 部署etcd集群
-#### 集群规划
+# 部署Master节点服务
+## 部署etcd集群
+### 集群规划
 主机名|角色|ip
 -|-|-
 HDSS7-12.host.com|etcd lead|10.4.7.12
@@ -342,7 +340,8 @@ HDSS7-22.host.com|etcd follow|10.4.7.22
 
 **注意：**这里部署文档以`HDSS7-12.host.com`主机为例，另外两台主机安装部署方法类似
 
-#### 创建生成证书签名请求（csr）的JSON配置文件
+### 创建生成证书签名请求（csr）的JSON配置文件
+运维主机`HDSS7-200.host.com`上：
 ```vi /opt/certs/etcd-peer-csr.json
 {
     "CN": "etcd-peer",
@@ -367,12 +366,13 @@ HDSS7-22.host.com|etcd follow|10.4.7.22
         }
     ]
 }
+
 ```
-#### 生成etcd证书和私钥
+### 生成etcd证书和私钥
 ```pwd /opt/certs
 [root@hdss7-200 certs]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=peer etcd-peer-csr.json | cfssljson -bare etcd-peer
 ```
-#### 检查生成的证书、私钥
+### 检查生成的证书、私钥
 ```ll /opt/certs
 [root@hdss7-200 certs]# ls -l|grep etcd
 -rw-r--r-- 1 root root  387 Jan 18 12:32 etcd-peer-csr.json
@@ -381,11 +381,14 @@ HDSS7-22.host.com|etcd follow|10.4.7.22
 -rw-r--r-- 1 root root 1432 Jan 18 12:32 etcd-peer.pem
 ```
 
-#### 创建etcd用户
+### 创建etcd用户
+`HDSS7-12.host.com`上：
 ```
 [root@hdss7-12 ~]# useradd -s /sbin/nologin -M etcd
 ```
-#### 下载软件，解压，做软连接
+### 下载软件，解压，做软连接
+[etcd下载地址](https://github.com/etcd-io/etcd/releases/download/v3.1.8/etcd-v3.1.8-linux-amd64.tar.gz)
+`HDSS7-12.host.com`上：
 ```pwd /opt/src
 [root@hdss7-12 src]# ls -l
 total 9604
@@ -398,7 +401,8 @@ lrwxrwxrwx 1 root   root   24 Jan 18 14:21 etcd -> etcd-v3.1.18-linux-amd64
 drwxr-xr-x 4 478493 89939 166 Jun 16  2018 etcd-v3.1.18-linux-amd64
 drwxr-xr-x 2 root   root   45 Jan 18 14:21 src
 ```
-#### 创建目录，拷贝证书、私钥
+### 创建目录，拷贝证书、私钥
+`HDSS7-12.host.com`上：
 ```
 [root@hdss7-12 src]# mkdir -p /data/etcd /data/logs/etcd-server 
 [root@hdss7-12 src]# chown -R etcd.etcd /data/etcd /data/logs/etcd-server/
@@ -414,7 +418,8 @@ total 12
 -rw------- 1 etcd etcd 1679 Jan 18 17:00 etcd-peer-key.pem
 -rw-r--r-- 1 etcd etcd 1444 Jan 18 17:02 etcd-peer.pem
 ```
-#### 创建etcd服务启动脚本
+### 创建etcd服务启动脚本
+`HDSS7-12.host.com`上：
 ```vi /opt/etcd/etcd-server-startup.sh
 #!/bin/sh
 ./etcd --name etcd-server-7-12 \
@@ -438,18 +443,21 @@ total 12
        --log-output stdout
 ```
 **注意：**etcd集群各主机的启动脚本略有不同，部署其他节点时注意修改。
-#### 调整权限和目录
+### 调整权限和目录
+`HDSS7-12.host.com`上：
 ```
 [root@hdss7-12 certs]# chmod +x /opt/etcd/etcd-server-startup.sh
 [root@hdss7-12 certs]# mkdir -p /data/logs/etcd-server
 ```
-#### 安装supervisor软件
+### 安装supervisor软件
+`HDSS7-12.host.com`上：
 ```
 [root@hdss7-12 certs]# yum install supervisor -y
 [root@hdss7-12 certs]# systemctl start supervisord
 [root@hdss7-12 certs]# systemctl enable supervisord
 ```
-#### 创建etcd-server的启动配置
+### 创建etcd-server的启动配置
+`HDSS7-12.host.com`上：
 ```vi /etc/supervisord.d/etcd-server.ini
 [program:etcd-server-7-12]
 command=/opt/etcd/etcd-server-startup.sh                        ; the program (relative uses PATH, can take args)
@@ -477,17 +485,18 @@ stderr_events_enabled=false                                     ; emit events on
 ```
 **注意：**etcd集群各主机启动配置略有不同，配置其他节点时注意修改。
 
-#### 启动etcd服务并检查
+### 启动etcd服务并检查
+`HDSS7-12.host.com`上：
 ```
 [root@hdss7-12 certs]# supervisorctl start all
 [root@hdss7-12 certs]# supervisorctl status   
 etcd-server-7-12                 RUNNING   pid 6692, uptime 5:37:25
 ```
 
-#### 安装部署启动检查所有集群规划主机上的etcd服务
+### 安装部署启动检查所有集群规划主机上的etcd服务
 略
 
-#### 检查集群状态
+### 检查集群状态
 3台均启动后，检查集群状态
 ```
 [root@hdss7-12 ~]# /opt/etcd/etcdctl cluster-health
@@ -502,8 +511,8 @@ cluster is healthy
 f4a0cb0a765574a8: name=etcd-server-7-12 peerURLs=https://10.4.7.12:2380 clientURLs=http://127.0.0.1:2379,https://10.4.7.12:2379 isLeader=true
 ```
 
-###  部署kube-apiserver集群
-#### 集群规划
+## 部署kube-apiserver集群
+### 集群规划
 主机名|角色|ip
 -|-|-
 HDSS7-21.host.com|kube-apiserver|10.4.7.21
@@ -512,8 +521,11 @@ HDSS7-11.host.com|4层负载均衡|10.4.7.11
 HDSS7-12.host.com|4层负载均衡|10.4.7.12
 **注意：**这里`10.4.7.11`和`10.4.7.12`使用nginx做4层负载均衡器，用keepalived跑一个vip：10.4.7.10，代理两个kube-apiserver，实现高可用
 
-#### 下载软件，解压，做软连接
 这里部署文档以`HDSS7-21.host.com`主机为例，另外一台运算节点安装部署方法类似
+
+### 下载软件，解压，做软连接
+`HDSS7-21.host.com`上：
+[kubernetes下载地址](https://dl.k8s.io/v1.13.5/kubernetes-server-linux-amd64.tar.gz)
 ```pwd /opt/src
 [root@hdss7-21 src]# ls -l|grep kubernetes
 -rw-r--r-- 1 root root 417761204 Jan 17 16:46 kubernetes-server-linux-amd64.tar.gz
@@ -523,8 +535,9 @@ HDSS7-12.host.com|4层负载均衡|10.4.7.12
 lrwxrwxrwx 1 root   root         31 Jan 18 10:49 kubernetes -> kubernetes-v1.13.2-linux-amd64/
 drwxr-xr-x 4 root   root         50 Jan 17 17:40 kubernetes-v1.13.2-linux-amd64
 ```
-#### 在运维主机，签发etcd client证书
-##### 创建生成证书签名请求（csr）的JSON配置文件
+### 签发etcd client证书
+运维主机`HDSS7-200.host.com`上：
+#### 创建生成证书签名请求（csr）的JSON配置文件
 ```vi /opt/certs/client-csr.json
 {
     "CN": "client",
@@ -545,11 +558,11 @@ drwxr-xr-x 4 root   root         50 Jan 17 17:40 kubernetes-v1.13.2-linux-amd64
     ]
 }
 ```
-##### 生成etcd-client证书和私钥
+#### 生成etcd-client证书和私钥
 ```
 [root@hdss7-200 certs]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client client-csr.json | cfssljson -bare etcd-client
 ```
-##### 检查生成的证书、私钥
+#### 检查生成的证书、私钥
 ```
 [root@hdss7-200 certs]# ls -l|grep etcd-client
 -rw------- 1 root root 1679 Jan 21 11:13 etcd-client-key.pem
@@ -557,8 +570,9 @@ drwxr-xr-x 4 root   root         50 Jan 17 17:40 kubernetes-v1.13.2-linux-amd64
 -rw-r--r-- 1 root root 1367 Jan 21 11:13 etcd-client.pem
 ```
 
-#### 在运维主机，签发kube-apiserver证书
-##### 创建生成证书签名请求（csr）的JSON配置文件
+### 签发kube-apiserver证书
+运维主机`HDSS7-200.host.com`上：
+#### 创建生成证书签名请求（csr）的JSON配置文件
 ```vi /opt/apiserver-csr.json 
 {
     "CN": "apiserver",
@@ -589,11 +603,11 @@ drwxr-xr-x 4 root   root         50 Jan 17 17:40 kubernetes-v1.13.2-linux-amd64
     ]
 }
 ```
-##### 生成kube-apiserver证书和私钥
+#### 生成kube-apiserver证书和私钥
 ```
 [root@hdss7-200 certs]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=server apiserver-csr.json | cfssljson -bare apiserver 
 ```
-##### 检查生成的证书、私钥
+#### 检查生成的证书、私钥
 ```
 [root@hdss7-200 certs]# ls -l|grep apiserver
 total 72
@@ -603,8 +617,9 @@ total 72
 -rw-r--r-- 1 root root 1599 Jan 21 14:11 apiserver.pem
 ```
 
-#### 拷贝证书至各运算节点，并创建配置
-##### 拷贝证书、私钥，注意私钥文件属性600
+### 拷贝证书至各运算节点，并创建配置
+`HDSS7-21.host.com`上：
+#### 拷贝证书、私钥，注意私钥文件属性600
 ```ls /opt/kubernetes/server/bin/cert
 [root@hdss7-21 cert]# ls -l /opt/kubernetes/server/bin/cert
 total 40
@@ -615,7 +630,7 @@ total 40
 -rw------- 1 root root 1679 Jan 21 13:53 etcd-client-key.pem
 -rw-r--r-- 1 root root 1368 Jan 21 13:53 etcd-client.pem
 ```
-##### 创建配置
+#### 创建配置
 ```vi /opt/kubernetes/server/bin/conf/audit.yaml
 apiVersion: audit.k8s.io/v1beta1 # This is required.
 kind: Policy
@@ -687,7 +702,8 @@ rules:
       - "RequestReceived"
 ```
 
-#### 创建启动脚本
+### 创建启动脚本
+`HDSS7-21.host.com`上：
 ```vi /opt/kubernetes/server/bin/kube-apiserver.sh
 #!/bin/bash
 ./kube-apiserver \
@@ -714,12 +730,14 @@ rules:
   --v 2
 ```
 
-#### 调整权限和目录
+### 调整权限和目录
+`HDSS7-21.host.com`上：
 ```pwd /opt/kubernetes/server/bin
 [root@hdss7-21 bin]# chmod +x /opt/kubernetes/server/bin/kube-apiserver.sh
 [root@hdss7-21 bin]# mkdir -p /data/logs/kubernetes/kube-apiserver
 ```
-#### 创建supervisor配置
+### 创建supervisor配置
+`HDSS7-21.host.com`上：
 ```vi /etc/supervisord.d/kube-apiserver.ini
 [program:kube-apiserver]
 command=/opt/kubernetes/server/bin/kube-apiserver.sh            ; the program (relative uses PATH, can take args)
@@ -745,7 +763,8 @@ stderr_logfile_backups=4                                        ; # of stderr lo
 stderr_capture_maxbytes=1MB                                     ; number of bytes in 'capturemode' (default 0)
 stderr_events_enabled=false                                     ; emit events on stderr writes (default false)
 ```
-#### 启动服务并检查
+### 启动服务并检查
+`HDSS7-21.host.com`上：
 ```
 [root@hdss7-21 bin]# supervisorctl update
 kube-apiserverr: added process group
@@ -753,11 +772,12 @@ kube-apiserverr: added process group
 etcd-server-7-21                 RUNNING   pid 6661, uptime 1 day, 8:41:13
 kube-apiserver                   RUNNING   pid 43765, uptime 2:09:41
 ```
-#### 安装部署启动检查所有集群规划主机上的kube-apiserver
+### 安装部署启动检查所有集群规划主机上的kube-apiserver
 略
 
-#### 配4层反向代理
-##### nginx配置（两台都要配置）
+### 配4层反向代理
+`HDSS7-11.host.com`,`HDSS7-12.host.com`上：
+#### nginx配置
 ```vi /etc/nginx/nginx.conf
 stream {
     upstream kube-apiserver {
@@ -772,8 +792,8 @@ stream {
     }
 }
 ```
-##### keepalived配置
-###### check_port.sh（两台都要创建）
+#### keepalived配置
+##### check_port.sh
 ```vi /etc/keepalived/check_port.sh 
 #!/bin/bash
 #keepalived 监控端口脚本
@@ -796,7 +816,8 @@ else
 	echo "Check Port Cant Be Empty!"
 fi
 ```
-###### `HDSS7-11.host.com`上
+##### keepalived主
+`HDSS7-11.host.com`上
 ```
 [root@hdss7-11 ~]# rpm -qa keepalived
 keepalived-1.3.5-6.el7.x86_64
@@ -837,7 +858,8 @@ vrrp_instance VI_1 {
     }
 }
 ```
-###### `HDSS7-12.host.com`上
+##### keepalived备
+`HDSS7-12.host.com`上
 ```
 [root@hdss7-12 ~]# rpm -qa keepalived
 keepalived-1.3.5-6.el7.x86_64
@@ -873,8 +895,9 @@ vrrp_instance VI_1 {
 }
 ```
 
-#### 启动代理并检查
-启动
+### 启动代理并检查
+`HDSS7-11.host.com`,`HDSS7-12.host.com`上：
+- 启动
 ```
 [root@hdss7-11 ~]# systemctl start keepalived
 [root@hdss7-11 ~]# systemctl enable keepalived
@@ -884,7 +907,7 @@ vrrp_instance VI_1 {
 [root@hdss7-12 ~]# systemctl enable keepalived
 [root@hdss7-12 ~]# nginx -s reload
 ```
-检查
+- 检查
 ```
 [root@hdss7-11 ~]## netstat -luntp|grep 7443
 tcp        0      0 0.0.0.0:7443            0.0.0.0:*               LISTEN      17970/nginx: master
@@ -896,8 +919,8 @@ tcp        0      0 0.0.0.0:7443            0.0.0.0:*               LISTEN      
     （空）
 ```
 
-### 部署controller-manager
-#### 集群规划
+## 部署controller-manager
+### 集群规划
 主机名|角色|ip
 -|-|-
 HDSS7-21.host.com|controller-manager|10.4.7.21
@@ -905,7 +928,8 @@ HDSS7-22.host.com|controller-manager|10.4.7.22
 
 **注意：**这里部署文档以`HDSS7-21.host.com`主机为例，另外一台运算节点安装部署方法类似
 
-#### 创建启动脚本
+### 创建启动脚本
+`HDSS7-21.host.com`上：
 ```vi /opt/kubernetes/server/bin/kube-controller-manager.sh
 #!/bin/sh
 ./kube-controller-manager \
@@ -918,12 +942,14 @@ HDSS7-22.host.com|controller-manager|10.4.7.22
   --root-ca-file ./cert/ca.pem \
   --v 2
 ```
-#### 调整文件权限，创建目录
+### 调整文件权限，创建目录
+`HDSS7-21.host.com`上：
 ```pwd /opt/kubernetes/server/bin
 [root@hdss7-21 bin]# chmod +x /opt/kubernetes/server/bin/kube-controller-manager.sh
 [root@hdss7-21 bin]# mkdir -p /data/logs/kubernetes/kube-controller-manager
 ```
-#### 创建supervisor配置
+### 创建supervisor配置
+`HDSS7-21.host.com`上：
 ```vi /etc/supervisord.d/kube-conntroller-manager.ini
 [program:kube-controller-manager]
 command=/opt/kubernetes/server/bin/kube-controller-manager.sh                     ; the program (relative uses PATH, can take args)
@@ -949,7 +975,8 @@ stderr_logfile_backups=4                                                        
 stderr_capture_maxbytes=1MB                                                       ; number of bytes in 'capturemode' (default 0)
 stderr_events_enabled=false                                                       ; emit events on stderr writes (default false)
 ```
-#### 启动服务并检查
+### 启动服务并检查
+`HDSS7-21.host.com`上：
 ```
 [root@hdss7-21 bin]# supervisorctl update
 kube-controller-manager: added process group
@@ -959,11 +986,11 @@ kube-apiserver                   RUNNING   pid 43765, uptime 2:09:41
 kube-controller-manager          RUNNING   pid 44230, uptime 2:05:01
 ```
 
-#### 安装部署启动检查所有集群规划主机上的kube-controller-manager服务
+### 安装部署启动检查所有集群规划主机上的kube-controller-manager服务
 略
 
-### 部署kube-scheduler
-#### 集群规划
+## 部署kube-scheduler
+### 集群规划
 主机名|角色|ip
 -|-|-
 HDSS7-21.host.com|kube-scheduler|10.4.7.21
@@ -971,7 +998,8 @@ HDSS7-22.host.com|kube-scheduler|10.4.7.22
 
 **注意：**这里部署文档以`HDSS7-21.host.com`主机为例，另外一台运算节点安装部署方法类似
 
-#### 创建启动脚本
+### 创建启动脚本
+`HDSS7-21.host.com`上：
 ```vi /opt/kubernetes/server/bin/kube-scheduler.sh
 #!/bin/sh
 ./kube-scheduler \
@@ -981,13 +1009,15 @@ HDSS7-22.host.com|kube-scheduler|10.4.7.22
   --v 2
 ```
 
-#### 调整文件权限，创建目录
+### 调整文件权限，创建目录
+`HDSS7-21.host.com`上：
 ```pwd /opt/kubernetes/server/bin
 [root@hdss7-21 bin]# chmod +x /opt/kubernetes/server/bin/kube-scheduler.sh
 [root@hdss7-21 bin]# mkdir -p /data/logs/kubernetes/kube-scheduler
 ```
 
-#### 创建supervisor配置
+### 创建supervisor配置
+`HDSS7-21.host.com`上：
 ```vi /etc/supervisord.d/kube-scheduler.ini
 [program:kube-scheduler]
 command=/opt/kubernetes/server/bin/kube-scheduler.sh                     ; the program (relative uses PATH, can take args)
@@ -1014,7 +1044,8 @@ stderr_capture_maxbytes=1MB                                              ; numbe
 stderr_events_enabled=false                                              ; emit events on stderr writes (default false)
 ```
 
-#### 启动服务并检查
+### 启动服务并检查
+`HDSS7-21.host.com`上：
 ```
 [root@hdss7-21 bin]# supervisorctl update
 kube-scheduler: added process group
@@ -1025,11 +1056,12 @@ kube-controller-manager          RUNNING   pid 44230, uptime 2:05:01
 kube-scheduler                   RUNNING   pid 44779, uptime 2:02:27
 ```
 
-#### 安装部署启动检查所有集群规划主机上的kube-scheduler服务
+### 安装部署启动检查所有集群规划主机上的kube-scheduler服务
 略
 
-### 部署kubelet
-#### 集群规划
+# 部署Node节点服务
+## 部署kubelet
+### 集群规划
 主机名|角色|ip
 -|-|-
 HDSS7-21.host.com|kubelet|10.4.7.21
@@ -1037,8 +1069,9 @@ HDSS7-22.host.com|kubelet|10.4.7.22
 
 **注意：**这里部署文档以`HDSS7-21.host.com`主机为例，另外一台运算节点安装部署方法类似
 
-#### 在运维主机，签发kubelet证书
-##### 创建生成证书签名请求（csr）的JSON配置文件
+### 签发kubelet证书
+运维主机`HDSS7-200.host.com`上：
+#### 创建生成证书签名请求（csr）的JSON配置文件
 ```vi kubelet-peer-csr.json
 {
     "CN": "kubelet-node",
@@ -1065,11 +1098,11 @@ HDSS7-22.host.com|kubelet|10.4.7.22
     ]
 }
 ```
-##### 生成kubelet证书和私钥
+#### 生成kubelet证书和私钥
 ```pwd /opt/certs
 [root@hdss7-200 certs]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=peer kubelet-peer-csr.json | cfssljson -bare kubelet-peer
 ```
-##### 检查生成的证书、私钥
+#### 检查生成的证书、私钥
 ```pwd /opt/certs
 [root@hdss7-200 certs]# ls -l|grep kubelet
 total 88
@@ -1079,8 +1112,9 @@ total 88
 -rw-r--r-- 1 root root 1456 Jan 22 17:00 kubelet-peer.pem
 ```
 
-#### 拷贝证书至各运算节点，并创建配置
-##### 拷贝证书、私钥，注意私钥文件属性600
+### 拷贝证书至各运算节点，并创建配置
+`HDSS7-21.host.com`上：
+#### 拷贝证书、私钥，注意私钥文件属性600
 ```ls /opt/kubernetes/server/bin/cert
 [root@hdss7-21 cert]# ls -l /opt/kubernetes/server/bin/cert
 total 40
@@ -1093,14 +1127,15 @@ total 40
 -rw------- 1 root root 1679 Jan 22 17:00 kubelet-peer-key.pem
 -rw-r--r-- 1 root root 1456 Jan 22 17:00 kubelet-peer.pem
 ```
-##### 创建配置
-###### 给kubectl创建软连接
+#### 创建配置
+`HDSS7-21.host.com`上：
+##### 给kubectl创建软连接
 ```pwd /opt/kubernetes/server/bin
 [root@hdss7-21 bin]# ln -s /opt/kubernetes/server/bin/kubectl /usr/bin/kubectl
 [root@hdss7-21 bin]# which kubectl
 /usr/bin/kubectl
 ```
-###### set-cluster
+##### set-cluster
 **注意：**在conf目录下
 ```pwd /opt/kubernetes/server/conf
 [root@hdss7-21 conf]# kubectl config set-cluster myk8s \
@@ -1110,7 +1145,7 @@ total 40
   --kubeconfig=kubelet.kubeconfig
 ```
 
-###### set-credentials
+##### set-credentials
 **注意：**在conf目录下
 ```pwd /opt/kubernetes/server/conf
 [root@hdss7-21 conf]# kubectl config set-credentials kubelet-node --client-certificate=/opt/kubernetes/server/bin/cert/kubelet-peer.pem --client-key=/opt/kubernetes/server/bin/cert/kubelet-peer-key.pem --embed-certs=true --kubeconfig=kubelet.kubeconfig 
@@ -1118,7 +1153,7 @@ total 40
 User "kubelet-node" set.
 ```
 
-###### set-context
+##### set-context
 **注意：**在conf目录下
 ```pwd /opt/kubernetes/server/conf
 [root@hdss7-21 conf]# kubectl config set-context myk8s-context \
@@ -1127,13 +1162,14 @@ User "kubelet-node" set.
   --kubeconfig=kubelet.kubeconfig
 ```
 
-###### use-context
+##### use-context
 **注意：**在conf目录下
 ```pwd /opt/kubernetes/server/conf
 [root@hdss7-21 conf]# kubectl config use-context myk8s-context --kubeconfig=kubelet.kubeconfig
 ```
-###### kube-node.yaml
-创建资源配置文件
+##### kube-node.yaml
+- 创建资源配置文件
+
 ```vi /opt/kubernetes/server/conf/kube-node.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -1148,20 +1184,23 @@ subjects:
   kind: User
   name: kubelet-node
 ```
-应用资源配置文件
+- 应用资源配置文件
+
 ```pwd /opt/kubernetes/server/conf
 [root@hdss7-21 conf]# kubectl create -f kube-node.yaml
 ```
-检查
+- 检查
+
 ```pwd /opt/kubernetes/server/conf
 [root@hdss7-21 conf]# kubectl get clusterrolebinding kubelet-node      
 NAME           AGE
 kubelet-node   3m
 ```
-##### 准备infra_pod基础镜像
-###### 下载
+### 准备infra_pod基础镜像
+运维主机`HDSS7-200.host.com`上：
+#### 下载
 ```
-[root@hdss7-21 conf]# docker pull xplenty/rhel7-pod-infrastructure:v3.4
+[root@hdss7-200 ~]# docker pull xplenty/rhel7-pod-infrastructure:v3.4
 Trying to pull repository docker.io/xplenty/rhel7-pod-infrastructure ... 
 sha256:9314554780673b821cb7113d8c048a90d15077c6e7bfeebddb92a054a1f84843: Pulling from docker.io/xplenty/rhel7-pod-infrastructure
 615bc035f9f8: Pull complete 
@@ -1170,7 +1209,7 @@ sha256:9314554780673b821cb7113d8c048a90d15077c6e7bfeebddb92a054a1f84843: Pulling
 Digest: sha256:9314554780673b821cb7113d8c048a90d15077c6e7bfeebddb92a054a1f84843
 Status: Downloaded newer image for docker.io/xplenty/rhel7-pod-infrastructure:v3.4
 ```
-###### 提交至私有仓库（harbor）中
+#### 提交至私有仓库（harbor）中
 - 配置主机登录私有仓库
 
 ```vi /root/.docker/config.json
@@ -1183,7 +1222,7 @@ Status: Downloaded newer image for docker.io/xplenty/rhel7-pod-infrastructure:v3
 }
 ```
 > 这里代表：用户名admin，密码Harbor12345
-> [root@hdss7-21 ~]# echo YWRtaW46SGFyYm9yMTIzNDU=|base64 -d
+> [root@hdss7-200 ~]# echo YWRtaW46SGFyYm9yMTIzNDU=|base64 -d
 > admin:Harbor12345
 
 **注意：**也可以在各运算节点使用docker login harbor.od.com，输入用户名，密码
@@ -1191,18 +1230,20 @@ Status: Downloaded newer image for docker.io/xplenty/rhel7-pod-infrastructure:v3
 - 给镜像打tag
 
 ```
-[root@hdss7-21 conf]# docker images|grep v3.4
+[root@hdss7-200 ~]# docker images|grep v3.4
 xplenty/rhel7-pod-infrastructure   v3.4                34d3450d733b        2 years ago         205 MB
-[root@hdss7-21 conf]# docker tag 34d3450d733b harbor.od.com/k8s/pod:v3.4
+[root@hdss7-200 ~]# docker tag 34d3450d733b harbor.od.com/k8s/pod:v3.4
 ```
 
 - push到harbor
+> harbor上要提前创建k8s项目
 
 ```
-[root@hdss7-21 conf]# docker push harbor.od.com/k8s/pod:v3.4
+[root@hdss7-200 ~]# docker push harbor.od.com/k8s/pod:v3.4
 ```
 
-##### 创建kubelet启动脚本
+### 创建kubelet启动脚本
+`HDSS7-21.host.com`上：
 ```vi /opt/kubernetes/server/bin/kubelet-721.sh
 #!/bin/sh
 ./kubelet \
@@ -1225,7 +1266,8 @@ xplenty/rhel7-pod-infrastructure   v3.4                34d3450d733b        2 yea
 ```
 **注意：**kubelet集群各主机的启动脚本略有不同，部署其他节点时注意修改。
 
-##### 检查配置，权限，创建日志目录
+### 检查配置，权限，创建日志目录
+`HDSS7-21.host.com`上：
 ```pwd /opt/kubernetes/server/conf
 [root@hdss7-21 conf]# ls -l|grep kubelet.kubeconfig 
 -rw------- 1 root root 6471 Jan 22 17:33 kubelet.kubeconfig
@@ -1234,7 +1276,8 @@ xplenty/rhel7-pod-infrastructure   v3.4                34d3450d733b        2 yea
 [root@hdss7-21 conf]# mkdir -p /data/logs/kubernetes/kubelet /data/kubelet
 ```
 
-#### 创建supervisor配置
+### 创建supervisor配置
+`HDSS7-21.host.com`上：
 ```vi /etc/supervisord.d/kube-kubelet.ini
 [program:kube-kubelet]
 command=/opt/kubernetes/server/bin/kubelet-721.sh                 ; the program (relative uses PATH, can take args)
@@ -1261,7 +1304,8 @@ stderr_capture_maxbytes=1MB   									  ; number of bytes in 'capturemode' (def
 stderr_events_enabled=false   									  ; emit events on stderr writes (default false)
 ```
 
-#### 启动服务并检查
+### 启动服务并检查
+`HDSS7-21.host.com`上：
 ```
 [root@hdss7-21 bin]# supervisorctl update
 kube-kubelet: added process group
@@ -1273,18 +1317,19 @@ kube-kubelet                     STARTING
 kube-scheduler                   RUNNING   pid 10041, uptime 18:22:13
 ```
 
-#### 检查运算节点
+### 检查运算节点
+`HDSS7-21.host.com`上：
 ```
 [root@hdss7-21 bin]# kubectl get node
 NAME        STATUS   ROLES    AGE   VERSION
 10.4.7.21   Ready    <none>   3m   v1.13.2
 ```
 
-#### 安装部署启动检查所有集群规划主机上的kubelet服务
+### 安装部署启动检查所有集群规划主机上的kubelet服务
 略
 
-### 部署kube-proxy
-#### 集群规划
+## 部署kube-proxy
+### 集群规划
 主机名|角色|ip
 -|-|-
 HDSS7-21.host.com|kube-proxy|10.4.7.21
@@ -1292,8 +1337,9 @@ HDSS7-22.host.com|kube-proxy|10.4.7.22
 
 **注意：**这里部署文档以`HDSS7-21.host.com`主机为例，另外一台运算节点安装部署方法类似
 
-#### 在运维主机，签发kube-proxy证书
-##### 创建生成证书签名请求（csr）的JSON配置文件
+### 签发kube-proxy证书
+运维主机`HDSS7-200.host.com`上：
+#### 创建生成证书签名请求（csr）的JSON配置文件
 ```vi /opt/certs/kube-proxy-csr.json
 {
     "CN": "system:kube-proxy",
@@ -1312,11 +1358,11 @@ HDSS7-22.host.com|kube-proxy|10.4.7.22
     ]
 }
 ```
-##### 生成kube-proxy证书和私钥
+#### 生成kube-proxy证书和私钥
 ```pwd /opt/certs
 [root@hdss7-200 certs]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client kube-proxy-csr.json | cfssljson -bare kube-proxy-client
 ```
-##### 检查生成的证书、私钥
+#### 检查生成的证书、私钥
 ```pwd /opt/certs
 [root@hdss7-200 certs]# ls -l|grep kube-proxy
 -rw------- 1 root root 1679 Jan 22 17:31 kube-proxy-client-key.pem
@@ -1324,8 +1370,9 @@ HDSS7-22.host.com|kube-proxy|10.4.7.22
 -rw-r--r-- 1 root root 1383 Jan 22 17:31 kube-proxy-client.pem
 -rw-r--r-- 1 root root  268 Jan 22 17:23 kube-proxy-csr.json
 ```
-#### 拷贝证书至各运算节点，并创建配置
-##### 拷贝证书、私钥，注意私钥文件属性600
+### 拷贝证书至各运算节点，并创建配置
+`HDSS7-21.host.com`上：
+#### 拷贝证书、私钥，注意私钥文件属性600
 ```ls /opt/kubernetes/server/bin/cert
 [root@hdss7-21 cert]# ls -l /opt/kubernetes/server/bin/cert
 total 40
@@ -1341,8 +1388,8 @@ total 40
 -rw-r--r-- 1 root root 1383 Jan 22 17:31 kube-proxy-client.pem
 ```
 
-##### 创建配置
-###### set-cluster
+#### 创建配置
+##### set-cluster
 **注意：**在conf目录下
 ```pwd /opt/kubernetes/server/bin/conf
 [root@hdss7-21 conf]# kubectl config set-cluster myk8s \
@@ -1351,7 +1398,7 @@ total 40
   --server=https://10.4.7.10:7443 \
   --kubeconfig=kube-proxy.kubeconfig
 ```
-###### set-credentials
+##### set-credentials
 **注意：**在conf目录下
 ```pwd /opt/kubernetes/server/bin/conf
 [root@hdss7-21 conf]# kubectl config set-credentials kube-proxy \
@@ -1360,7 +1407,7 @@ total 40
   --embed-certs=true \
   --kubeconfig=kube-proxy.kubeconfig
 ```
-###### set-context
+##### set-context
 **注意：**在conf目录下
 ```pwd /opt/kubernetes/server/bin/conf
 [root@hdss7-21 conf]# kubectl config set-context myk8s-context \
@@ -1368,12 +1415,13 @@ total 40
   --user=kube-proxy \
   --kubeconfig=kube-proxy.kubeconfig
 ```
-###### use-context
+##### use-context
 **注意：**在conf目录下
 ```pwd /opt/kubernetes/server/bin/conf
 [root@hdss7-21 conf]# kubectl config use-context myk8s-context --kubeconfig=kube-proxy.kubeconfig
 ```
-##### 创建kube-proxy启动脚本
+### 创建kube-proxy启动脚本
+`HDSS7-21.host.com`上：
 ```vi /opt/kubernetes/server/bin/kube-proxy-721.sh
 #!/bin/sh
 ./kube-proxy \
@@ -1383,7 +1431,8 @@ total 40
 ```
 **注意：**kube-proxy集群各主机的启动脚本略有不同，部署其他节点时注意修改。
 
-##### 检查配置，权限，创建日志目录
+### 检查配置，权限，创建日志目录
+`HDSS7-21.host.com`上：
 ```pwd /opt/kubernetes/server/conf
 [root@hdss7-21 conf]# ls -l|grep kube-proxy.kubeconfig 
 -rw------- 1 root root 6471 Jan 22 17:33 kube-proxy.kubeconfig
@@ -1391,7 +1440,8 @@ total 40
 [root@hdss7-21 conf]# chmod +x /opt/kubernetes/server/bin/kube-proxy.sh
 [root@hdss7-21 conf]# mkdir -p /data/logs/kubernetes/kube-proxy
 ```
-#### 创建supervisor配置
+### 创建supervisor配置
+`HDSS7-21.host.com`上：
 ```vi /etc/supervisord.d/kube-proxy.ini
 [program:kube-proxy]
 command=/opt/kubernetes/server/bin/kube-proxy-721.sh                     ; the program (relative uses PATH, can take args)
@@ -1417,7 +1467,8 @@ stderr_logfile_backups=4                                        		 ; # of stderr
 stderr_capture_maxbytes=1MB   						                     ; number of bytes in 'capturemode' (default 0)
 stderr_events_enabled=false   						                     ; emit events on stderr writes (default false)
 ```
-#### 启动服务并检查
+### 启动服务并检查
+`HDSS7-21.host.com`上：
 ```
 [root@hdss7-21 bin]# supervisorctl update
 kube-proxy: added process group
@@ -1429,153 +1480,13 @@ kube-kubelet                     RUNNING   pid 14597, uptime 0:32:59
 kube-proxy                       STARTING  
 kube-scheduler                   RUNNING   pid 10041, uptime 18:22:13
 ```
-#### 安装部署启动检查所有集群规划主机上的kube-proxy服务
+### 安装部署启动检查所有集群规划主机上的kube-proxy服务
 略
 
-### 部署flannel
-#### 集群规划
-主机名|角色|ip
--|-|-
-HDSS7-21.host.com|flannel|10.4.7.21
-HDSS7-22.host.com|flannel|10.4.7.22
 
-**注意：**这里部署文档以`HDSS7-21.host.com`主机为例，另外一台运算节点安装部署方法类似
-
-#### 在各运算节点上增加iptables规则
-**注意：**iptables规则各主机的略有不同，其他运算节点上执行时注意修改。
-优化SNAT规则，各运算节点之间的各POD之间的网络通信不再出网
-```
-# iptables -t nat -D POSTROUTING -s 172.7.21.0/24 ! -o docker0 -j MASQUERADE
-# iptables -t nat -I POSTROUTING -s 172.7.21.0/24 ! -d 172.7.0.0/16 ! -o docker0 -j MASQUERADE
-```
-> 10.4.7.21主机上的，来源是172.7.21.0/24段的docker的ip，目标ip不是172.7.0.0/16段，网络发包不从docker0桥设备出站的，进行SNAT转换
-
-#### 各运算节点保存iptables规则
-```
-[root@hdss7-21 ~]# iptables-save > /etc/sysconfig/iptables
-```
-#### 下载软件，解压，做软连接
-```pwd /opt/src
-[root@hdss7-21 src]# ls -l|grep flannel
--rw-r--r-- 1 root root 417761204 Jan 17 18:46 flannel-v0.10.0-linux-amd64.tar.gz
-[root@hdss7-21 src]# tar xf flannel-v0.10.0-linux-amd64.tar.gz -C /opt
-[root@hdss7-21 src]# ln -s /opt/flannel-v0.10.0-linux-amd64.tar.gz /opt/flannel
-[root@hdss7-21 src]# ls -l /opt|grep flannel
-lrwxrwxrwx 1 root   root         31 Jan 17 18:49 flannel -> flannel-v0.10.0-linux-amd64/
-drwxr-xr-x 4 root   root         50 Jan 17 18:47 flannel-v0.10.0-linux-amd64
-```
-#### 最终目录结构
-```pwd /opt
-[root@hdss7-21 opt]# tree -L 2
-.
-|-- etcd -> etcd-v3.1.18-linux-amd64
-|-- etcd-v3.1.18-linux-amd64
-|   |-- Documentation
-|   |-- README-etcdctl.md
-|   |-- README.md
-|   |-- READMEv2-etcdctl.md
-|   |-- certs
-|   |-- etcd
-|   |-- etcd-server-startup.sh
-|   `-- etcdctl
-|-- flannel -> flannel-v0.10.0/
-|-- flannel-v0.10.0
-|   |-- README.md
-|   |-- cert
-|   |-- flanneld
-|   `-- mk-docker-opts.sh
-|-- kubernetes -> kubernetes-v1.13.2-linux-amd64/
-|-- kubernetes-v1.13.2-linux-amd64
-|   |-- LICENSES
-|   |-- addons
-|   `-- server
-`-- src
-    |-- etcd-v3.1.18-linux-amd64.tar.gz
-    |-- flannel-v0.10.0-linux-amd64.tar.gz
-    `-- kubernetes-server-linux-amd64.tar.gz
-```
-#### 操作etcd，增加host-gw
-```pwd /opt/etcd
-[root@hdss7-21 etcd]# ./etcdctl set /coreos.com/network/config '{"Network": "172.7.0.0/16", "Backend": {"Type": "host-gw"}}'
-{"Network": "172.7.0.0/16", "Backend": {"Type": "host-gw"}}
-```
-
-#### 创建配置
-```vi /opt/flannel/subnet.env
-FLANNEL_NETWORK=172.7.0.0/16
-FLANNEL_SUBNET=172.7.21.1/24
-FLANNEL_MTU=1500
-FLANNEL_IPMASQ=false
-```
-**注意：**flannel集群各主机的配置略有不同，部署其他节点时注意修改。
-
-#### 创建启动脚本
-```vi /opt/flannelflanneld.sh
-#!/bin/sh
-./flanneld \
-  --public-ip=10.4.7.21 \
-  --etcd-endpoints=https://10.4.7.12:2379,https://10.4.7.21:2379,https://10.4.7.22:2379 \
-  --etcd-keyfile=./cert/etcd-client-key.pem \
-  --etcd-certfile=./cert/etcd-client.pem \
-  --etcd-cafile=./cert/ca.pem \
-  --iface=eth0 \
-  --subnet-file=./subnet.env \
-  --healthz-port=2401 
-```
-**注意：**flannel集群各主机的启动脚本略有不同，部署其他节点时注意修改。
-
-#### 检查配置，权限，创建日志目录
-```pwd /opt/flannel
-[root@hdss7-21 flannel]# chmod +x /opt/flannel/flanneld.sh 
-
-[root@hdss7-21 flannel]# mkdir -p /data/logs/flanneld
-```
-
-#### 创建supervisor配置
-```vi /etc/supervisord.d/flanneld.ini
-[program:flanneld]
-command=/opt/flannel/flanneld.sh                             ; the program (relative uses PATH, can take args)
-numprocs=1                                                   ; number of processes copies to start (def 1)
-directory=/opt/flannel                                       ; directory to cwd to before exec (def no cwd)
-autostart=true                                               ; start at supervisord start (default: true)
-autorestart=true                                             ; retstart at unexpected quit (default: true)
-startsecs=22       										     ; number of secs prog must stay running (def. 1)
-startretries=3     										     ; max # of serial start failures (default 3)
-exitcodes=0,2      										     ; 'expected' exit codes for process (default 0,2)
-stopsignal=QUIT    										     ; signal used to kill process (default TERM)
-stopwaitsecs=10    										     ; max num secs to wait b4 SIGKILL (default 10)
-user=root                                                    ; setuid to this UNIX account to run the program
-redirect_stderr=false                                        ; redirect proc stderr to stdout (default false)
-stdout_logfile=/data/logs/flanneld/flanneld.stdout.log       ; stdout log path, NONE for none; default AUTO
-stdout_logfile_maxbytes=64MB                                 ; max # logfile bytes b4 rotation (default 50MB)
-stdout_logfile_backups=4                                     ; # of stdout logfile backups (default 10)
-stdout_capture_maxbytes=1MB                                  ; number of bytes in 'capturemode' (default 0)
-stdout_events_enabled=false                                  ; emit events on stdout writes (default false)
-stderr_logfile=/data/logs/flanneld/flanneld.stderr.log       ; stderr log path, NONE for none; default AUTO
-stderr_logfile_maxbytes=64MB                                 ; max # logfile bytes b4 rotation (default 50MB)
-stderr_logfile_backups=4                                     ; # of stderr logfile backups (default 10)
-stderr_capture_maxbytes=1MB                                  ; number of bytes in 'capturemode' (default 0)
-stderr_events_enabled=false                                  ; emit events on stderr writes (default false)
-```
-
-#### 启动服务并检查
-```
-[root@hdss7-21 flanneld]# supervisorctl update
-flanneld: added process group
-[root@hdss7-21 flanneld]# supervisorctl status
-etcd-server-7-21                 RUNNING   pid 9507, uptime 1 day, 20:35:42
-flanneld                         STARTING  
-kube-apiserver                   RUNNING   pid 9770, uptime 1 day, 19:01:43
-kube-controller-manager          RUNNING   pid 37646, uptime 0:58:48
-kube-kubelet                     RUNNING   pid 32640, uptime 17:16:36
-kube-proxy                       RUNNING   pid 15097, uptime 17:55:36
-kube-scheduler                   RUNNING   pid 37803, uptime 0:55:47
-```
-#### 安装部署启动检查所有集群规划主机上的flannel服务
-略
-
-### 验证kubernetes集群
-#### 在任意一个运算节点，创建一个资源配置清单
+# 部署addons插件
+## 验证kubernetes集群
+### 在任意一个运算节点，创建一个资源配置清单
 这里我们选择`HDSS7-21.host.com`主机
 ```vi /root/nginx-ds.yaml
 apiVersion: v1
@@ -1613,7 +1524,7 @@ spec:
         ports:
         - containerPort: 80
 ```
-#### 应用资源配置，并检查
+### 应用资源配置，并检查
 ```pwd /root
 [root@hdss7-21 ~]# kubectl create -f nginx-ds.yaml
 [root@hdss7-21 ~]# kubectl get pods
@@ -1622,40 +1533,163 @@ nginx-ds-6hnc7   1/1     Running   0          99m
 nginx-ds-m5q6j   1/1     Running   0          18h
 ```
 
-#### 验证
+### 验证
+补
+
+## 部署flannel
+### 集群规划
+主机名|角色|ip
+-|-|-
+HDSS7-21.host.com|flannel|10.4.7.21
+HDSS7-22.host.com|flannel|10.4.7.22
+
+**注意：**这里部署文档以`HDSS7-21.host.com`主机为例，另外一台运算节点安装部署方法类似
+
+### 在各运算节点上增加iptables规则
+**注意：**iptables规则各主机的略有不同，其他运算节点上执行时注意修改。
+- 优化SNAT规则，各运算节点之间的各POD之间的网络通信不再出网
+
 ```
-[root@hdss7-21 ~]# docker exec -ti 63c0 bash
-root@nginx-ds-m5q6j:/# ping 172.7.22.2
-PING 172.7.22.2 (172.7.22.2): 48 data bytes
-56 bytes from 172.7.22.2: icmp_seq=0 ttl=62 time=24.438 ms
-56 bytes from 172.7.22.2: icmp_seq=1 ttl=62 time=0.695 ms
-56 bytes from 172.7.22.2: icmp_seq=2 ttl=62 time=0.325 ms
-^C--- 172.7.22.2 ping statistics ---
-3 packets transmitted, 3 packets received, 0% packet loss
-round-trip min/avg/max/stddev = 0.325/8.486/24.438/11.281 ms
+# iptables -t nat -D POSTROUTING -s 172.7.21.0/24 ! -o docker0 -j MASQUERADE
+# iptables -t nat -I POSTROUTING -s 172.7.21.0/24 ! -d 172.7.0.0/16 ! -o docker0 -j MASQUERADE
+```
+> 10.4.7.21主机上的，来源是172.7.21.0/24段的docker的ip，目标ip不是172.7.0.0/16段，网络发包不从docker0桥设备出站的，进行SNAT转换
 
-[root@hdss7-22 ~]# docker exec -ti 1964 bash
-root@nginx-ds-6hnc7:/# ping 172.7.21.2
-PING 172.7.21.2 (172.7.21.2): 48 data bytes
-56 bytes from 172.7.21.2: icmp_seq=0 ttl=62 time=455.370 ms
-56 bytes from 172.7.21.2: icmp_seq=1 ttl=62 time=0.395 ms
-56 bytes from 172.7.21.2: icmp_seq=2 ttl=62 time=0.514 ms
-^C--- 172.7.21.2 ping statistics ---
-13 packets transmitted, 13 packets received, 0% packet loss
-round-trip min/avg/max/stddev = 0.309/61.144/455.370/136.546 ms
-
-[root@hdss7-21 ~]# kubectl get nodes
-NAME        STATUS   ROLES    AGE    VERSION
-10.4.7.21   Ready    <none>   21h    v1.13.2
-10.4.7.22   Ready    <none>   101m   v1.13.2
-[root@hdss7-21 ~]# kubectl get svc
-NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)       AGE
-kubernetes   ClusterIP   192.168.0.1     <none>        443/TCP       45h
-nginx-ds     NodePort    192.168.62.22   <none>        80:5801/TCP   18h
+### 各运算节点保存iptables规则
+```
+[root@hdss7-21 ~]# iptables-save > /etc/sysconfig/iptables
+```
+### 下载软件，解压，做软连接
+`HDSS7-21.host.com`上：
+```pwd /opt/src
+[root@hdss7-21 src]# ls -l|grep flannel
+-rw-r--r-- 1 root root 417761204 Jan 17 18:46 flannel-v0.10.0-linux-amd64.tar.gz
+[root@hdss7-21 src]# tar xf flannel-v0.10.0-linux-amd64.tar.gz -C /opt
+[root@hdss7-21 src]# ln -s /opt/flannel-v0.10.0-linux-amd64.tar.gz /opt/flannel
+[root@hdss7-21 src]# ls -l /opt|grep flannel
+lrwxrwxrwx 1 root   root         31 Jan 17 18:49 flannel -> flannel-v0.10.0-linux-amd64/
+drwxr-xr-x 4 root   root         50 Jan 17 18:47 flannel-v0.10.0-linux-amd64
+```
+### 最终目录结构
+```pwd /opt
+[root@hdss7-21 opt]# tree -L 2
+.
+|-- etcd -> etcd-v3.1.18-linux-amd64
+|-- etcd-v3.1.18-linux-amd64
+|   |-- Documentation
+|   |-- README-etcdctl.md
+|   |-- README.md
+|   |-- READMEv2-etcdctl.md
+|   |-- certs
+|   |-- etcd
+|   |-- etcd-server-startup.sh
+|   `-- etcdctl
+|-- flannel -> flannel-v0.10.0/
+|-- flannel-v0.10.0
+|   |-- README.md
+|   |-- cert
+|   |-- flanneld
+|   `-- mk-docker-opts.sh
+|-- kubernetes -> kubernetes-v1.13.2-linux-amd64/
+|-- kubernetes-v1.13.2-linux-amd64
+|   |-- LICENSES
+|   |-- addons
+|   `-- server
+`-- src
+    |-- etcd-v3.1.18-linux-amd64.tar.gz
+    |-- flannel-v0.10.0-linux-amd64.tar.gz
+    `-- kubernetes-server-linux-amd64.tar.gz
+```
+### 操作etcd，增加host-gw
+`HDSS7-21.host.com`上：
+```pwd /opt/etcd
+[root@hdss7-21 etcd]# ./etcdctl set /coreos.com/network/config '{"Network": "172.7.0.0/16", "Backend": {"Type": "host-gw"}}'
+{"Network": "172.7.0.0/16", "Backend": {"Type": "host-gw"}}
 ```
 
-### 部署k8s资源配置清单的内网http服务
-#### 在运维主机`HDSS7-200.host.com`上，配置一个nginx虚拟主机，用以提供k8s统一的资源配置清单访问入口
+### 创建配置
+`HDSS7-21.host.com`上：
+```vi /opt/flannel/subnet.env
+FLANNEL_NETWORK=172.7.0.0/16
+FLANNEL_SUBNET=172.7.21.1/24
+FLANNEL_MTU=1500
+FLANNEL_IPMASQ=false
+```
+**注意：**flannel集群各主机的配置略有不同，部署其他节点时注意修改。
+
+### 创建启动脚本
+`HDSS7-21.host.com`上：
+```vi /opt/flannelflanneld.sh
+#!/bin/sh
+./flanneld \
+  --public-ip=10.4.7.21 \
+  --etcd-endpoints=https://10.4.7.12:2379,https://10.4.7.21:2379,https://10.4.7.22:2379 \
+  --etcd-keyfile=./cert/etcd-client-key.pem \
+  --etcd-certfile=./cert/etcd-client.pem \
+  --etcd-cafile=./cert/ca.pem \
+  --iface=eth0 \
+  --subnet-file=./subnet.env \
+  --healthz-port=2401 
+```
+**注意：**flannel集群各主机的启动脚本略有不同，部署其他节点时注意修改。
+
+### 检查配置，权限，创建日志目录
+`HDSS7-21.host.com`上：
+```pwd /opt/flannel
+[root@hdss7-21 flannel]# chmod +x /opt/flannel/flanneld.sh 
+
+[root@hdss7-21 flannel]# mkdir -p /data/logs/flanneld
+```
+
+### 创建supervisor配置
+`HDSS7-21.host.com`上：
+```vi /etc/supervisord.d/flanneld.ini
+[program:flanneld]
+command=/opt/flannel/flanneld.sh                             ; the program (relative uses PATH, can take args)
+numprocs=1                                                   ; number of processes copies to start (def 1)
+directory=/opt/flannel                                       ; directory to cwd to before exec (def no cwd)
+autostart=true                                               ; start at supervisord start (default: true)
+autorestart=true                                             ; retstart at unexpected quit (default: true)
+startsecs=22       										     ; number of secs prog must stay running (def. 1)
+startretries=3     										     ; max # of serial start failures (default 3)
+exitcodes=0,2      										     ; 'expected' exit codes for process (default 0,2)
+stopsignal=QUIT    										     ; signal used to kill process (default TERM)
+stopwaitsecs=10    										     ; max num secs to wait b4 SIGKILL (default 10)
+user=root                                                    ; setuid to this UNIX account to run the program
+redirect_stderr=false                                        ; redirect proc stderr to stdout (default false)
+stdout_logfile=/data/logs/flanneld/flanneld.stdout.log       ; stdout log path, NONE for none; default AUTO
+stdout_logfile_maxbytes=64MB                                 ; max # logfile bytes b4 rotation (default 50MB)
+stdout_logfile_backups=4                                     ; # of stdout logfile backups (default 10)
+stdout_capture_maxbytes=1MB                                  ; number of bytes in 'capturemode' (default 0)
+stdout_events_enabled=false                                  ; emit events on stdout writes (default false)
+stderr_logfile=/data/logs/flanneld/flanneld.stderr.log       ; stderr log path, NONE for none; default AUTO
+stderr_logfile_maxbytes=64MB                                 ; max # logfile bytes b4 rotation (default 50MB)
+stderr_logfile_backups=4                                     ; # of stderr logfile backups (default 10)
+stderr_capture_maxbytes=1MB                                  ; number of bytes in 'capturemode' (default 0)
+stderr_events_enabled=false                                  ; emit events on stderr writes (default false)
+```
+
+### 启动服务并检查
+`HDSS7-21.host.com`上：
+```
+[root@hdss7-21 flanneld]# supervisorctl update
+flanneld: added process group
+[root@hdss7-21 flanneld]# supervisorctl status
+etcd-server-7-21                 RUNNING   pid 9507, uptime 1 day, 20:35:42
+flanneld                         STARTING  
+kube-apiserver                   RUNNING   pid 9770, uptime 1 day, 19:01:43
+kube-controller-manager          RUNNING   pid 37646, uptime 0:58:48
+kube-kubelet                     RUNNING   pid 32640, uptime 17:16:36
+kube-proxy                       RUNNING   pid 15097, uptime 17:55:36
+kube-scheduler                   RUNNING   pid 37803, uptime 0:55:47
+```
+### 安装部署启动检查所有集群规划主机上的flannel服务
+略
+
+### 再次验证集群
+
+## 部署k8s资源配置清单的内网http服务
+### 在运维主机`HDSS7-200.host.com`上，配置一个nginx虚拟主机，用以提供k8s统一的资源配置清单访问入口
 ```vi /etc/nginx/conf.d/k8s-yaml.od.com.conf
 server {
     listen       80;
@@ -1668,7 +1702,7 @@ server {
     }
 }
 ```
-#### 配置内网DNS解析
+### 配置内网DNS解析
 `HDSS7-11.host.com`上
 ```vi /var/named/od.com.zone
 k8s-yaml	60 IN A 10.4.7.200
@@ -1678,14 +1712,16 @@ k8s-yaml	60 IN A 10.4.7.200
 [root@hdss7-200 ~]# nginx -s reload
 ```
 
-### 部署kube-dns(coredns)
-#### 运维主机上准备coredns-v1.3.1镜像
+## 部署kube-dns(coredns)
+### 准备coredns-v1.3.1镜像
+运维主机`HDSS7-200.host.com`上：
 ```
 [root@hdss7-200 ~]# docker pull coredns/coredns:1.3.1
 [root@hdss7-200 ~]# docker tag eb516548c180 harbor.od.com/k8s/coredns:1.3.1
 [root@hdss7-200 ~]# docker push harbor.od.com/k8s/coredns:1.3.1
 ```
-#### 运维主机上准备资源配置清单
+#### 准备资源配置清单
+运维主机`HDSS7-200.host.com`上：
 ```
 [root@hdss7-200 ~]# mkdir -p /data/k8s-yaml/coredns && cd /data/k8s-yaml/coredns
 ```
@@ -1843,9 +1879,9 @@ spec:
 <!-- endtab -->
 {% endtabs %}
 
-#### 依次执行创建
+### 依次执行创建
 浏览器打开：http://k8s-yaml.od.com/coredns 检查资源配置清单文件是否正确创建
-在任意运算节点应用资源配置清单
+在任意运算节点上应用资源配置清单
 ```
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/coredns/rolebinding.yaml
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/coredns/configmap.yaml
@@ -1853,24 +1889,30 @@ spec:
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/coredns/sva.yaml
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/coredns/svc.yaml
 ```
-#### 检查
+### 检查
 ```
-[root@hdss7-21 ~]# kubectl get pods -n kube-system
+[root@hdss7-21 ~]# kubectl get pods -n kube-system -o wide
 NAME                       READY   STATUS    RESTARTS   AGE
 coredns-7ccccdf57c-5b9ch   1/1     Running   0          3m4s
+
 [root@hdss7-21 coredns]# kubectl get svc -n kube-system
 NAME      TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)         AGE
 coredns   ClusterIP   192.168.0.2   <none>        53/UDP,53/TCP   29s
+
+[root@hdss7-21 ~]# dig -t A nginx-ds.default.svc.cluster.local. @172.7.21.2 +short
+192.168.0.3
 ```
 
-### 部署taefik（ingress）
-#### 运维主机上准备traefik镜像
+## 部署taefik（ingress）
+### 准备traefik镜像
+运维主机`HDSS7-200.host.com`上：
 ```
 [root@hdss7-200 ~]# docker pull traefik:v1.7-alpine
 [root@hdss7-200 ~]# docker tag a8958b0d0447 harbor.od.com/k8s/traefik:1.7       
 [root@hdss7-200 ~]# docker push harbor.od.com/k8s/traefik:1.7
 ```
-#### 运维主机上准备资源配置清单
+### 准备资源配置清单
+运维主机`HDSS7-200.host.com`上：
 ```
 [root@hdss7-200 ~]# mkdir -p /data/k8s-yaml/traefik && cd /data/k8s-yaml/traefik
 ```
@@ -2005,7 +2047,13 @@ spec:
 <!-- endtab -->
 {% endtabs %}
 
-#### 依次执行创建
+### 解析域名
+`HDSS7-11.host.com`上
+```vi /var/named/od.com.zone
+traefik	60 IN A 10.4.7.10
+```
+
+### 依次执行创建
 浏览器打开：http://k8s-yaml.od.com/traefik 检查资源配置清单文件是否正确创建
 在任意运算节点应用资源配置清单
 ```
@@ -2024,13 +2072,7 @@ service/traefik-ingress-service created
 ingress.extensions/traefik-web-ui created
 ```
 
-#### 解析域名
-`HDSS7-11.host.com`上
-```vi /var/named/od.com.zone
-traefik	60 IN A 10.4.7.10
-```
-
-#### 配置反代
+### 配置反代
 `HDSS7-11.host.com`和`HDSS7-12.host.com`两台主机上的nginx均需要配置，这里可以考虑使用saltstack或者ansible进行统一配置管理
 ```vi /etc/nginx/conf.d/od.com.conf
 upstream default_backend_traefik {
@@ -2048,11 +2090,12 @@ server {
 } 
 ```
 
-#### 浏览器访问
+### 浏览器访问
 http://traefik.od.com
 
-### 部署dashboard
-#### 运维主机上准备dashboard镜像
+## 部署dashboard
+### 准备dashboard镜像
+运维主机`HDSS7-200.host.com`上：
 ```
 [root@hdss7-200 ~]# docker pull k8scn/kubernetes-dashboard-amd64:v1.8.3
 v1.8.3: Pulling from k8scn/kubernetes-dashboard-amd64
@@ -2066,7 +2109,8 @@ The push refers to a repository [harbor.od.com/k8s/dashboard]
 23ddb8cbb75a: Pushed 
 1.8.3: digest: sha256:e76c5fe6886c99873898e4c8c0945261709024c4bea773fc477629455631e472 size: 529
 ```
-#### 运维主机上准备资源配置清单
+### 准备资源配置清单
+运维主机`HDSS7-200.host.com`上：
 ```
 [root@hdss7-200 ~]# mkdir -p /data/k8s-yaml/dashboard && cd /data/k8s-yaml/dashboard
 ```
@@ -2276,7 +2320,13 @@ spec:
 <!-- endtab -->
 {% endtabs %}
 
-#### 依次执行创建
+### 解析域名
+`HDSS7-11.host.com`上
+```vi /var/named/od.com.zone
+dashboard	60 IN A 10.4.7.10
+```
+
+### 依次执行创建
 浏览器打开：http://k8s-yaml.od.com/dashboard 检查资源配置清单文件是否正确创建
 在任意运算节点应用资源配置清单
 ```
@@ -2301,11 +2351,6 @@ ingress.extensions/kubernetes-dashboard created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dashboard/deployment.yaml 
 deployment.apps/kubernetes-dashboard created
 ```
-#### 解析域名
-`HDSS7-11.host.com`上
-```vi /var/named/od.com.zone
-dashboard	60 IN A 10.4.7.10
-```
 
-#### 浏览器访问
+### 浏览器访问
 http://dashboard.od.com
