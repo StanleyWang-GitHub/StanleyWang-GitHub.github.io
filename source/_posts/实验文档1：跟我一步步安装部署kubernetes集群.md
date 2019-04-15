@@ -1903,7 +1903,7 @@ coredns   ClusterIP   192.168.0.2   <none>        53/UDP,53/TCP   29s
 192.168.0.3
 ```
 
-## 部署taefik（ingress）
+## 部署traefik（ingress）
 ### 准备traefik镜像
 运维主机`HDSS7-200.host.com`上：
 ```

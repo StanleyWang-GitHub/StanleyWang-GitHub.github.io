@@ -974,7 +974,7 @@ http://jenkins.od.com
 7. Add Parameter -> String Parameter
 > Name : target_dir
 > Default Value : ./target
-> Description : the relative path of target file such as .jar or .war package. e.g: ./dubbo-demo-service/target
+> Description : the relative path of target file such as .jar or .war package. e.g: ./dubbo-server/target
 
 8. Add Parameter -> String Parameter
 > Name : mvn_cmd
