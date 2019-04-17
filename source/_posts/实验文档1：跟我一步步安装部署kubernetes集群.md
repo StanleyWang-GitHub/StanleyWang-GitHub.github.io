@@ -101,7 +101,7 @@ HDSS7-200.host.com|k8s运维节点(docker仓库)|10.4.7.200
 }
 ```
 > 证书类型
-> client certificate： 用于服务端认证客户端,例如etcdctl、etcd proxy、fleetctl、docker客户端
+> client certificate： 客户端使用，用于服务端认证客户端,例如etcdctl、etcd proxy、fleetctl、docker客户端
 > server certificate: 服务端使用，客户端以此验证服务端身份,例如docker服务端、kube-apiserver
 > peer certificate: 双向证书，用于etcd集群成员间通信
 
@@ -139,6 +139,13 @@ HDSS7-200.host.com|k8s运维节点(docker仓库)|10.4.7.200
 ### 生成CA证书和私钥
 ```pwd /opt/certs
 [root@hdss7-200 certs]# cfssl gencert -initca ca-csr.json | cfssljson -bare ca - 
+2019/01/18 09:31:19 [INFO] generating a new CA key and certificate from CSR
+2019/01/18 09:31:19 [INFO] generate received request
+2019/01/18 09:31:19 [INFO] received CSR
+2019/01/18 09:31:19 [INFO] generating key: rsa-2048
+2019/01/18 09:31:19 [INFO] encoded CSR
+2019/01/18 09:31:19 [INFO] signed certificate with serial number 345276964513449660162382535043012874724976422200
+
 ```
 生成ca.pem、ca.csr、ca-key.pem(CA私钥,需妥善保管)
 ```pwd /opt/certs
@@ -346,7 +353,6 @@ HDSS7-22.host.com|etcd follow|10.4.7.22
 {
     "CN": "etcd-peer",
     "hosts": [
-        "127.0.0.1",
         "10.4.7.11",
         "10.4.7.12",
         "10.4.7.21",
@@ -371,6 +377,16 @@ HDSS7-22.host.com|etcd follow|10.4.7.22
 ### 生成etcd证书和私钥
 ```pwd /opt/certs
 [root@hdss7-200 certs]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=peer etcd-peer-csr.json | cfssljson -bare etcd-peer
+2019/01/18 09:35:09 [INFO] generate received request
+2019/01/18 09:35:09 [INFO] received CSR
+2019/01/18 09:35:09 [INFO] generating key: rsa-2048
+
+2019/01/18 09:35:09 [INFO] encoded CSR
+2019/01/18 09:35:10 [INFO] signed certificate with serial number 324191491384928915605254764031096067872154649010
+2019/01/18 09:35:10 [WARNING] This certificate lacks a "hosts" field. This makes it unsuitable for
+websites. For more information see the Baseline Requirements for the Issuance and Management
+of Publicly-Trusted Certificates, v.1.1.6, from the CA/Browser Forum (https://cabforum.org);
+specifically, section 10.2.3 ("Information Requirements").
 ```
 ### 检查生成的证书、私钥
 ```ll /opt/certs
@@ -460,7 +476,7 @@ total 12
 `HDSS7-12.host.com`上：
 ```vi /etc/supervisord.d/etcd-server.ini
 [program:etcd-server-7-12]
-command=/opt/etcd/etcd-server-startup.sh                        ; the program (relative uses PATH, can take args)
+command=/opt/etcd/etcd-server-startup.sh                     ; the program (relative uses PATH, can take args)
 numprocs=1                                                      ; number of processes copies to start (def 1)
 directory=/opt/etcd                                             ; directory to cwd to before exec (def no cwd)
 autostart=true                                                  ; start at supervisord start (default: true)
@@ -489,8 +505,9 @@ stderr_events_enabled=false                                     ; emit events on
 `HDSS7-12.host.com`上：
 ```
 [root@hdss7-12 certs]# supervisorctl start all
+etcd-server-7-12: started
 [root@hdss7-12 certs]# supervisorctl status   
-etcd-server-7-12                 RUNNING   pid 6692, uptime 5:37:25
+etcd-server-7-12                 RUNNING   pid 6692, uptime 0:00:05
 ```
 
 ### 安装部署启动检查所有集群规划主机上的etcd服务
@@ -530,17 +547,19 @@ HDSS7-12.host.com|4层负载均衡|10.4.7.12
 [root@hdss7-21 src]# ls -l|grep kubernetes
 -rw-r--r-- 1 root root 417761204 Jan 17 16:46 kubernetes-server-linux-amd64.tar.gz
 [root@hdss7-21 src]# tar xf kubernetes-server-linux-amd64.tar.gz -C /opt
+[root@hdss7-21 src]# mv /opt/kubernetes /opt/kubernetes-v1.13.2-linux-amd64
 [root@hdss7-21 src]# ln -s /opt/kubernetes-v1.13.2-linux-amd64 /opt/kubernetes
+[root@hdss7-21 src]# mkdir /opt/kubernetes/server/bin/{cert,conf}
 [root@hdss7-21 src]# ls -l /opt|grep kubernetes
 lrwxrwxrwx 1 root   root         31 Jan 18 10:49 kubernetes -> kubernetes-v1.13.2-linux-amd64/
 drwxr-xr-x 4 root   root         50 Jan 17 17:40 kubernetes-v1.13.2-linux-amd64
 ```
-### 签发etcd client证书
+### 签发client证书
 运维主机`HDSS7-200.host.com`上：
 #### 创建生成证书签名请求（csr）的JSON配置文件
 ```vi /opt/certs/client-csr.json
 {
-    "CN": "client",
+    "CN": "k8s-node",
     "hosts": [
     ],
     "key": {
@@ -558,22 +577,31 @@ drwxr-xr-x 4 root   root         50 Jan 17 17:40 kubernetes-v1.13.2-linux-amd64
     ]
 }
 ```
-#### 生成etcd-client证书和私钥
+#### 生成client证书和私钥
 ```
-[root@hdss7-200 certs]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client client-csr.json | cfssljson -bare etcd-client
+[root@hdss7-200 certs]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client client-csr.json | cfssljson -bare client
+2019/01/18 14:02:50 [INFO] generate received request
+2019/01/18 14:02:50 [INFO] received CSR
+2019/01/18 14:02:50 [INFO] generating key: rsa-2048
+2019/01/18 14:02:51 [INFO] encoded CSR
+2019/01/18 14:02:51 [INFO] signed certificate with serial number 423108651040279300242366884100637974155370861448
+2019/01/18 14:02:51 [WARNING] This certificate lacks a "hosts" field. This makes it unsuitable for
+websites. For more information see the Baseline Requirements for the Issuance and Management
+of Publicly-Trusted Certificates, v.1.1.6, from the CA/Browser Forum (https://cabforum.org);
+specifically, section 10.2.3 ("Information Requirements").
 ```
 #### 检查生成的证书、私钥
 ```
-[root@hdss7-200 certs]# ls -l|grep etcd-client
--rw------- 1 root root 1679 Jan 21 11:13 etcd-client-key.pem
--rw-r--r-- 1 root root  989 Jan 21 11:13 etcd-client.csr
--rw-r--r-- 1 root root 1367 Jan 21 11:13 etcd-client.pem
+[root@hdss7-200 certs]# ls -l|grep client
+-rw------- 1 root root 1679 Jan 21 11:13 client-key.pem
+-rw-r--r-- 1 root root  989 Jan 21 11:13 client.csr
+-rw-r--r-- 1 root root 1367 Jan 21 11:13 client.pem
 ```
 
 ### 签发kube-apiserver证书
 运维主机`HDSS7-200.host.com`上：
 #### 创建生成证书签名请求（csr）的JSON配置文件
-```vi /opt/apiserver-csr.json 
+```vi /opt/certs/apiserver-csr.json 
 {
     "CN": "apiserver",
     "hosts": [
@@ -585,8 +613,7 @@ drwxr-xr-x 4 root   root         50 Jan 17 17:40 kubernetes-v1.13.2-linux-amd64
         "kubernetes.default.svc.cluster.local",
         "10.4.7.21",
         "10.4.7.22",
-        "10.4.7.23",
-        "10.4.7.24"
+        "10.4.7.23"
     ],
     "key": {
         "algo": "rsa",
@@ -606,6 +633,15 @@ drwxr-xr-x 4 root   root         50 Jan 17 17:40 kubernetes-v1.13.2-linux-amd64
 #### 生成kube-apiserver证书和私钥
 ```
 [root@hdss7-200 certs]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=server apiserver-csr.json | cfssljson -bare apiserver 
+2019/01/18 14:05:44 [INFO] generate received request
+2019/01/18 14:05:44 [INFO] received CSR
+2019/01/18 14:05:44 [INFO] generating key: rsa-2048
+2019/01/18 14:05:46 [INFO] encoded CSR
+2019/01/18 14:05:46 [INFO] signed certificate with serial number 633406650960616624590510576685608580490218676227
+2019/01/18 14:05:46 [WARNING] This certificate lacks a "hosts" field. This makes it unsuitable for
+websites. For more information see the Baseline Requirements for the Issuance and Management
+of Publicly-Trusted Certificates, v.1.1.6, from the CA/Browser Forum (https://cabforum.org);
+specifically, section 10.2.3 ("Information Requirements").
 ```
 #### 检查生成的证书、私钥
 ```
@@ -627,8 +663,8 @@ total 40
 -rw-r--r-- 1 root root 1599 Jan 21 16:36 apiserver.pem
 -rw------- 1 root root 1675 Jan 21 13:55 ca-key.pem
 -rw-r--r-- 1 root root 1354 Jan 21 13:50 ca.pem
--rw------- 1 root root 1679 Jan 21 13:53 etcd-client-key.pem
--rw-r--r-- 1 root root 1368 Jan 21 13:53 etcd-client.pem
+-rw------- 1 root root 1679 Jan 21 13:53 client-key.pem
+-rw-r--r-- 1 root root 1368 Jan 21 13:53 client.pem
 ```
 #### 创建配置
 ```vi /opt/kubernetes/server/bin/conf/audit.yaml
@@ -715,15 +751,15 @@ rules:
   --requestheader-client-ca-file ./cert/ca.pem \
   --enable-admission-plugins NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota \
   --etcd-cafile ./cert/ca.pem \
-  --etcd-certfile ./cert/etcd-client.pem \
-  --etcd-keyfile ./cert/etcd-client-key.pem \
+  --etcd-certfile ./cert/client.pem \
+  --etcd-keyfile ./cert/client-key.pem \
   --etcd-servers https://10.4.7.12:2379,https://10.4.7.21:2379,https://10.4.7.22:2379 \
   --service-account-key-file ./cert/ca-key.pem \
   --service-cluster-ip-range 192.168.0.0/16 \
   --service-node-port-range 3000-29999 \
   --target-ram-mb=1024 \
-  --kubelet-client-certificate ./cert/etcd-client.pem \
-  --kubelet-client-key ./cert/etcd-client-key.pem \
+  --kubelet-client-certificate ./cert/client.pem \
+  --kubelet-client-key ./cert/client-key.pem \
   --log-dir  /data/logs/kubernetes/kube-apiserver \
   --tls-cert-file ./cert/apiserver.pem \
   --tls-private-key-file ./cert/apiserver-key.pem \
@@ -740,7 +776,7 @@ rules:
 `HDSS7-21.host.com`上：
 ```vi /etc/supervisord.d/kube-apiserver.ini
 [program:kube-apiserver]
-command=/opt/kubernetes/server/bin/kube-apiserver.sh            ; the program (relative uses PATH, can take args)
+command=/opt/kubernetes/server/bin/kube-apiserver.sh         ; the program (relative uses PATH, can take args)
 numprocs=1                                                      ; number of processes copies to start (def 1)
 directory=/opt/kubernetes/server/bin                            ; directory to cwd to before exec (def no cwd)
 autostart=true                                                  ; start at supervisord start (default: true)
@@ -1072,16 +1108,20 @@ HDSS7-22.host.com|kubelet|10.4.7.22
 ### 签发kubelet证书
 运维主机`HDSS7-200.host.com`上：
 #### 创建生成证书签名请求（csr）的JSON配置文件
-```vi kubelet-peer-csr.json
+```vi kubelet-csr.json
 {
     "CN": "kubelet-node",
     "hosts": [
-		"127.0.0.1",
-		"10.4.7.10",
-		"10.4.7.21",
-		"10.4.7.22",
-		"10.4.7.23",
-		"10.4.7.24"
+    "127.0.0.1",
+    "10.4.7.10",
+    "10.4.7.21",
+    "10.4.7.22",
+    "10.4.7.23",
+    "10.4.7.24",
+    "10.4.7.25",
+    "10.4.7.26",
+    "10.4.7.27",
+    "10.4.7.28"
     ],
     "key": {
         "algo": "rsa",
@@ -1100,16 +1140,25 @@ HDSS7-22.host.com|kubelet|10.4.7.22
 ```
 #### 生成kubelet证书和私钥
 ```pwd /opt/certs
-[root@hdss7-200 certs]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=peer kubelet-peer-csr.json | cfssljson -bare kubelet-peer
+[root@hdss7-200 certs]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=server kubelet-csr.json | cfssljson -bare kubelet
+2019/01/18 17:51:16 [INFO] generate received request
+2019/01/18 17:51:16 [INFO] received CSR
+2019/01/18 17:51:16 [INFO] generating key: rsa-2048
+2019/01/18 17:51:17 [INFO] encoded CSR
+2019/01/18 17:51:17 [INFO] signed certificate with serial number 48870268157415133698067712395152321546974943470
+2019/01/18 17:51:17 [WARNING] This certificate lacks a "hosts" field. This makes it unsuitable for
+websites. For more information see the Baseline Requirements for the Issuance and Management
+of Publicly-Trusted Certificates, v.1.1.6, from the CA/Browser Forum (https://cabforum.org);
+specifically, section 10.2.3 ("Information Requirements").
 ```
 #### 检查生成的证书、私钥
 ```pwd /opt/certs
 [root@hdss7-200 certs]# ls -l|grep kubelet
 total 88
--rw-r--r-- 1 root root  415 Jan 22 16:58 kubelet-peer-csr.json
--rw------- 1 root root 1679 Jan 22 17:00 kubelet-peer-key.pem
--rw-r--r-- 1 root root 1086 Jan 22 17:00 kubelet-peer.csr
--rw-r--r-- 1 root root 1456 Jan 22 17:00 kubelet-peer.pem
+-rw-r--r-- 1 root root  415 Jan 22 16:58 kubelet-csr.json
+-rw------- 1 root root 1679 Jan 22 17:00 kubelet-key.pem
+-rw-r--r-- 1 root root 1086 Jan 22 17:00 kubelet.csr
+-rw-r--r-- 1 root root 1456 Jan 22 17:00 kubelet.pem
 ```
 
 ### 拷贝证书至各运算节点，并创建配置
@@ -1122,10 +1171,10 @@ total 40
 -rw-r--r-- 1 root root 1599 Jan 21 16:36 apiserver.pem
 -rw------- 1 root root 1675 Jan 21 13:55 ca-key.pem
 -rw-r--r-- 1 root root 1354 Jan 21 13:50 ca.pem
--rw------- 1 root root 1679 Jan 21 13:53 etcd-client-key.pem
--rw-r--r-- 1 root root 1368 Jan 21 13:53 etcd-client.pem
--rw------- 1 root root 1679 Jan 22 17:00 kubelet-peer-key.pem
--rw-r--r-- 1 root root 1456 Jan 22 17:00 kubelet-peer.pem
+-rw------- 1 root root 1679 Jan 21 13:53 client-key.pem
+-rw-r--r-- 1 root root 1368 Jan 21 13:53 client.pem
+-rw------- 1 root root 1679 Jan 22 17:00 kubelet-key.pem
+-rw-r--r-- 1 root root 1456 Jan 22 17:00 kubelet.pem
 ```
 #### 创建配置
 `HDSS7-21.host.com`上：
@@ -1143,14 +1192,16 @@ total 40
   --embed-certs=true \
   --server=https://10.4.7.10:7443 \
   --kubeconfig=kubelet.kubeconfig
+
+Cluster "myk8s" set.
 ```
 
 ##### set-credentials
 **注意：**在conf目录下
 ```pwd /opt/kubernetes/server/conf
-[root@hdss7-21 conf]# kubectl config set-credentials kubelet-node --client-certificate=/opt/kubernetes/server/bin/cert/kubelet-peer.pem --client-key=/opt/kubernetes/server/bin/cert/kubelet-peer-key.pem --embed-certs=true --kubeconfig=kubelet.kubeconfig 
+[root@hdss7-21 conf]# kubectl config set-credentials k8s-node --client-certificate=/opt/kubernetes/server/bin/cert/client.pem --client-key=/opt/kubernetes/server/bin/cert/client-key.pem --embed-certs=true --kubeconfig=kubelet.kubeconfig 
 
-User "kubelet-node" set.
+User "k8s-node" set.
 ```
 
 ##### set-context
@@ -1158,23 +1209,27 @@ User "kubelet-node" set.
 ```pwd /opt/kubernetes/server/conf
 [root@hdss7-21 conf]# kubectl config set-context myk8s-context \
   --cluster=myk8s \
-  --user=kubelet-node \
+  --user=k8s-node \
   --kubeconfig=kubelet.kubeconfig
+
+Context "myk8s-context" created.
 ```
 
 ##### use-context
 **注意：**在conf目录下
 ```pwd /opt/kubernetes/server/conf
 [root@hdss7-21 conf]# kubectl config use-context myk8s-context --kubeconfig=kubelet.kubeconfig
+
+Switched to context "myk8s-context".
 ```
-##### kube-node.yaml
+##### k8s-node.yaml
 - 创建资源配置文件
 
-```vi /opt/kubernetes/server/conf/kube-node.yaml
+```vi /opt/kubernetes/server/bin/conf/k8s-node.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: kubelet-node
+  name: k8s-node
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -1182,19 +1237,21 @@ roleRef:
 subjects:
 - apiGroup: rbac.authorization.k8s.io
   kind: User
-  name: kubelet-node
+  name: k8s-node
 ```
 - 应用资源配置文件
 
 ```pwd /opt/kubernetes/server/conf
-[root@hdss7-21 conf]# kubectl create -f kube-node.yaml
+[root@hdss7-21 conf]# kubectl create -f k8s-node.yaml
+
+clusterrolebinding.rbac.authorization.k8s.io/k8s-node created
 ```
 - 检查
 
 ```pwd /opt/kubernetes/server/conf
-[root@hdss7-21 conf]# kubectl get clusterrolebinding kubelet-node      
+[root@hdss7-21 conf]# kubectl get clusterrolebinding k8s-node
 NAME           AGE
-kubelet-node   3m
+k8s-node       3m
 ```
 ### 准备infra_pod基础镜像
 运维主机`HDSS7-200.host.com`上：
@@ -1236,10 +1293,14 @@ xplenty/rhel7-pod-infrastructure   v3.4                34d3450d733b        2 yea
 ```
 
 - push到harbor
-> harbor上要提前创建k8s项目
 
 ```
 [root@hdss7-200 ~]# docker push harbor.od.com/k8s/pod:v3.4
+The push refers to a repository [harbor.od.com/k8s/pod]
+ba3d4cbbb261: Pushed 
+0a081b45cb84: Pushed 
+df9d2808b9a9: Pushed 
+v3.4: digest: sha256:73cc48728e707b74f99d17b4e802d836e22d373aee901fdcaa781b056cdabf5c size: 948
 ```
 
 ### 创建kubelet启动脚本
@@ -1254,8 +1315,8 @@ xplenty/rhel7-pod-infrastructure   v3.4                34d3450d733b        2 yea
   --runtime-cgroups=/systemd/system.slice --kubelet-cgroups=/systemd/system.slice \
   --fail-swap-on="false" \
   --client-ca-file ./cert/ca.pem \
-  --tls-cert-file ./cert/kubelet-peer.pem \
-  --tls-private-key-file ./cert/kubelet-peer-key.pem \
+  --tls-cert-file ./cert/kubelet.pem \
+  --tls-private-key-file ./cert/kubelet-key.pem \
   --hostname-override 10.4.7.21 \
   --image-gc-high-threshold 20 \
   --image-gc-low-threshold 10 \
@@ -1272,8 +1333,8 @@ xplenty/rhel7-pod-infrastructure   v3.4                34d3450d733b        2 yea
 [root@hdss7-21 conf]# ls -l|grep kubelet.kubeconfig 
 -rw------- 1 root root 6471 Jan 22 17:33 kubelet.kubeconfig
 
-[root@hdss7-21 conf]# chmod +x /opt/kubernetes/server/bin/kubelet.sh
-[root@hdss7-21 conf]# mkdir -p /data/logs/kubernetes/kubelet /data/kubelet
+[root@hdss7-21 conf]# chmod +x /opt/kubernetes/server/bin/kubelet-721.sh
+[root@hdss7-21 conf]# mkdir -p /data/logs/kubernetes/kube-kubelet /data/kubelet
 ```
 
 ### 创建supervisor配置
@@ -1292,12 +1353,12 @@ stopsignal=QUIT               									  ; signal used to kill process (default 
 stopwaitsecs=10               									  ; max num secs to wait b4 SIGKILL (default 10)
 user=root                                                         ; setuid to this UNIX account to run the program
 redirect_stderr=false                                             ; redirect proc stderr to stdout (default false)
-stdout_logfile=/data/logs/kubernetes/kubelet/kubelet.stdout.log   ; stdout log path, NONE for none; default AUTO
+stdout_logfile=/data/logs/kubernetes/kube-kubelet/kubelet.stdout.log   ; stdout log path, NONE for none; default AUTO
 stdout_logfile_maxbytes=64MB                                      ; max # logfile bytes b4 rotation (default 50MB)
 stdout_logfile_backups=4                                          ; # of stdout logfile backups (default 10)
 stdout_capture_maxbytes=1MB                                       ; number of bytes in 'capturemode' (default 0)
 stdout_events_enabled=false                                       ; emit events on stdout writes (default false)
-stderr_logfile=/data/logs/kubernetes/kubelet/kubelet.stderr.log   ; stderr log path, NONE for none; default AUTO
+stderr_logfile=/data/logs/kubernetes/kube-kubelet/kubelet.stderr.log   ; stderr log path, NONE for none; default AUTO
 stderr_logfile_maxbytes=64MB                                      ; max # logfile bytes b4 rotation (default 50MB)
 stderr_logfile_backups=4                                          ; # of stderr logfile backups (default 10)
 stderr_capture_maxbytes=1MB   									  ; number of bytes in 'capturemode' (default 0)
@@ -1324,6 +1385,7 @@ kube-scheduler                   RUNNING   pid 10041, uptime 18:22:13
 NAME        STATUS   ROLES    AGE   VERSION
 10.4.7.21   Ready    <none>   3m   v1.13.2
 ```
+**非常重要！**
 
 ### 安装部署启动检查所有集群规划主机上的kubelet服务
 略
@@ -1361,6 +1423,15 @@ HDSS7-22.host.com|kube-proxy|10.4.7.22
 #### 生成kube-proxy证书和私钥
 ```pwd /opt/certs
 [root@hdss7-200 certs]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client kube-proxy-csr.json | cfssljson -bare kube-proxy-client
+2019/01/18 18:14:23 [INFO] generate received request
+2019/01/18 18:14:23 [INFO] received CSR
+2019/01/18 18:14:23 [INFO] generating key: rsa-2048
+2019/01/18 18:14:23 [INFO] encoded CSR
+2019/01/18 18:14:23 [INFO] signed certificate with serial number 375797145588654714099258750873820528127028390681
+2019/01/18 18:14:23 [WARNING] This certificate lacks a "hosts" field. This makes it unsuitable for
+websites. For more information see the Baseline Requirements for the Issuance and Management
+of Publicly-Trusted Certificates, v.1.1.6, from the CA/Browser Forum (https://cabforum.org);
+specifically, section 10.2.3 ("Information Requirements").
 ```
 #### 检查生成的证书、私钥
 ```pwd /opt/certs
@@ -1380,10 +1451,10 @@ total 40
 -rw-r--r-- 1 root root 1599 Jan 21 16:36 apiserver.pem
 -rw------- 1 root root 1675 Jan 21 13:55 ca-key.pem
 -rw-r--r-- 1 root root 1354 Jan 21 13:50 ca.pem
--rw------- 1 root root 1679 Jan 21 13:53 etcd-client-key.pem
--rw-r--r-- 1 root root 1368 Jan 21 13:53 etcd-client.pem
--rw------- 1 root root 1679 Jan 22 17:00 kubelet-peer-key.pem
--rw-r--r-- 1 root root 1456 Jan 22 17:00 kubelet-peer.pem
+-rw------- 1 root root 1679 Jan 21 13:53 client-key.pem
+-rw-r--r-- 1 root root 1368 Jan 21 13:53 client.pem
+-rw------- 1 root root 1679 Jan 22 17:00 kubelet-key.pem
+-rw-r--r-- 1 root root 1456 Jan 22 17:00 kubelet.pem
 -rw------- 1 root root 1679 Jan 22 17:31 kube-proxy-client-key.pem
 -rw-r--r-- 1 root root 1383 Jan 22 17:31 kube-proxy-client.pem
 ```
@@ -1397,6 +1468,8 @@ total 40
   --embed-certs=true \
   --server=https://10.4.7.10:7443 \
   --kubeconfig=kube-proxy.kubeconfig
+
+Cluster "myk8s" set.
 ```
 ##### set-credentials
 **注意：**在conf目录下
@@ -1406,6 +1479,8 @@ total 40
   --client-key=/opt/kubernetes/server/bin/cert/kube-proxy-client-key.pem \
   --embed-certs=true \
   --kubeconfig=kube-proxy.kubeconfig
+
+User "kube-proxy" set.
 ```
 ##### set-context
 **注意：**在conf目录下
@@ -1414,11 +1489,15 @@ total 40
   --cluster=myk8s \
   --user=kube-proxy \
   --kubeconfig=kube-proxy.kubeconfig
+
+Context "myk8s-context" created.
 ```
 ##### use-context
 **注意：**在conf目录下
 ```pwd /opt/kubernetes/server/bin/conf
 [root@hdss7-21 conf]# kubectl config use-context myk8s-context --kubeconfig=kube-proxy.kubeconfig
+
+Switched to context "myk8s-context".
 ```
 ### 创建kube-proxy启动脚本
 `HDSS7-21.host.com`上：
@@ -1437,7 +1516,7 @@ total 40
 [root@hdss7-21 conf]# ls -l|grep kube-proxy.kubeconfig 
 -rw------- 1 root root 6471 Jan 22 17:33 kube-proxy.kubeconfig
 
-[root@hdss7-21 conf]# chmod +x /opt/kubernetes/server/bin/kube-proxy.sh
+[root@hdss7-21 conf]# chmod +x /opt/kubernetes/server/bin/kube-proxy-721.sh
 [root@hdss7-21 conf]# mkdir -p /data/logs/kubernetes/kube-proxy
 ```
 ### 创建supervisor配置
@@ -1553,7 +1632,7 @@ HDSS7-22.host.com|flannel|10.4.7.22
 # iptables -t nat -D POSTROUTING -s 172.7.21.0/24 ! -o docker0 -j MASQUERADE
 # iptables -t nat -I POSTROUTING -s 172.7.21.0/24 ! -d 172.7.0.0/16 ! -o docker0 -j MASQUERADE
 ```
-> 10.4.7.21主机上的，来源是172.7.21.0/24段的docker的ip，目标ip不是172.7.0.0/16段，网络发包不从docker0桥设备出站的，进行SNAT转换
+> 10.4.7.21主机上的，来源是172.7.21.0/24段的docker的ip，目标ip不是172.7.0.0/16段，网络发包不从docker0桥设备出站的，才进行SNAT转换
 
 ### 各运算节点保存iptables规则
 ```
@@ -1564,8 +1643,9 @@ HDSS7-22.host.com|flannel|10.4.7.22
 ```pwd /opt/src
 [root@hdss7-21 src]# ls -l|grep flannel
 -rw-r--r-- 1 root root 417761204 Jan 17 18:46 flannel-v0.10.0-linux-amd64.tar.gz
-[root@hdss7-21 src]# tar xf flannel-v0.10.0-linux-amd64.tar.gz -C /opt
-[root@hdss7-21 src]# ln -s /opt/flannel-v0.10.0-linux-amd64.tar.gz /opt/flannel
+[root@hdss7-21 src]# mkdir -p /opt/flannel-v0.10.0-linux-amd64/cert
+[root@hdss7-21 src]# tar xf flannel-v0.10.0-linux-amd64.tar.gz -C /opt/flannel-v0.10.0-linux-amd64
+[root@hdss7-21 src]# ln -s /opt/flannel-v0.10.0-linux-amd64 /opt/flannel
 [root@hdss7-21 src]# ls -l /opt|grep flannel
 lrwxrwxrwx 1 root   root         31 Jan 17 18:49 flannel -> flannel-v0.10.0-linux-amd64/
 drwxr-xr-x 4 root   root         50 Jan 17 18:47 flannel-v0.10.0-linux-amd64
@@ -1619,13 +1699,13 @@ FLANNEL_IPMASQ=false
 
 ### 创建启动脚本
 `HDSS7-21.host.com`上：
-```vi /opt/flannelflanneld.sh
+```vi /opt/flannel/flanneld.sh
 #!/bin/sh
 ./flanneld \
   --public-ip=10.4.7.21 \
   --etcd-endpoints=https://10.4.7.12:2379,https://10.4.7.21:2379,https://10.4.7.22:2379 \
-  --etcd-keyfile=./cert/etcd-client-key.pem \
-  --etcd-certfile=./cert/etcd-client.pem \
+  --etcd-keyfile=./cert/client-key.pem \
+  --etcd-certfile=./cert/client.pem \
   --etcd-cafile=./cert/ca.pem \
   --iface=eth0 \
   --subnet-file=./subnet.env \
@@ -1717,8 +1797,22 @@ k8s-yaml	60 IN A 10.4.7.200
 运维主机`HDSS7-200.host.com`上：
 ```
 [root@hdss7-200 ~]# docker pull coredns/coredns:1.3.1
+1.3.1: Pulling from coredns/coredns
+e0daa8927b68: Pull complete 
+3928e47de029: Pull complete 
+Digest: sha256:02382353821b12c21b062c59184e227e001079bb13ebd01f9d3270ba0fcbf1e4
+Status: Downloaded newer image for coredns/coredns:1.3.1
 [root@hdss7-200 ~]# docker tag eb516548c180 harbor.od.com/k8s/coredns:1.3.1
 [root@hdss7-200 ~]# docker push harbor.od.com/k8s/coredns:1.3.1
+docker push harbor.od.com/k8s/coredns:1.3.1
+The push refers to a repository [harbor.od.com/k8s/coredns]
+c6a5fc8a3f01: Pushed 
+fb61a074724d: Pushed 
+1.3.1: digest: sha256:e077b9680c32be06fc9652d57f64aa54770dd6554eb87e7a00b97cf8e9431fda size: 739
+```
+任意一台运算节点上：
+```
+[root@hdss7-21 ~]# kubectl create secret docker-registry harbor --docker-server=harbor.od.com --docker-username=admin --docker-password=Harbor12345 --docker-email=stanley.wang.m@qq.com -n kube-system
 ```
 #### 准备资源配置清单
 运维主机`HDSS7-200.host.com`上：
@@ -1823,7 +1917,9 @@ spec:
       containers:
       - name: coredns
         image: harbor.od.com/k8s/coredns:1.3.1
-        args: [ "-conf", "/etc/coredns/Corefile" ]
+        args:
+        - -conf
+        - /etc/coredns/Corefile
         volumeMounts:
         - name: config-volume
           mountPath: /etc/coredns
@@ -1844,6 +1940,8 @@ spec:
           successThreshold: 1
           failureThreshold: 5
       dnsPolicy: Default
+      imagePullSecrets:
+      - name: harbor
       volumes:
         - name: config-volume
           configMap:
@@ -1884,10 +1982,15 @@ spec:
 在任意运算节点上应用资源配置清单
 ```
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/coredns/rolebinding.yaml
+serviceaccount/coredns created
+clusterrole.rbac.authorization.k8s.io/system:coredns created
+clusterrolebinding.rbac.authorization.k8s.io/system:coredns created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/coredns/configmap.yaml
+configmap/coredns created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/coredns/deployment.yaml
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/coredns/sva.yaml
+deployment.extensions/coredns created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/coredns/svc.yaml
+service/coredns created
 ```
 ### 检查
 ```
@@ -1908,8 +2011,21 @@ coredns   ClusterIP   192.168.0.2   <none>        53/UDP,53/TCP   29s
 运维主机`HDSS7-200.host.com`上：
 ```
 [root@hdss7-200 ~]# docker pull traefik:v1.7-alpine
-[root@hdss7-200 ~]# docker tag a8958b0d0447 harbor.od.com/k8s/traefik:1.7       
+v1.7-alpine: Pulling from library/traefik
+bdf0201b3a05: Pull complete 
+9dfd896cc066: Pull complete 
+de06b5685128: Pull complete 
+c4d82a21fa27: Pull complete 
+Digest: sha256:0531581bde9da0670fc2c7a4e419e1cc38abff74e7ba06410bf2b1b55c70ef15
+Status: Downloaded newer image for traefik:v1.7-alpine
+[root@hdss7-200 ~]# docker tag 1930b7508541 harbor.od.com/k8s/traefik:1.7       
 [root@hdss7-200 ~]# docker push harbor.od.com/k8s/traefik:1.7
+The push refers to a repository [harbor.od.com/k8s/traefik]
+a3e3d574f6ae: Pushed 
+a7c355c1a104: Pushed 
+e89059911fc9: Pushed 
+a464c54f93a9: Mounted from infra/apollo-portal 
+1.7: digest: sha256:8f92899f5feb08db600c89d3016145e838fa7ff0d316ee21ecd63d9623643410 size: 1157
 ```
 ### 准备资源配置清单
 运维主机`HDSS7-200.host.com`上：
@@ -1999,10 +2115,12 @@ spec:
             add:
             - NET_BIND_SERVICE
         args:
-        - --api
-        - --kubernetes
-        - --logLevel=INFO
-		- --insecureskipverify=true
+        - -\-api
+        - -\-kubernetes
+        - -\-logLevel=INFO
+        - -\-insecureskipverify=true
+      imagePullSecrets:
+      - name: harbor
 {% endcode %}
 <!-- endtab -->
 <!-- tab Service-->
@@ -2293,7 +2411,7 @@ spec:
           protocol: TCP
         args:
           # PLATFORM-SPECIFIC ARGS HERE
-          - --auto-generate-certificates
+          - -\-auto-generate-certificates
         volumeMounts:
         - name: kubernetes-dashboard-certs
           mountPath: /certs
@@ -2316,6 +2434,8 @@ spec:
       tolerations:
       - key: "CriticalAddonsOnly"
         operator: "Exists"
+      imagePullSecrets:
+      - name: harbor
 {% endcode %}
 <!-- endtab -->
 {% endtabs %}
