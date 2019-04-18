@@ -753,7 +753,7 @@ Successfully built 64c74242ee28
 ```
 {% tabs jenkins-yaml%}
 <!-- tab Deployment -->
-[root@hdss7-200 jenkins]# vi deployment.yaml
+vi deployment.yaml
 {% code %}
 kind: Deployment
 apiVersion: extensions/v1beta1
@@ -791,14 +791,14 @@ spec:
           protocol: TCP
         env:
         - name: JAVA_OPTS
-          value: -Xmx128m -Xms128m
+          value: -Xmx512m -Xms512m
         resources:
           limits: 
-            cpu: 300m
-            memory: 128Mi
+            cpu: 500m
+            memory: 1Gi
           requests: 
-            cpu: 300m
-            memory: 128Mi
+            cpu: 500m
+            memory: 1Gi
         volumeMounts:
         - name: data
           mountPath: /var/jenkins_home
@@ -823,7 +823,7 @@ spec:
 {% endcode %}
 <!-- endtab -->
 <!-- tab Service-->
-[root@hdss7-200 jenkins]# vi svc.yaml
+vi svc.yaml
 {% code %}
 kind: Service
 apiVersion: v1
@@ -843,7 +843,7 @@ spec:
 {% endcode %}
 <!-- endtab -->
 <!-- tab Ingress-->
-[root@hdss7-200 jenkins]# vi ingress.yaml
+vi ingress.yaml
 {% code %}
 kind: Ingress
 apiVersion: extensions/v1beta1
@@ -854,8 +854,9 @@ spec:
   rules:
   - host: jenkins.od.com
     http:
-      paths: /
-      - backend: 
+      paths:
+			- path: /
+        backend: 
           serviceName: jenkins
           servicePort: 8080
 {% endcode %}
@@ -1225,7 +1226,12 @@ spec:
         ports:
         - containerPort: 20880
           protocol: TCP
+        env:
+        - name: JAR_BALL
+          value: dubbo-client.jar
         imagePullPolicy: IfNotPresent
+      imagePullSecrets:
+      - name: harbor
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       dnsPolicy: Default
@@ -1245,6 +1251,7 @@ spec:
 在任意一台k8s运算节点执行：
 ```
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-demo-service/deployment.yaml
+deployment.extensions/dubbo-demo-service created
 ```
 
 ### 检查docker运行情况及zk里的信息
@@ -1290,7 +1297,7 @@ CMD /dubbo-monitor-simple/bin/start.sh
 ```
 3. build镜像
 ```
-[root@hdss7-200 dubbo-monitor]# docker build . -t harbor.od.com/infra/dubbo-monitor:190117_1930
+[root@hdss7-200 dubbo-monitor]# docker build . -t harbor.od.com/infra/dubbo-monitor:latest
 Sending build context to Docker daemon 26.21 MB
 Step 1 : FROM harbor.od.com/base/jre7:7u80
  ---> dbba4641da57
@@ -1311,7 +1318,7 @@ Step 5 : CMD /opt/dubbo-monitor/bin/start.sh
 Removing intermediate container c33b8fb98326
 Successfully built 97e40c179bbe
 
-[root@hdss7-200 dubbo-monitor]# docker push harbor.od.com/infra/dubbo-monitor:190117_1930
+[root@hdss7-200 dubbo-monitor]# docker push harbor.od.com/infra/dubbo-monitor:latest
 The push refers to a repository [harbor.od.com/infra/dubbo-monitor]
 750135a87545: Pushed 
 0b2b753b122e: Pushed 
@@ -1359,13 +1366,15 @@ spec:
     spec:
       containers:
       - name: dubbo-monitor
-        image: harbor.od.com/infra/dubbo-monitor:190117_1930
+        image: harbor.od.com/infra/dubbo-monitor:latest
         ports:
 				- containerPort: 8080
 				  protocol: TCP
         - containerPort: 20880
           protocol: TCP
         imagePullPolicy: IfNotPresent
+      imagePullSecrets:
+      - name: harbor
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       dnsPolicy: Default
@@ -1387,8 +1396,8 @@ vi /data/k8s-yaml/dubbo-monitor/svc.yaml
 kind: Service
 apiVersion: v1
 metadata: 
-  name: dubbo-monitor, 
-	namespace: infra
+  name: dubbo-monitor
+  namespace: infra
 spec:
   ports:
   - protocol: TCP
@@ -1413,8 +1422,9 @@ spec:
   rules:
   - host: dubbo-monitor.od.com
     http:
-      paths: /
-      - backend: 
+      paths:
+			- path: /
+        backend: 
           serviceName: dubbo-monitor
           servicePort: 8080
 {% endcode %}
@@ -1425,8 +1435,11 @@ spec:
 在任意一台k8s运算节点执行：
 ```
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-monitor/deployment.yaml
+deployment.extensions/dubbo-monitor created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-monitor/svc.yaml
+service/dubbo-monitor created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-monitor/ingress.yaml
+ingress.extensions/dubbo-monitor created
 ```
 
 ### 浏览器访问
@@ -1509,14 +1522,19 @@ spec:
         name: dubbo-demo-consumer
     spec:
       containers:
-      - name: dubbo-monitor
-        image: harbor.od.com/app/dubbo-demo-consumer:190117_1950
+      - name: dubbo-demo-consumer
+        image: harbor.od.com/app/dubbo-demo-consumer:master_190119_2015
         ports:
         - containerPort: 8080
           protocol: TCP
         - containerPort: 20880
           protocol: TCP
+        env:
+        - name: JAR_BALL
+          value: dubbo-client.jar
         imagePullPolicy: IfNotPresent
+      imagePullSecrets:
+      - name: harbor
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       dnsPolicy: Default
@@ -1539,7 +1557,7 @@ kind: Service
 apiVersion: v1
 metadata: 
   name: dubbo-demo-consumer
-	namespace: app
+  namespace: app
 spec:
   ports:
   - protocol: TCP
@@ -1564,8 +1582,9 @@ spec:
   rules:
   - host: demo.od.com
     http:
-      paths: /
-      - backend: 
+      paths:
+      - path: /
+        backend: 
           serviceName: dubbo-demo-consumer
           servicePort: 8080
 {% endcode %}
@@ -1576,8 +1595,11 @@ spec:
 在任意一台k8s运算节点执行：
 ```
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-demo-consumer/deployment.yaml
+deployment.extensions/dubbo-demo-consumer created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-demo-consumer/svc.yaml
+service/dubbo-demo-consumer created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-demo-consumer/ingress.yaml
+ingress.extensions/dubbo-demo-consumer created
 ```
 ### 检查docker运行情况及dubbo-monitor
 http://dubbo-monitor.od.com

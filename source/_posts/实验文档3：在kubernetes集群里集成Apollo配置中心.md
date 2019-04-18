@@ -51,17 +51,17 @@ metadata:
   name: dubbo-monitor-cm
   namespace: infra
 data:
-  dubbo_origin.properties: |
+  dubbo.properties: |
     dubbo.container=log4j,spring,registry,jetty
     dubbo.application.name=simple-monitor
     dubbo.application.owner=
-    dubbo.registry.address=zookeeper://zk1.od.com
+    dubbo.registry.address=zookeeper://zk1.od.com:2181
     dubbo.protocol.port=20880
     dubbo.jetty.port=8080
-    dubbo.jetty.directory=/opt/dubbo-monitor/monitor
-    dubbo.charts.directory=/opt/dubbo-monitor/charts
-    dubbo.statistics.directory=/opt/dubbo-monitor/monitor/statistics
-    dubbo.log4j.file=logs/dubbo-monitor.log
+    dubbo.jetty.directory=/dubbo-monitor-simple/monitor
+    dubbo.charts.directory=/dubbo-monitor-simple/charts
+    dubbo.statistics.directory=/dubbo-monitor-simple/statistics
+    dubbo.log4j.file=/dubbo-monitor-simple/logs/dubbo-monitor.log
     dubbo.log4j.level=WARN
 {% endcode %}
 <!-- endtab -->
@@ -88,7 +88,7 @@ spec:
     spec:
       containers:
       - name: dubbo-monitor
-        image: harbor.od.com/infra/dubbo-monitor:190117_1930
+        image: harbor.od.com/infra/dubbo-monitor:latest
         ports:
         - containerPort: 8080
           protocol: TCP
@@ -102,6 +102,8 @@ spec:
         - name: configmap-volume
           configMap:
             name: dubbo-monitor-cm
+      imagePullSecrets:
+      - name: harbor
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       dnsPolicy: Default
@@ -123,7 +125,9 @@ spec:
 在任意一台k8s运算节点执行：
 ```
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-monitor/configmap.yaml
+configmap/dubbo-monitor-cm created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-monitor/deployment.yaml
+deployment.extensions/dubbo-monitor configured
 ```
 
 ## 重新发版，修改dubbo项目的配置文件
@@ -393,7 +397,7 @@ config	60 IN A 10.4.7.10
 ```
 {% tabs apollo-configservice-yaml%}
 <!-- tab Deployment -->
-[root@hdss7-200 apollo-configservice]# vi deployment.yaml
+vi deployment.yaml
 {% code %}
 kind: Deployment
 apiVersion: extensions/v1beta1
@@ -415,8 +419,8 @@ spec:
     spec:
       volumes:
       - name: configmap-volume
-          configMap:
-            name: apollo-configservice-cm
+        configMap:
+          name: apollo-configservice-cm
       containers:
       - name: apollo-configservice
         image: harbor.od.com/infra/apollo-configservice:v1.3.0
@@ -429,6 +433,8 @@ spec:
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
         imagePullPolicy: IfNotPresent
+      imagePullSecrets:
+      - name: harbor
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       dnsPolicy: Default
@@ -445,7 +451,7 @@ spec:
 {% endcode %}
 <!-- endtab -->
 <!-- tab Service-->
-[root@hdss7-200 apollo-configservice]# vi svc.yaml
+vi svc.yaml
 {% code %}
 kind: Service
 apiVersion: v1
@@ -465,7 +471,7 @@ spec:
 {% endcode %}
 <!-- endtab -->
 <!-- tab Ingress-->
-[root@hdss7-200 apollo-configservice]# vi ingress.yaml
+vi ingress.yaml
 {% code %}
 kind: Ingress
 apiVersion: extensions/v1beta1
@@ -476,14 +482,15 @@ spec:
   rules:
   - host: config.od.com
     http:
-      paths: /
-      - backend: 
+      paths:
+      - path: /
+        backend: 
           serviceName: apollo-configservice
           servicePort: 8080
 {% endcode %}
 <!-- endtab -->
 <!-- tab ConfigMap -->
-[root@hdss7-200 apollo-configservice]# vi configmap.yaml
+vi configmap.yaml
 {% code %}
 apiVersion: v1
 kind: ConfigMap
@@ -507,9 +514,13 @@ data:
 在任意一台k8s运算节点执行：
 ```
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/apollo-configservice/configmap.yaml
+configmap/apollo-configservice-cm created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/apollo-configservice/deployment.yaml
+deployment.extensions/apollo-configservice created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/apollo-configservice/svc.yaml
+service/apollo-configservice created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/apollo-configservice/ingress.yaml
+ingress.extensions/apollo-configservice created
 ```
 
 ### 浏览器访问
@@ -668,7 +679,7 @@ v1.3.0: digest: sha256:75367caab9bad3d0d281eb3324451a0734e84b6aa3ee860e38ad758d7
 ```
 {% tabs apollo-adminservice-yaml%}
 <!-- tab Deployment -->
-[root@hdss7-200 apollo-adminservice]# vi deployment.yaml
+vi deployment.yaml
 {% code %}
 kind: Deployment
 apiVersion: extensions/v1beta1
@@ -690,8 +701,8 @@ spec:
     spec:
       volumes:
       - name: configmap-volume
-          configMap:
-            name: apollo-adminservice-cm
+        configMap:
+          name: apollo-adminservice-cm
       containers:
       - name: apollo-adminservice
         image: harbor.od.com/infra/apollo-adminservice:v1.3.0
@@ -704,6 +715,8 @@ spec:
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
         imagePullPolicy: IfNotPresent
+      imagePullSecrets:
+      - name: harbor
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       dnsPolicy: Default
@@ -720,7 +733,7 @@ spec:
 {% endcode %}
 <!-- endtab -->
 <!-- tab ConfigMap -->
-[root@hdss7-200 apollo-adminservice]# vi configmap.yaml
+vi configmap.yaml
 {% code %}
 apiVersion: v1
 kind: ConfigMap
@@ -744,7 +757,9 @@ data:
 在任意一台k8s运算节点执行：
 ```
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/apollo-adminservice/configmap.yaml
+configmap/apollo-adminservice-cm created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/apollo-adminservice/deployment.yaml
+deployment.extensions/apollo-adminservice created
 ```
 ### 浏览器访问
 http://config.od.com
@@ -931,7 +946,7 @@ portal	60 IN A 10.4.7.10
 ```
 {% tabs apollo-portal-yaml%}
 <!-- tab Deployment -->
-[root@hdss7-200 apollo-portal]# vi deployment.yaml
+vi deployment.yaml
 {% code %}
 kind: Deployment
 apiVersion: extensions/v1beta1
@@ -953,8 +968,8 @@ spec:
     spec:
       volumes:
       - name: configmap-volume
-          configMap:
-            name: apollo-portal-cm
+        configMap:
+          name: apollo-portal-cm
       containers:
       - name: apollo-portal
         image: harbor.od.com/infra/apollo-portal:v1.3.0
@@ -967,6 +982,8 @@ spec:
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
         imagePullPolicy: IfNotPresent
+      imagePullSecrets:
+      - name: harbor
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       dnsPolicy: Default
@@ -983,7 +1000,7 @@ spec:
 {% endcode %}
 <!-- endtab -->
 <!-- tab Service-->
-[root@hdss7-200 apollo-portal]# vi svc.yaml
+vi svc.yaml
 {% code %}
 kind: Service
 apiVersion: v1
@@ -1003,7 +1020,7 @@ spec:
 {% endcode %}
 <!-- endtab -->
 <!-- tab Ingress-->
-[root@hdss7-200 apollo-portal]# vi ingress.yaml
+vi ingress.yaml
 {% code %}
 kind: Ingress
 apiVersion: extensions/v1beta1
@@ -1014,14 +1031,15 @@ spec:
   rules:
   - host: portal.od.com
     http:
-      paths: /
-      - backend: 
+      paths:
+      - path: /
+        backend: 
           serviceName: apollo-portal
           servicePort: 8080
 {% endcode %}
 <!-- endtab -->
 <!-- tab ConfigMap -->
-[root@hdss7-200 apollo-portal]# vi configmap.yaml
+vi configmap.yaml
 {% code %}
 apiVersion: v1
 kind: ConfigMap
@@ -1046,9 +1064,13 @@ data:
 在任意一台k8s运算节点执行：
 ```
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/apollo-portal/configmap.yaml
+configmap/apollo-portal-cm created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/apollo-portal/deployment.yaml
+deployment.extensions/apollo-portal created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/apollo-portal/svc.yaml
+service/apollo-portal created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/apollo-portal/ingress.yaml
+ingress.extensions/apollo-portal created
 ```
 ### 浏览器访问
 http://portal.od.com
@@ -1206,14 +1228,18 @@ spec:
     spec:
       containers:
       - name: dubbo-demo-service
-        image: harbor.od.com/app/dubbo-demo-service:master_190118_1920
+        image: harbor.od.com/app/dubbo-demo-service:apollo_190119_1815
         ports:
         - containerPort: 20880
           protocol: TCP
         env:
         - name: C_OPTS
-          value: -Denv=dev,-Dapollo.meta=http://config.od.com
+          value: -Denv=dev -Dapollo.meta=http://config.od.com
+        - name: JAR_BALL
+          value: dubbo-server.jar
         imagePullPolicy: IfNotPresent
+      imagePullSecrets:
+      - name: harbor
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       dnsPolicy: Default
@@ -1236,6 +1262,7 @@ spec:
 在任意一台k8s运算节点上执行：
 ```
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-demo-service/deployment.yaml
+deployment.extensions/dubbo-demo-service configured
 ```
 ### 观察项目运行情况
 http://dubbo-monitor.od.com
@@ -1284,28 +1311,28 @@ http://dubbo-monitor.od.com
 ## 上线新构建的项目
 ### 准备资源配置清单
 运维主机`HDSS7-200.host.com`上：
-```vi /data/k8s-yaml/dubbo-demo-web/deployment.yaml
+```vi /data/k8s-yaml/dubbo-demo-consumer/deployment.yaml
 kind: Deployment
 apiVersion: extensions/v1beta1
 metadata:
-  name: dubbo-demo-web
+  name: dubbo-demo-consumer
   namespace: app
   labels: 
-    name: dubbo-demo-web
+    name: dubbo-demo-consumer
 spec:
   replicas: 1
   selector:
     matchLabels: 
-      name: dubbo-demo-web
+      name: dubbo-demo-consumer
   template:
     metadata:
       labels: 
-        app: dubbo-demo-web
-        name: dubbo-demo-web
+        app: dubbo-demo-consumer
+        name: dubbo-demo-consumer
     spec:
       containers:
-      - name: dubbo-demo-web
-        image: harbor.od.com/app/dubbo-demo-web:master_190118_1920
+      - name: dubbo-demo-consumer
+        image: harbor.od.com/app/dubbo-demo-consumer:apllo_190120_1815
         ports:
         - containerPort: 20880
           protocol: TCP
@@ -1313,8 +1340,12 @@ spec:
           protocol: TCP
         env:
         - name: C_OPTS
-          value: -Denv=dev,-Dapollo.meta=http://config.od.com
+          value: -Denv=dev -Dapollo.meta=http://config.od.com
+        - name: JAR_BALL
+          value: dubbo-client.jar
         imagePullPolicy: IfNotPresent
+      imagePullSecrets:
+      - name: harbor
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       dnsPolicy: Default
@@ -1337,6 +1368,7 @@ spec:
 在任意一台k8s运算节点上执行：
 ```
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-demo-web/deployment.yaml
+deployment.extensions/dubbo-demo-consumer configured
 ```
 
 ## 通过Apollo配置中心动态维护项目的配置
