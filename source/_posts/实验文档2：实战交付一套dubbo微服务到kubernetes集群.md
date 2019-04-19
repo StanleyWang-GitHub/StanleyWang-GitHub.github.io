@@ -807,6 +807,8 @@ spec:
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
         imagePullPolicy: IfNotPresent
+      imagePullSecrets:
+      - name: harbor
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       dnsPolicy: Default

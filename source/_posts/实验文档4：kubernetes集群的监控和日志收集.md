@@ -344,7 +344,351 @@ total 16
 ```
 
 # 使用Promethus和Grafana监控kubernetes集群
-## 安装部署
+## 安装部署metrics-server
+### 准备docker镜像
+在运维主机`HDSS7-200.host.com`上：
+1. 准备metrics-server镜像
+- 写Dockerfile
+
+```vi /data/dockerfile/metrics-server/Dockefile
+From stanleyws/metrics-server-amd64:v0.3.1
+ADD Shanghai /usr/share/zoneinfo/Asia/Shanghai
+RUN /bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime &&\ 
+    echo 'Asia/Shanghai' >/etc/timezone
+```
+- 制作镜像
+
+```
+[root@hdss7-200 metrics-server]# docker build . -t harbor.od.com/k8s/metrics-server:v0.3.1
+Sending build context to Docker daemon 3.072 kB
+Step 1 : FROM stanleyws/metrics-server-amd64:v0.3.1
+ ---> 78aaab498fde
+Step 2 : ADD /usr/share/zoneinfo/Asia/Shanghai /usr/share/zoneinfo/Asia/Shanghai
+ ---> ab00d1c83519
+Removing intermediate container 8faf73f203ac
+Step 3 : RUN /bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime &&    echo 'Asia/Shanghai' >/etc/timezone
+ ---> Running in cb9153d6949e
+ ---> 680b889e8ff2
+Removing intermediate container cb9153d6949e
+Successfully built 680b889e8ff2
+
+[root@hdss7-200 ~]# docker push harbor.od.com/k8s/metrics-server:v0.3.1
+docker push harbor.od.com/k8s/metrics-server:v0.3.1
+The push refers to a repository [harbor.od.com/k8s/metrics-server]
+6cd0e9e7cabb: Pushed 
+683f499823be: Pushed 
+v0.3.1: digest: sha256:a5308a794beedd0748df79db0fb076b07d2e0de3fa635de755a5841cf47d7e6b size: 739
+```
+2. 准备addon-resizer镜像
+- 写Dockerfile
+
+```vi /data/dockerfile/addon-resizer/Dockerfile
+From stanleyws/addon-resizer:v1.8.1
+ADD Shanghai /etc/localtime
+RUN echo 'Asia/Shanghai' >/etc/timezone
+```
+- 制作镜像
+
+```
+[root@hdss7-200 metrics-server]# docker build . -t harbor.od.com/k8s/addon-resizer:v1.8.1
+Sending build context to Docker daemon 3.072 kB
+Step 1 : FROM stanleyws/addon-resizer:v1.8.1
+ ---> 6c0dbeaa8d20
+Step 2 : ADD Shanghai /etc/localtime
+ ---> a232efdb7e52
+Removing intermediate container e1afd0f36a3e
+Step 3 : RUN echo 'Asia/Shanghai' >/etc/timezone
+ ---> Running in 335872d27b2b
+ ---> 279d4b02b4ab
+Removing intermediate container 335872d27b2b
+Successfully built 279d4b02b4ab
+
+[root@hdss7-200 ~]# docker push harbor.od.com/k8s/addon-resizer:v1.8.1
+docker push harbor.od.com/k8s/addon-resizer:v1.8.1
+The push refers to a repository [harbor.od.com/k8s/addon-resizer]
+6a40b7456b09: Pushed 
+0271b8eebde3: Pushed 
+v1.8.1: digest: sha256:507aa9845ecce1fdde4d61f530c802f4dc2974c700ce0db7730866e442db958d size: 738
+```
+### 准备metrics-server资源配置清单
+[metrics-server源码地址](https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/metrics-server)
+运维主机`HDSS7-200.host.com`上：
+```
+[root@hdss7-200 ~]# mkdir /data/k8s-yaml/metrics-server && cd /data/k8s-yaml/metrics-server
+```
+{% tabs metrics-server%}
+<!-- tab auth-delegator -->
+vi auth-delegator.yaml
+{% code %}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: metrics-server:system:auth-delegator
+  labels:
+    kubernetes.io/cluster-service: "true"
+    addonmanager.kubernetes.io/mode: Reconcile
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+- kind: ServiceAccount
+  name: metrics-server
+  namespace: kube-system
+{% endcode %}
+<!-- endtab -->
+<!-- tab auth-reader -->
+vi auth-reader.yaml
+{% code %}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: metrics-server-auth-reader
+  namespace: kube-system
+  labels:
+    kubernetes.io/cluster-service: "true"
+    addonmanager.kubernetes.io/mode: Reconcile
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: extension-apiserver-authentication-reader
+subjects:
+- kind: ServiceAccount
+  name: metrics-server
+  namespace: kube-system
+{% endcode %}
+<!-- endtab -->
+<!-- tab metrics-apiservice -->
+vi metrics-apiservice.yaml
+{% code %}
+apiVersion: apiregistration.k8s.io/v1beta1
+kind: APIService
+metadata:
+  name: v1beta1.metrics.k8s.io
+  labels:
+    kubernetes.io/cluster-service: "true"
+    addonmanager.kubernetes.io/mode: Reconcile
+spec:
+  service:
+    name: metrics-server
+    namespace: kube-system
+  group: metrics.k8s.io
+  version: v1beta1
+  insecureSkipTLSVerify: true
+  groupPriorityMinimum: 100
+  versionPriority: 100
+{% endcode %}
+<!-- endtab -->
+<!-- tab metrics-server-deployment -->
+vi metrics-server-deployment.yaml
+{% code %}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: metrics-server
+  namespace: kube-system
+  labels:
+    kubernetes.io/cluster-service: "true"
+    addonmanager.kubernetes.io/mode: Reconcile
+-\--
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: metrics-server-config
+  namespace: kube-system
+  labels:
+    kubernetes.io/cluster-service: "true"
+    addonmanager.kubernetes.io/mode: EnsureExists
+data:
+  NannyConfiguration: |-
+    apiVersion: nannyconfig/v1alpha1
+    kind: NannyConfiguration
+-\--
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metrics-server-v0.3.1
+  namespace: kube-system
+  labels:
+    k8s-app: metrics-server
+    kubernetes.io/cluster-service: "true"
+    addonmanager.kubernetes.io/mode: Reconcile
+    version: v0.3.1
+spec:
+  selector:
+    matchLabels:
+      k8s-app: metrics-server
+      version: v0.3.1
+  template:
+    metadata:
+      name: metrics-server
+      labels:
+        k8s-app: metrics-server
+        version: v0.3.1
+      annotations:
+        scheduler.alpha.kubernetes.io/critical-pod: ''
+        seccomp.security.alpha.kubernetes.io/pod: 'docker/default'
+    spec:
+      priorityClassName: system-cluster-critical
+      serviceAccountName: metrics-server
+      containers:
+      - name: metrics-server
+        image: harbor.od.com/k8s/metrics-server:v0.3.1
+        command:
+        - /metrics-server
+        - -\-metric-resolution=30s
+        # These are needed for GKE, which doesn't support secure communication yet.
+        # Remove these lines for non-GKE clusters, and when GKE supports token-based auth.
+        - -\-kubelet-port=10255
+        - -\-deprecated-kubelet-completely-insecure=true
+        ports:
+        - containerPort: 443
+          name: https
+          protocol: TCP
+      - name: metrics-server-nanny
+        image: harbor.od.com/k8s/addon-resizer:v1.8.1
+        resources:
+          limits:
+            cpu: 100m
+            memory: 300Mi
+          requests:
+            cpu: 5m
+            memory: 50Mi
+        env:
+          - name: MY_POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: MY_POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+        volumeMounts:
+        - name: metrics-server-config-volume
+          mountPath: /etc/config
+        command:
+          - /pod_nanny
+          - -\-config-dir=/etc/config
+          - -\-cpu=1000m
+          - -\-extra-cpu=0.5m
+          - -\-memory=4Gi
+          - -\-extra-memory=10Mi
+          - -\-threshold=5
+          - -\-deployment=metrics-server-v0.3.1
+          - -\-container=metrics-server
+          - -\-poll-period=300000
+          - -\-estimator=exponential
+      imagePullSecrets:
+      - name: harbor
+      volumes:
+        - name: metrics-server-config-volume
+          configMap:
+            name: metrics-server-config
+      tolerations:
+        - key: "CriticalAddonsOnly"
+          operator: "Exists"
+{% endcode %}
+<!-- endtab -->
+<!-- tab metrics-server-service -->
+vi metrics-server-service.yaml
+{% code %}
+apiVersion: v1
+kind: Service
+metadata:
+  name: metrics-server
+  namespace: kube-system
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+    kubernetes.io/cluster-service: "true"
+    kubernetes.io/name: "Metrics-server"
+spec:
+  selector:
+    k8s-app: metrics-server
+  ports:
+  - port: 443
+    protocol: TCP
+    targetPort: https
+{% endcode %}
+<!-- endtab -->
+<!-- tab resource-reader -->
+vi resource-reader.yaml
+{% code %}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: system:metrics-server
+  labels:
+    kubernetes.io/cluster-service: "true"
+    addonmanager.kubernetes.io/mode: Reconcile
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - nodes
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - "extensions"
+  resources:
+  - deployments
+  verbs:
+  - get
+  - list
+  - update
+  - watch
+-\--
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: system:metrics-server
+  labels:
+    kubernetes.io/cluster-service: "true"
+    addonmanager.kubernetes.io/mode: Reconcile
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:metrics-server
+subjects:
+- kind: ServiceAccount
+  name: metrics-server
+  namespace: kube-system
+{% endcode %}
+<!-- endtab -->
+{% endtabs %}
+
+### 应用资源配置清单
+任意一台运算节点上：
+```
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/metrics-server/aggregated-metrics-reader.yaml
+clusterrole.rbac.authorization.k8s.io/system:aggregated-metrics-reader created
+
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/metrics-server/auth-delegator.yaml
+clusterrolebinding.rbac.authorization.k8s.io/metrics-server:system:auth-delegator created
+
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/metrics-server/auth-reader.yaml
+rolebinding.rbac.authorization.k8s.io/metrics-server-auth-reader created
+
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/metrics-server/metrics-apiservice.yaml
+apiservice.apiregistration.k8s.io/v1beta1.metrics.k8s.io created
+serviceaccount/metrics-server created
+
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/metrics-server/metrics-server-deployment.yaml
+deployment.extensions/metrics-server created
+
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/metrics-server/metrics-server-service.yaml
+service/metrics-server created
+
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/metrics-server/resource-reader.yaml
+clusterrole.rbac.authorization.k8s.io/system:metrics-server created
+clusterrolebinding.rbac.authorization.k8s.io/system:metrics-server created
+```
+
+
+
 ## 监控集群
 ## 监控dubbo微服务
 
