@@ -323,6 +323,10 @@ server {
 }
 ```
 **注意：**这里需要自签ssl证书，自签过程略
+> (umask 077; openssl genrsa -out od.key 2048)
+> openssl req -new -key od.key -out  od.csr -subj "/CN=*.od.com/ST=Beijing/L=beijing/O=od/OU=ops"
+> openssl x509 -req -in od.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out od.crt -days 3650
+
 #### 启动
 ```
 [root@hdss7-200 harbor]# nginx
