@@ -58,10 +58,10 @@ HDSS7-200.host.com|k8s运维节点(docker仓库)|10.4.7.200
 > [cfssl-certinfo下载地址](https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64)
 
 ```
-[root@hdss7-200 ~]# curl -s -L -o /bin/cfssl https://pkg.cfssl.org/R1.2/cfssl_linux-amd64 
-[root@hdss7-200 ~]# curl -s -L -o /bin/cfssljson https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64 
-[root@hdss7-200 ~]# curl -s -L -o /bin/cfssl-certinfo https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64 
-[root@hdss7-200 ~]# chmod +x /bin/cfssl*
+[root@hdss7-200 ~]# curl -s -L -o /usr/bin/cfssl https://pkg.cfssl.org/R1.2/cfssl_linux-amd64 
+[root@hdss7-200 ~]# curl -s -L -o /usr/bin/cfssljson https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64 
+[root@hdss7-200 ~]# curl -s -L -o /usr/bin/cfssl-certinfo https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64 
+[root@hdss7-200 ~]# chmod +x /usr/bin/cfssl*
 ```
 ### 创建生成CA证书的JSON配置文件
 ```vi /opt/certs/ca-config.json
@@ -228,7 +228,7 @@ WantedBy=multi-user.target
 ### 下载软件二进制包并解压
 [harbor下载地址](https://storage.googleapis.com/harbor-releases/release-1.7.0/harbor-offline-installer-v1.7.1.tgz)
 ```pwd /opt/harbor
-[root@hdss7-200 harbor]# tar xf harbor-offline-installer-v1.7.1.tgz -C /opt/harbor
+[root@hdss7-200 harbor]# tar xf harbor-offline-installer-v1.7.1.tgz -C /opt
 
 [root@hdss7-200 harbor]# ll
 total 583848
@@ -480,7 +480,7 @@ total 12
 `HDSS7-12.host.com`上：
 ```vi /etc/supervisord.d/etcd-server.ini
 [program:etcd-server-7-12]
-command=/opt/etcd/etcd-server-startup.sh                     ; the program (relative uses PATH, can take args)
+command=/opt/etcd/etcd-server-startup.sh                        ; the program (relative uses PATH, can take args)
 numprocs=1                                                      ; number of processes copies to start (def 1)
 directory=/opt/etcd                                             ; directory to cwd to before exec (def no cwd)
 autostart=true                                                  ; start at supervisord start (default: true)
@@ -615,6 +615,7 @@ specifically, section 10.2.3 ("Information Requirements").
         "kubernetes.default.svc",
         "kubernetes.default.svc.cluster",
         "kubernetes.default.svc.cluster.local",
+        "10.4.7.10",
         "10.4.7.21",
         "10.4.7.22",
         "10.4.7.23"
@@ -780,7 +781,7 @@ rules:
 `HDSS7-21.host.com`上：
 ```vi /etc/supervisord.d/kube-apiserver.ini
 [program:kube-apiserver]
-command=/opt/kubernetes/server/bin/kube-apiserver.sh         ; the program (relative uses PATH, can take args)
+command=/opt/kubernetes/server/bin/kube-apiserver.sh            ; the program (relative uses PATH, can take args)
 numprocs=1                                                      ; number of processes copies to start (def 1)
 directory=/opt/kubernetes/server/bin                            ; directory to cwd to before exec (def no cwd)
 autostart=true                                                  ; start at supervisord start (default: true)
@@ -844,17 +845,16 @@ stream {
 #    interval 2 #检查脚本的频率,单位（秒）
 #}
 CHK_PORT=$1
-echo $CHK_PORT
-if [ "$CHK_PORT" != "" ];then
-
-	PORT_PROCESS=`lsof -i:$CHK_PORT|wc -l`
-	if [ $PORT_PROCESS -eq 0 ];then
-	echo "Port $CHK_PORT Is Not Used,End."
-        exit 1	
-	fi
+if [ -n "$CHK_PORT" ];then
+        PORT_PROCESS=`ss -lt|grep $CHK_PORT|wc -l`
+        if [ $PORT_PROCESS -eq 0 ];then
+                echo "Port $CHK_PORT Is Not Used,End."
+                exit 1
+        fi
 else
-	echo "Check Port Cant Be Empty!"
+        echo "Check Port Cant Be Empty!"
 fi
+
 ```
 ##### keepalived主
 `HDSS7-11.host.com`上
@@ -872,14 +872,14 @@ global_defs {
 }
 
 vrrp_script chk_nginx {
-    script "/etc/keepalived/check_port.sh 80"
+    script "/etc/keepalived/check_port.sh 7443"
     interval 2
     weight -20
 }
 
 vrrp_instance VI_1 {
     state MASTER
-    interface vir0
+    interface eth0
     virtual_router_id 251
     priority 100
     advert_int 1
@@ -911,13 +911,13 @@ global_defs {
 	router_id 10.4.7.12
 }
 vrrp_script chk_nginx {
-	script "/etc/keepalived/check_port.sh 80"
+	script "/etc/keepalived/check_port.sh 7443"
 	interval 2
 	weight -20
 }
 vrrp_instance VI_1 {
 	state BACKUP
-	interface vir0
+	interface eth0
 	virtual_router_id 251
 	mcast_src_ip 10.4.7.12
 	priority 90
@@ -1325,7 +1325,7 @@ v3.4: digest: sha256:73cc48728e707b74f99d17b4e802d836e22d373aee901fdcaa781b056cd
   --image-gc-high-threshold 20 \
   --image-gc-low-threshold 10 \
   --kubeconfig ./conf/kubelet.kubeconfig \
-  --log-dir /data/logs/kubernetes/kubelet \
+  --log-dir /data/logs/kubernetes/kube-kubelet \
   --pod-infra-container-image harbor.od.com/k8s/pod:v3.4 \
   --root-dir /data/kubelet
 ```
@@ -1527,28 +1527,28 @@ Switched to context "myk8s-context".
 `HDSS7-21.host.com`上：
 ```vi /etc/supervisord.d/kube-proxy.ini
 [program:kube-proxy]
-command=/opt/kubernetes/server/bin/kube-proxy-721.sh                     ; the program (relative uses PATH, can take args)
-numprocs=1                                                               ; number of processes copies to start (def 1)
-directory=/opt/kubernetes/server/bin                                     ; directory to cwd to before exec (def no cwd)
-autostart=true                                                           ; start at supervisord start (default: true)
-autorestart=true                                                         ; retstart at unexpected quit (default: true)
-startsecs=22                                                             ; number of secs prog must stay running (def. 1)
-startretries=3                                                           ; max # of serial start failures (default 3)
-exitcodes=0,2                                                            ; 'expected' exit codes for process (default 0,2)
-stopsignal=QUIT                                                          ; signal used to kill process (default TERM)
-stopwaitsecs=10                                                          ; max num secs to wait b4 SIGKILL (default 10)
+command=/opt/kubernetes/server/bin/kube-proxy-721.sh                 ; the program (relative uses PATH, can take args)
+numprocs=1                                                           ; number of processes copies to start (def 1)
+directory=/opt/kubernetes/server/bin                                 ; directory to cwd to before exec (def no cwd)
+autostart=true                                                       ; start at supervisord start (default: true)
+autorestart=true                                                     ; retstart at unexpected quit (default: true)
+startsecs=22                                                         ; number of secs prog must stay running (def. 1)
+startretries=3                                                       ; max # of serial start failures (default 3)
+exitcodes=0,2                                                        ; 'expected' exit codes for process (default 0,2)
+stopsignal=QUIT                                                      ; signal used to kill process (default TERM)
+stopwaitsecs=10                                                      ; max num secs to wait b4 SIGKILL (default 10)
 user=root                                                		         ; setuid to this UNIX account to run the program
 redirect_stderr=false                                           		 ; redirect proc stderr to stdout (default false)
-stdout_logfile=/data/logs/kubernetes/kube-proxy/proxy.stdout.log         ; stdout log path, NONE for none; default AUTO
+stdout_logfile=/data/logs/kubernetes/kube-proxy/proxy.stdout.log     ; stdout log path, NONE for none; default AUTO
 stdout_logfile_maxbytes=64MB                                    		 ; max # logfile bytes b4 rotation (default 50MB)
 stdout_logfile_backups=4                                        		 ; # of stdout logfile backups (default 10)
 stdout_capture_maxbytes=1MB                                     		 ; number of bytes in 'capturemode' (default 0)
 stdout_events_enabled=false                                     		 ; emit events on stdout writes (default false)
-stderr_logfile=/data/logs/kubernetes/kube-proxy/proxy.stderr.log         ; stderr log path, NONE for none; default AUTO
+stderr_logfile=/data/logs/kubernetes/kube-proxy/proxy.stderr.log     ; stderr log path, NONE for none; default AUTO
 stderr_logfile_maxbytes=64MB                                    		 ; max # logfile bytes b4 rotation (default 50MB)
 stderr_logfile_backups=4                                        		 ; # of stderr logfile backups (default 10)
-stderr_capture_maxbytes=1MB   						                     ; number of bytes in 'capturemode' (default 0)
-stderr_events_enabled=false   						                     ; emit events on stderr writes (default false)
+stderr_capture_maxbytes=1MB   						                           ; number of bytes in 'capturemode' (default 0)
+stderr_events_enabled=false   						                           ; emit events on stderr writes (default false)
 ```
 ### 启动服务并检查
 `HDSS7-21.host.com`上：
@@ -1734,11 +1734,11 @@ numprocs=1                                                   ; number of process
 directory=/opt/flannel                                       ; directory to cwd to before exec (def no cwd)
 autostart=true                                               ; start at supervisord start (default: true)
 autorestart=true                                             ; retstart at unexpected quit (default: true)
-startsecs=22       										     ; number of secs prog must stay running (def. 1)
-startretries=3     										     ; max # of serial start failures (default 3)
-exitcodes=0,2      										     ; 'expected' exit codes for process (default 0,2)
-stopsignal=QUIT    										     ; signal used to kill process (default TERM)
-stopwaitsecs=10    										     ; max num secs to wait b4 SIGKILL (default 10)
+startsecs=22                   ; number of secs prog must stay running (def. 1)
+startretries=3     				     ; max # of serial start failures (default 3)
+exitcodes=0,2      				     ; 'expected' exit codes for process (default 0,2)
+stopsignal=QUIT    				     ; signal used to kill process (default TERM)
+stopwaitsecs=10    				     ; max num secs to wait b4 SIGKILL (default 10)
 user=root                                                    ; setuid to this UNIX account to run the program
 redirect_stderr=false                                        ; redirect proc stderr to stdout (default false)
 stdout_logfile=/data/logs/flanneld/flanneld.stdout.log       ; stdout log path, NONE for none; default AUTO
