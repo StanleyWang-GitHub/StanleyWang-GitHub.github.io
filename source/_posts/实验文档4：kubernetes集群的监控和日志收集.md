@@ -92,7 +92,7 @@ MIN_HEAP=${MIN_HEAP:-"128m"}
 MAX_HEAP=${MAX_HEAP:-"128m"}
 JAVA_OPTS=${JAVA_OPTS:-"-Xmn384m -Xss256k -Duser.timezone=GMT+08  -XX:+DisableExplicitGC -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:+CMSParallelRemarkEnabled -XX:+UseCMSCompactAtFullCollection -XX:CMSFullGCsBeforeCompaction=0 -XX:+CMSClassUnloadingEnabled -XX:LargePageSizeInBytes=128m -XX:+UseFastAccessorMethods -XX:+UseCMSInitiatingOccupancyOnly -XX:CMSInitiatingOccupancyFraction=80 -XX:SoftRefLRUPolicyMSPerMB=0 -XX:+PrintClassHistogram  -Dfile.encoding=UTF8 -Dsun.jnu.encoding=UTF8"}
 CATALINA_OPTS="${CATALINA_OPTS}"
-JAVA_OPTS="${E_OPTS} ${C_OPTS} -Xms${MIN_HEAP} -Xmx${MAX_HEAP} ${JAVA_OPTS}"
+JAVA_OPTS="${M_OPTS} ${C_OPTS} -Xms${MIN_HEAP} -Xmx${MAX_HEAP} ${JAVA_OPTS}"
 sed -i -e "1a\JAVA_OPTS=\"$JAVA_OPTS\"" -e "1a\CATALINA_OPTS=\"$CATALINA_OPTS\"" /opt/tomcat/bin/catalina.sh
 
 cd /opt/tomcat && /opt/tomcat/bin/catalina.sh run
@@ -1073,16 +1073,6 @@ scrape_configs:
     regex: (.+)
     target_label: __address__
     replacement: ${1}:10255
-- job_name: 'kubernetes-cadvisor'
-  kubernetes_sd_configs:
-  - role: node
-  relabel_configs:
-  - action: labelmap
-    regex: __meta_kubernetes_node_label_(.+)
-  - source_labels: [__meta_kubernetes_node_name]
-    regex: (.+)
-    target_label: __address__
-    replacement: ${1}:4194
 - job_name: 'kubernetes-kube-state'
   kubernetes_sd_configs:
   - role: pod
@@ -1119,7 +1109,7 @@ scrape_configs:
     target_label: __param_target
   - action: replace
     target_label: __address__
-    replacement: http://blackbox.od.com
+    replacement: blackbox-exporter.kube-system:9115
   - source_labels: [__param_target]
     target_label: instance
   - action: labelmap
@@ -1147,7 +1137,7 @@ scrape_configs:
     target_label: __param_target
   - action: replace
     target_label: __address__
-    replacement: http://blackbox.od.com
+    replacement: blackbox-exporter.kube-system:9115
   - source_labels: [__param_target]
     target_label: instance
   - action: labelmap
@@ -1198,9 +1188,613 @@ service/prometheus created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/prometheus/ingress.yaml
 ingress.extensions/prometheus created
 ```
+### 解析域名
+`HDSS7-11.host.com`上
+```vi /var/named/od.com.zone
+prometheus	60 IN A 10.4.7.10
+```
+
+### 浏览器访问
+http://prometheus.od.com
+
+### Prometheus监控内容
+Targets（jobs）
+#### etcd
+> 监控etcd服务
+
+key|value
+-|-
+etcd_server_has_leader|1
+etcd_http_failed_total|1
+...|...
+
+#### kubernetes-apiserver
+> 监控apiserver服务
+
+#### kubernetes-kubelet
+> 监控kubelet服务
+
+#### kubernetes-kube-state
+监控基本信息
+- node-exporter
+> 监控Node节点信息
+
+- kube-state-metrics
+> 监控pod信息
+
+#### traefik
+> 监控traefik-ingress-controller
+
+key|value
+-|-
+traefik_entrypoint_requests_total{code="200",entrypoint="http",method="PUT",protocol="http"}|138
+traefik_entrypoint_requests_total{code="200",entrypoint="http",method="GET",protocol="http"}|285
+traefik_entrypoint_open_connections{entrypoint="http",method="PUT",protocol="http"}|1
+...|...
+
+**注意：在traefik的pod控制器上加annotations，并重启pod，监控生效**
+配置范例：
+```
+"annotations": {
+  "prometheus_io_scheme": "traefik",
+  "prometheus_io_path": "/metrics",
+  "prometheus_io_port": "8080"
+}
+```
+
+#### blackbox*
+监控服务是否存活
+- blackbox_tcp_pod_porbe
+> 监控tcp协议服务是否存活
+
+key|value
+-|-
+probe_success|1
+probe_ip_protocol|4
+probe_failed_due_to_regex|0
+probe_duration_seconds|0.000597546
+probe_dns_lookup_time_seconds|0.00010898
+
+**注意：在pod控制器上加annotations，并重启pod，监控生效**
+配置范例：
+```
+"annotations": {
+  "blackbox_port": "20880",
+  "blackbox_scheme": "tcp"
+}
+```
+
+- blackbox_http_pod_probe
+> 监控http协议服务是否存活
+
+key|value
+-|-
+probe_success|1
+probe_ip_protocol|4
+probe_http_version|1.1
+probe_http_status_code|200
+probe_http_ssl|0
+probe_http_redirects|1
+probe_http_last_modified_timestamp_seconds|1.553861888e+09
+probe_http_duration_seconds{phase="transfer"}|0.000238343
+probe_http_duration_seconds{phase="tls"}|0
+probe_http_duration_seconds{phase="resolve"}|5.4095e-05
+probe_http_duration_seconds{phase="processing"}|0.000966104
+probe_http_duration_seconds{phase="connect"}|0.000520821
+probe_http_content_length|716
+probe_failed_due_to_regex|0
+probe_duration_seconds|0.00272609
+probe_dns_lookup_time_seconds|5.4095e-05
+
+**注意：在pod控制器上加annotations，并重启pod，监控生效**
+配置范例：
+```
+"annotations": {
+  "blackbox_path": "/",
+  "blackbox_port": "8080",
+  "blackbox_scheme": "http"
+}
+```
+
+#### kubernetes-pods*
+> 监控JVM信息
+
+key|value
+-|-
+jvm_info{version="1.7.0_80-b15",vendor="Oracle Corporation",runtime="Java(TM) SE Runtime Environment",}|1.0
+jmx_config_reload_success_total|0.0
+process_resident_memory_bytes|4.693897216E9
+process_virtual_memory_bytes|1.2138840064E10
+process_max_fds|65536.0
+process_open_fds|123.0
+process_start_time_seconds|1.54331073249E9
+process_cpu_seconds_total|196465.74
+jvm_buffer_pool_used_buffers{pool="mapped",}|0.0
+jvm_buffer_pool_used_buffers{pool="direct",}|150.0
+jvm_buffer_pool_capacity_bytes{pool="mapped",}|0.0
+jvm_buffer_pool_capacity_bytes{pool="direct",}|6216688.0
+jvm_buffer_pool_used_bytes{pool="mapped",}|0.0
+jvm_buffer_pool_used_bytes{pool="direct",}|6216688.0
+jvm_gc_collection_seconds_sum{gc="PS MarkSweep",}|1.867
+...|...
+
+**注意：在pod控制器上加annotations，并重启pod，监控生效**
+配置范例：
+```
+"annotations": {
+  "prometheus_io_scrape": "true",
+  "prometheus_io_port": "12346",
+  "prometheus_io_path": "/"
+}
+```
+
+### 修改traefik服务接入prometheus监控
+`dashboard`上：
+kube-system名称空间->daemonset->traefik-ingress-controller->spec.template下，添加
+```
+"annotations": {
+  "prometheus_io_scheme": "traefik",
+  "prometheus_io_path": "/metrics",
+  "prometheus_io_port": "8080"
+}
+```
+删除pod，重启traefik，观察监控
+
+继续添加blackbox监控配置项
+```
+"annotations": {
+  "prometheus_io_scheme": "traefik",
+  "prometheus_io_path": "/metrics",
+  "prometheus_io_port": "8080"
+  "blackbox_path": "/",
+  "blackbox_port": "8080",
+  "blackbox_scheme": "http"
+}
+```
+### 修改dubbo-service服务接入prometheus监控
+`dashboard`上：
+app名称空间->deployment->dubbo-demo-service->spec.template下，添加
+```
+"annotations": {
+  "prometheus_io_scrape": "true",
+  "prometheus_io_path": "/",
+  "prometheus_io_port": "12346",
+  "blackbox_port": "20880",
+  "blackbox_scheme": "tcp"
+}
+```
+删除pod，重启traefik，观察监控
+
+### 修改dubbo-consumer服务接入prometheus监控
+app名称空间->deployment->dubbo-demo-consumer->spec.template下，添加
+```
+"annotations": {
+  "prometheus_io_scrape": "true",
+  "prometheus_io_path": "/",
+  "prometheus_io_port": "12346",
+  "blackbox_path": "/hello",
+  "blackbox_port": "8080",
+  "blackbox_scheme": "http"
+}
+```
+删除pod，重启traefik，观察监控
+
 ## 部署Grafana
+运维主机`HDSS7-200.host.com`上：
+### 准备grafana镜像
+[grafana官方dockerhub地址](https://hub.docker.com/r/grafana/grafana)
+[grafana官方github地址](https://github.com/grafana/grafana)
+[grafana官网](https://grafana.com/)
+```
+[root@hdss7-200 ~]# docker pull grafana/grafana:6.1.4
+6.1.4: Pulling from grafana/grafana
+27833a3ba0a5: Pull complete 
+9412d126b236: Pull complete 
+1b7d6aaa6217: Pull complete 
+530d1110a8c8: Pull complete 
+fdcf73917f64: Pull complete 
+f5009e3ea28a: Pull complete 
+Digest: sha256:c2100550937e7aa0f3e33c2fc46a8c9668c3b5f2f71a8885e304d35de9fea009
+Status: Downloaded newer image for grafana/grafana:6.1.4
+[root@hdss7-200 ~]# docker tag d9bdb6044027 harbor.od.com/infra/grafana:v6.1.4
+[root@hdss7-200 ~]# docker push harbor.od.com/infra/grafana:v6.1.4
+docker push harbor.od.com/infra/grafana:v6.1.4
+The push refers to a repository [harbor.od.com/infra/grafana]
+b57e9e94fc2d: Pushed 
+3d4e16e25cba: Pushed 
+9642e67d431a: Pushed 
+af52591a894f: Pushed 
+0a8c2d04bf65: Pushed 
+5dacd731af1b: Pushed 
+v6.1.4: digest: sha256:db87ab263f90bdae66be744ac7935f6980c4bbd30c9756308e7382e00d4eeae8 size: 1576
+```
+
+### 准备资源配置清单
+{% tabs grafana%}
+<!-- tab Deployment -->
+vi /data/k8s-yaml/grafana/deployment.yaml
+{% code %}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: grafana
+    name: grafana
+  name: grafana
+  namespace: infra
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 7
+  selector:
+    matchLabels:
+      name: grafana
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: grafana
+        name: grafana
+    spec:
+      containers:
+      - image: harbor.od.com/infra/grafana:v6.1.4
+        imagePullPolicy: IfNotPresent
+        name: grafana
+        ports:
+        - containerPort: 3000
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /var/lib/grafana
+          name: data
+      imagePullSecrets:
+      - name: harbor
+      dnsPolicy: Default
+      nodeName: 10.4.7.21
+      restartPolicy: Always
+      securityContext:
+        runAsUser: 0
+      volumes:
+      - hostPath:
+          path: /data/k8s-volume/grafana
+          type: ""
+        name: data
+{% endcode %}
+<!-- endtab -->
+<!-- tab Service-->
+vi /data/k8s-yaml/grafana/service.yaml
+{% code %}
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: infra
+spec:
+  ports:
+  - port: 3000
+    protocol: TCP
+  selector:
+    app: grafana
+  type: ClusterIP
+{% endcode %}
+<!-- endtab -->
+<!-- tab Ingress-->
+vi /data/k8s-yaml/grafana/ingress.yaml
+{% code %}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: grafana
+  namespace: infra
+spec:
+  rules:
+  - host: grafana.od.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: grafana
+          servicePort: 3000
+{% endcode %}
+<!-- endtab -->
+{% endtabs %}
+
+### 应用资源配置清单
+任意运算节点上：
+```
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/grafana/deployment.yaml 
+deployment.extensions/grafana created
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/grafana/service.yaml 
+service/grafana created
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/grafana/ingress.yaml 
+ingress.extensions/grafana created
+```
+
+### 解析域名
+`HDSS7-11.host.com`上
+```vi /var/named/od.com.zone
+grafana	60 IN A 10.4.7.10
+```
+
+### 浏览器访问
+http://grafana.od.com
+
+- 用户名：admin
+- 密  码：admin
+
+登录后需要修改管理员密码
+![grafana首次登录](/images/grafana-password.png "修改管理员密码")
+
+### 配置grafana页面
+#### 外观
+Configuration -> Preferences
+- UI Theme
+> Light
+
+- Home Dashboard
+> Default
+
+- Timezone
+> Local browser time
+
+save
+
+#### 插件
+Configuration -> Plugins
+- Kubernetes App
+
+安装方法一：
+```
+grafana-cli plugins install grafana-kubernetes-app
+```
+安装方法二：
+[下载地址](https://grafana.com/api/plugins/grafana-kubernetes-app/versions/1.0.1/download -O grafana-kubernetes-app.zip)
+```pwd /data/k8s-volume/grafana/plugins
+[root@hdss7-21 plugins]# wget https://grafana.com/api/plugins/grafana-kubernetes-app/versions/1.0.1/download
+--2019-04-28 16:15:33--  https://grafana.com/api/plugins/grafana-kubernetes-app/versions/1.0.1/download
+Resolving grafana.com (grafana.com)... 35.241.23.245
+Connecting to grafana.com (grafana.com)|35.241.23.245|:443... connected.
+HTTP request sent, awaiting response... 302 Found
+Location: https://codeload.github.com/grafana/kubernetes-app/legacy.zip/31da38addc1d0ce5dfb154737c9da56e3b6692fc [following]
+--2019-04-28 16:15:37--  https://codeload.github.com/grafana/kubernetes-app/legacy.zip/31da38addc1d0ce5dfb154737c9da56e3b6692fc
+Resolving codeload.github.com (codeload.github.com)... 13.229.189.0, 13.250.162.133, 54.251.140.56
+Connecting to codeload.github.com (codeload.github.com)|13.229.189.0|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 3084524 (2.9M) [application/zip]
+Saving to: ‘grafana-kubernetes-app.zip’
+
+100%[===================================================================================================================>] 3,084,524    116KB/s   in 12s    
+
+2019-04-28 16:15:51 (250 KB/s) - ‘grafana-kubernetes-app.zip’ saved [3084524/3084524]
+[root@hdss7-21 plugins]# unzip grafana-kubernetes-app.zip
+```
+
+- Clock Pannel
+
+安装方法一：
+```
+grafana-cli plugins install grafana-clock-panel
+```
+
+安装方法二：
+[下载地址](https://grafana.com/api/plugins/grafana-clock-panel/versions/1.0.2/download)
+
+- Pie Chart
+
+安装方法一：
+```
+grafana-cli plugins install grafana-piechart-panel
+```
+
+安装方法二：
+[下载地址](https://grafana.com/api/plugins/grafana-piechart-panel/versions/1.3.6/download)
+
+- D3 Gauge
+
+安装方法一：
+```
+grafana-cli plugins install briangann-gauge-panel
+```
+
+安装方法二：
+[下载地址](https://grafana.com/api/plugins/briangann-gauge-panel/versions/0.0.6/download)
+
+- Discrete
+
+安装方法一：
+```
+grafana-cli plugins install natel-discrete-panel
+```
+
+安装方法二：
+[下载地址](https://grafana.com/api/plugins/natel-discrete-panel/versions/0.0.9/download)
+
+- 重启grafana的pod
+
+- 依次enable插件
+
+### 配置grafana数据源
+Configuration -> Data Sources
+选择prometheus
+- HTTP
+
+key|value
+-|-
+URL|http://prometheus.od.com
+Access|Server(Default)
+
+- Save & Test
+
+![Grafana数据源](/images/grafana-datasource.png "grafana数据源")
+
+
+### 配置Kubernetes集群Dashboard
+kubernetes -> +New Cluster
+- Add a new cluster
+
+key|value
+-|-
+Name|myk8s
+
+- HTTP
+
+key|value
+-|-
+URL|https://10.4.7.10:7443
+Access|Server(Default)
+
+- Auth
+
+key|value
+-|-
+TLS Client Auth| 勾选
+With Ca Cert|勾选
+
+将ca.pem、client.pem和client-key.pem粘贴至文本框内
+
+- Prometheus Read
+
+key|value
+-|-
+Datasource|Prometheus
+
+- Save
+
+### 配置自定义dashboard
+根据Prometheus数据源里的数据，配置如下dashboard：
+- etcd dashboard
+- traefik dashboard
+- generic dashboard
+- JMX dashboard
+
+{% tabs grafana-dashboard %}
+<!-- tab ETCD -->
+见附件
+<!-- endtab -->
+<!-- tab TRAEFIK-->
+见附件
+<!-- endtab -->
+<!-- tab GENERIC -->
+见附件
+<!-- endtab -->
+<!-- tab JMX -->
+见附件
+<!-- endtab -->
+{% endtabs %}
+
 
 # 使用ELK Stack收集kubernetes集群内的应用日志
-## 系统架构
-## 安装部署配置
-## Kibana的使用
+## 部署ElasticSearch
+[官网](https://www.elastic.co/)
+[官方github地址](https://github.com/elastic/elasticsearch)
+[下载地址](https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.6.15.tar.gz)
+`HDSS7-12.host.com`上：
+### 安装
+```pwd /opt/src
+[root@hdss7-12 src]# ls -l|grep elasticsearch-5.6.15.tar.gz
+-rw-r--r-- 1 root root  72262257 Jan 30 15:18 elasticsearch-5.6.15.tar.gz
+[root@hdss7-12 src]# tar xf elasticsearch-5.6.15.tar.gz -C /opt
+[root@hdss7-12 src]# ln -s /opt/elasticsearch-5.6.15/ /opt/elasticsearch
+```
+### 配置
+- elasticsearch.yml
+
+```
+[root@hdss7-12 src]# mkdir -p /data/elasticsearch/{data,logs}
+[root@hdss7-12 elasticsearch]# vi config/elasticsearch.yml
+cluster.name: es.od.com
+node.name: hdss7-12.host.com
+path.data: /data/elasticsearch/data
+path.logs: /data/elasticsearch/logs
+bootstrap.memory_lock: true
+network.host: 10.4.7.12
+http.port: 9200
+```
+- jvm.options
+
+```
+[root@hdss7-12 elasticsearch]# vi config/jvm.options
+-Xms1g
+-Xmx1g
+```
+
+### 启动
+```
+```
+
+## 部署kafka
+[官网](http://kafka.apache.org/)
+[官方github地址](https://github.com/apache/kafka)
+[下载地址](http://mirrors.tuna.tsinghua.edu.cn/apache/kafka/2.2.0/kafka_2.12-2.2.0.tgz)
+`HDSS7-11.host.com`上：
+### 安装
+```pwd /opt/src
+[root@hdss7-11 src]# ls -l|grep kafka
+-rw-r--r-- 1 root root  57028557 Mar 23 08:57 kafka_2.12-2.2.0.tgz
+[root@hdss7-11 src]# tar xf kafka_2.12-2.2.0.tgz -C /opt
+[root@hdss7-11 src]# ln -s /opt/kafka_2.12-2.2.0/ /opt/kafka
+```
+### 配置
+
+### 启动
+
+## 部署kafka-manager
+[官方github地址](https://github.com/yahoo/kafka-manager)
+[下载地址](https://github.com/yahoo/kafka-manager/archive/2.0.0.2.tar.gz)
+运维主机`HDSS7-200.host.com`上：
+### 下载
+```pwd /opt/src
+[root@hdss7-200 src]# ls -l |grep 2.0.0.2
+drwxrwxr-x   9 root root       189 Apr 12 01:36 2.0.0.2.tar.gz
+[root@hdss7-200 src]# mkdir /data/dockerfile/kafka-manager
+[root@hdss7-200 src]# tar xf 2.0.0.2.tar.gz -C /data/dockerfile/kafka-manager
+```
+### 制作docker镜像
+```vi /data/dockerfile/kafka-manager/Dockerfile
+FROM hseeberger/scala-sbt
+
+ENV ZK_HOSTS=10.4.7.12:2181 \
+     KM_VERSION=2.0.0.2
+
+RUN mkdir -p /tmp && \
+    cd /tmp && \
+    wget https://github.com/yahoo/kafka-manager/archive/${KM_VERSION}.tar.gz && \
+    tar xxf ${KM_VERSION}.tar.gz && \
+    cd /tmp/kafka-manager-${KM_VERSION} && \
+    sbt clean dist && \
+    unzip  -d / ./target/universal/kafka-manager-${KM_VERSION}.zip && \
+    rm -fr /tmp/${KM_VERSION} /tmp/kafka-manager-${KM_VERSION}
+
+WORKDIR /kafka-manager-${KM_VERSION}
+
+EXPOSE 9000
+ENTRYPOINT ["./bin/kafka-manager","-Dconfig.file=conf/application.conf"]
+```
+### 准备资源配置清单
+
+### 应用资源配置清单
+
+## 部署filebeat
+### 制作docker镜像
+#### 准备底包
+#### 准备Dockerfile
+#### 制作镜像
+### 修改资源配置清单
+
+## 部署logstash
+### 准备docker镜像
+### 启动docker镜像
+
+## 部署Kibana
+### 准备docker镜像
+### 准备资源配置清单
+### 应用资源配置清单
+
+## kibana的使用
+### 时间选择器
+### 环境选择器
+### 项目选择器
+### 关键字选择器

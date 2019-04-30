@@ -324,8 +324,8 @@ server {
 ```
 **注意：**这里需要自签ssl证书，自签过程略
 > (umask 077; openssl genrsa -out od.key 2048)
-> openssl req -new -key od.key -out  od.csr -subj "/CN=*.od.com/ST=Beijing/L=beijing/O=od/OU=ops"
-> openssl x509 -req -in od.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out od.crt -days 3650
+> openssl req -new -key od.key -out od.csr -subj "/CN=*.od.com/ST=Beijing/L=beijing/O=od/OU=ops"
+> openssl x509 -req -in od.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out od.crt -days 365
 
 #### 启动
 ```
@@ -2123,6 +2123,12 @@ spec:
         - -\-kubernetes
         - -\-logLevel=INFO
         - -\-insecureskipverify=true
+        - -\-kubernetes.endpoint=https://10.4.7.10:7443
+        - -\-accesslog
+        - -\-accesslog.filepath=/var/log/traefik_access.log
+        - -\-traefiklog
+        - -\-traefiklog.filepath=/var/log/traefik.log
+        - -\-metrics.prometheus
       imagePullSecrets:
       - name: harbor
 {% endcode %}

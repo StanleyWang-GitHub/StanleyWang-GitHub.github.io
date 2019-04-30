@@ -1098,7 +1098,7 @@ vi entrypoint.sh  (不要忘了给执行权限)
 M_OPTS="-Duser.timezone=Asia/Shanghai -javaagent:/opt/prom/jmx_javaagent-0.3.1.jar=$(hostname -i):${M_PORT:-"12346"}:/opt/prom/config.yml"
 C_OPTS=${C_OPTS}
 JAR_BALL=${JAR_BALL}
-exec java -jar ${M_OPS} ${C_OPTS} ${JAR_BALL}
+exec java -jar ${M_OPTS} ${C_OPTS} ${JAR_BALL}
 {% endcode %}
 <!-- endtab -->
 {% endtabs %}
