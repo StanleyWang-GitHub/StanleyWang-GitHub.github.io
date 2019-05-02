@@ -1806,13 +1806,13 @@ e0daa8927b68: Pull complete
 3928e47de029: Pull complete 
 Digest: sha256:02382353821b12c21b062c59184e227e001079bb13ebd01f9d3270ba0fcbf1e4
 Status: Downloaded newer image for coredns/coredns:1.3.1
-[root@hdss7-200 ~]# docker tag eb516548c180 harbor.od.com/k8s/coredns:1.3.1
-[root@hdss7-200 ~]# docker push harbor.od.com/k8s/coredns:1.3.1
-docker push harbor.od.com/k8s/coredns:1.3.1
+[root@hdss7-200 ~]# docker tag eb516548c180 harbor.od.com/k8s/coredns:v1.3.1
+[root@hdss7-200 ~]# docker push harbor.od.com/k8s/coredns:v1.3.1
+docker push harbor.od.com/k8s/coredns:v1.3.1
 The push refers to a repository [harbor.od.com/k8s/coredns]
 c6a5fc8a3f01: Pushed 
 fb61a074724d: Pushed 
-1.3.1: digest: sha256:e077b9680c32be06fc9652d57f64aa54770dd6554eb87e7a00b97cf8e9431fda size: 739
+v1.3.1: digest: sha256:e077b9680c32be06fc9652d57f64aa54770dd6554eb87e7a00b97cf8e9431fda size: 739
 ```
 任意一台运算节点上：
 ```
@@ -1920,7 +1920,7 @@ spec:
       serviceAccountName: coredns
       containers:
       - name: coredns
-        image: harbor.od.com/k8s/coredns:1.3.1
+        image: harbor.od.com/k8s/coredns:v1.3.1
         args:
         - -conf
         - /etc/coredns/Corefile
@@ -2022,14 +2022,14 @@ de06b5685128: Pull complete
 c4d82a21fa27: Pull complete 
 Digest: sha256:0531581bde9da0670fc2c7a4e419e1cc38abff74e7ba06410bf2b1b55c70ef15
 Status: Downloaded newer image for traefik:v1.7-alpine
-[root@hdss7-200 ~]# docker tag 1930b7508541 harbor.od.com/k8s/traefik:1.7       
-[root@hdss7-200 ~]# docker push harbor.od.com/k8s/traefik:1.7
+[root@hdss7-200 ~]# docker tag 1930b7508541 harbor.od.com/k8s/traefik:v1.7       
+[root@hdss7-200 ~]# docker push harbor.od.com/k8s/traefik:v1.7
 The push refers to a repository [harbor.od.com/k8s/traefik]
 a3e3d574f6ae: Pushed 
 a7c355c1a104: Pushed 
 e89059911fc9: Pushed 
 a464c54f93a9: Mounted from infra/apollo-portal 
-1.7: digest: sha256:8f92899f5feb08db600c89d3016145e838fa7ff0d316ee21ecd63d9623643410 size: 1157
+v1.7: digest: sha256:8f92899f5feb08db600c89d3016145e838fa7ff0d316ee21ecd63d9623643410 size: 1157
 ```
 ### 准备资源配置清单
 运维主机`HDSS7-200.host.com`上：
@@ -2104,7 +2104,7 @@ spec:
       serviceAccountName: traefik-ingress-controller
       terminationGracePeriodSeconds: 60
       containers:
-      - image: harbor.od.com/k8s/traefik:1.7
+      - image: harbor.od.com/k8s/traefik:v1.7
         name: traefik-ingress-lb
         ports:
         - name: http
@@ -2230,12 +2230,12 @@ v1.8.3: Pulling from k8scn/kubernetes-dashboard-amd64
 a4026007c47e: Pull complete 
 Digest: sha256:ebc993303f8a42c301592639770bd1944d80c88be8036e2d4d0aa116148264ff
 Status: Downloaded newer image for k8scn/kubernetes-dashboard-amd64:v1.8.3
-[root@hdss7-200 ~]# docker tag 0c60bcf89900 harbor.od.com/k8s/dashboard:1.8.3
-[root@hdss7-200 ~]# docker push harbor.od.com/k8s/dashboard:1.8.3
-docker push harbor.od.com/k8s/dashboard:1.8.3
+[root@hdss7-200 ~]# docker tag 0c60bcf89900 harbor.od.com/k8s/dashboard:v1.8.3
+[root@hdss7-200 ~]# docker push harbor.od.com/k8s/dashboard:v1.8.3
+docker push harbor.od.com/k8s/dashboard:v1.8.3
 The push refers to a repository [harbor.od.com/k8s/dashboard]
 23ddb8cbb75a: Pushed 
-1.8.3: digest: sha256:e76c5fe6886c99873898e4c8c0945261709024c4bea773fc477629455631e472 size: 529
+v1.8.3: digest: sha256:e76c5fe6886c99873898e4c8c0945261709024c4bea773fc477629455631e472 size: 529
 ```
 ### 准备资源配置清单
 运维主机`HDSS7-200.host.com`上：
@@ -2379,7 +2379,7 @@ spec:
       priorityClassName: system-cluster-critical
       containers:
       - name: kubernetes-dashboard
-        image: harbor.od.com/k8s/dashboard:1.8.3
+        image: harbor.od.com/k8s/dashboard:v1.8.3
         resources:
           limits:
             cpu: 100m
