@@ -746,10 +746,30 @@ Successfully built 64c74242ee28
 [root@hdss7-200 jenkins]# docker push harbor.od.com/infra/jenkins:v2.164.1
 ```
 
+## 准备共享存储
+运维主机，以及所有运算节点上：
+```
+# yum install nfs-utils -y
+```
+- 配置NFS服务
+
+运维主机`HDSS7-200.host.com`上：
+```vi /etc/exports
+/data/nfs-volume 10.4.7.0/8(rw,no_root_squash)
+```
+- 启动NFS服务
+
+运维主机`HDSS7-200.host.com`上：
+```
+[root@hdss7-200 ~]# mkdir -p /data/nfs-volume
+[root@hdss7-200 ~]# systemctl start nfs
+[root@hdss7-200 ~]# systemctl enable nfs
+```
+
 ## 准备资源配置清单
-在运维主机`HDSS7-200.host.com`上
+运维主机`HDSS7-200.host.com`上：
 ```pwd /data/k8s-yaml
-[root@hdss7-200 k8s-yaml]# mkdir /data/k8s-yaml/jenkins && cd /data/k8s-yaml/jenkins
+[root@hdss7-200 k8s-yaml]# mkdir /data/k8s-yaml/jenkins && mkdir /data/nfs-volume/jenkins_home && cd /data/k8s-yaml/jenkins 
 ```
 {% tabs jenkins-yaml%}
 <!-- tab Deployment -->
@@ -773,12 +793,11 @@ spec:
         app: jenkins 
         name: jenkins
     spec:
-      nodeName: 10.4.7.22
       volumes:
       - name: data
-        hostPath: 
-          path: /data/k8s-volume/jenkins_home
-          type: ''
+        nfs: 
+          server: hdss7-200
+          path: /data/nfs-volume/jenkins_home
       - name: docker
         hostPath: 
           path: /run/docker.sock

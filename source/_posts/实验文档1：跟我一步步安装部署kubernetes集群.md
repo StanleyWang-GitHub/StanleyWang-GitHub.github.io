@@ -1825,8 +1825,8 @@ fb61a074724d: Pushed
 ```
 
 {% tabs coredns%}
-<!-- tab RoleBinding -->
-vi /data/k8s-yaml/coredns/rolebinding.yaml
+<!-- tab RBAC -->
+vi /data/k8s-yaml/coredns/rbac.yaml
 {% code %}
 apiVersion: v1
 kind: ServiceAccount
@@ -1985,7 +1985,7 @@ spec:
 浏览器打开：http://k8s-yaml.od.com/coredns 检查资源配置清单文件是否正确创建
 在任意运算节点上应用资源配置清单
 ```
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/coredns/rolebinding.yaml
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/coredns/rbac.yaml
 serviceaccount/coredns created
 clusterrole.rbac.authorization.k8s.io/system:coredns created
 clusterrolebinding.rbac.authorization.k8s.io/system:coredns created
@@ -2037,8 +2037,8 @@ a464c54f93a9: Mounted from infra/apollo-portal
 [root@hdss7-200 ~]# mkdir -p /data/k8s-yaml/traefik && cd /data/k8s-yaml/traefik
 ```
 {% tabs traefik%}
-<!-- tab Rolebinding -->
-vi /data/k8s-yaml/traefik/rolebinding.yaml
+<!-- tab RBAC -->
+vi /data/k8s-yaml/traefik/rbac.yaml
 {% code %}
 apiVersion: v1
 kind: ServiceAccount
@@ -2185,7 +2185,7 @@ traefik	60 IN A 10.4.7.10
 浏览器打开：http://k8s-yaml.od.com/traefik 检查资源配置清单文件是否正确创建
 在任意运算节点应用资源配置清单
 ```
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/traefik/rolebinding.yaml 
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/traefik/rbac.yaml 
 serviceaccount/traefik-ingress-controller created
 clusterrole.rbac.authorization.k8s.io/traefik-ingress-controller created
 clusterrolebinding.rbac.authorization.k8s.io/traefik-ingress-controller created
@@ -2243,8 +2243,8 @@ The push refers to a repository [harbor.od.com/k8s/dashboard]
 [root@hdss7-200 ~]# mkdir -p /data/k8s-yaml/dashboard && cd /data/k8s-yaml/dashboard
 ```
 {% tabs dashboard%}
-<!-- tab RoleBinding -->
-vi /data/k8s-yaml/dashboard/rolebinding.yaml
+<!-- tab RBAC -->
+vi /data/k8s-yaml/dashboard/rbac.yaml
 {% code %}
 apiVersion: v1
 kind: ServiceAccount
@@ -2431,7 +2431,7 @@ dashboard	60 IN A 10.4.7.10
 浏览器打开：http://k8s-yaml.od.com/dashboard 检查资源配置清单文件是否正确创建
 在任意运算节点应用资源配置清单
 ```
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dashboard/rolebinding.yaml 
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dashboard/rbac.yaml 
 serviceaccount/kubernetes-dashboard created
 role.rbac.authorization.k8s.io/kubernetes-dashboard-admin created
 rolebinding.rbac.authorization.k8s.io/kubernetes-dashboard-admin created

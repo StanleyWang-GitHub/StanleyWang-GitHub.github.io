@@ -534,21 +534,21 @@ kube-state-metrics-645bd94c55-wdtqh      1/1     Running   0          94s
 [node-exporter官方dockerhub地址](https://hub.docker.com/r/prom/node-exporter)
 [node-expoerer官方github地址](https://github.com/prometheus/node_exporter)
 ```
-[root@hdss7-200 ~]# docker pull prom/node-exporter:v0.17.0
-v0.17.0: Pulling from prom/node-exporter
+[root@hdss7-200 ~]# docker pull prom/node-exporter:v0.15.0
+v0.15.0: Pulling from prom/node-exporter
 0de338cf4258: Pull complete 
 f508012419d8: Pull complete 
 d764f7880123: Pull complete 
 Digest: sha256:c390c8fea4cd362a28ad5070aedd6515aacdfdffd21de6db42ead05e332be5a9
-Status: Downloaded newer image for prom/node-exporter:v0.17.0
-[root@hdss7-200 ~]# docker tag b3e7f67a1480 harbor.od.com/k8s/node-exporter:v0.17.0
-[root@hdss7-200 ~]# docker push harbor.od.com/k8s/node-exporter:v0.17.0
-docker push harbor.od.com/k8s/node-exporter:v0.17.0
+Status: Downloaded newer image for prom/node-exporter:v0.15.0
+[root@hdss7-200 ~]# docker tag b3e7f67a1480 harbor.od.com/k8s/node-exporter:v0.15.0
+[root@hdss7-200 ~]# docker push harbor.od.com/k8s/node-exporter:v0.15.0
+docker push harbor.od.com/k8s/node-exporter:v0.15.0
 The push refers to a repository [harbor.od.com/k8s/node-exporter]
 0bf893ee7433: Pushed 
 17ab2671f87e: Pushed 
 b8873621dfbc: Pushed 
-v0.17.0: digest: sha256:4e13dd75f00a6114675ea3e62e61dbd79dcb2205e8f3bbe1f8f8ef2fd3e28113 size: 949
+v0.15.0: digest: sha256:4e13dd75f00a6114675ea3e62e61dbd79dcb2205e8f3bbe1f8f8ef2fd3e28113 size: 949
 ```
 
 ### 准备资源配置清单
@@ -584,7 +584,7 @@ spec:
           type: ""
       containers:
       - name: node-exporter
-        image: harbor.od.com/k8s/node-exporter:v0.17.0
+        image: harbor.od.com/k8s/node-exporter:v0.15.0
         args:
         - --path.procfs=/host_proc
         - --path.sysfs=/host_sys
@@ -612,6 +612,115 @@ spec:
 ```
 [root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/node-exporter/node-exporter-ds.yaml
 daemonset.extensions/node-exporter created
+```
+
+## 部署cadvisor
+运维主机`HDSS7-200.host.com`上：
+### 准备cadvisor镜像
+[cadvisor官方dockerhub地址](https://hub.docker.com/r/google/cadvisor)
+[cadvisor官方github地址](https://github.com/google/cadvisor)
+```
+[root@hdss7-200 ~]# docker pull google/cadvisor:v0.28.0
+v0.28.0: Pulling from google/cadvisor
+49388a8c9c86: Pull complete 
+21c698e54ae5: Pull complete 
+fafc7cbc1edf: Pull complete 
+Digest: sha256:09c8d73c9b799d30777763b7029cfd8624b8a1bd33af652ec3b51a6b827d492a
+Status: Downloaded newer image for google/cadvisor:v0.28.0
+[root@hdss7-200 ~]# docker tag d60fd8aeb74c harbor.od.com/k8s/cadvisor:v0.28.0
+[root@hdss7-200 ~]# docker push !$
+docker push harbor.od.com/k8s/cadvisor:v0.28.0
+The push refers to a repository [harbor.od.com/k8s/cadvisor]
+daab541dbbf0: Pushed 
+ba67c95cca3d: Pushed 
+ef763da74d91: Pushed 
+v0.28.0: digest: sha256:319812db86e7677767bf6a51ea63b5bdb17dc18ffa576eb6c8a667e899d1329d size: 951
+```
+
+### 准备资源配置清单
+{% tabs cadvisor%}
+<!-- tab DaemonSet -->
+vi /data/k8s-yaml/cadvisor/daemon.yaml
+{% code %}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: cadvisor
+  namespace: kube-system
+  labels:
+    app: cadvisor
+spec:
+  selector:
+    matchLabels:
+      name: cadvisor
+  template:
+    metadata:
+      labels:
+        name: cadvisor
+    spec:
+      hostNetwork: true
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+        key: enabledDiskSchedule
+        value: "true"
+        effect: NoSchedule
+      containers:
+      - name: cadvisor
+        image: harbor.od.com/k8s/cadvisor:v0.28.0
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: rootfs
+          mountPath: /rootfs
+          readOnly: true
+        - name: var-run
+          mountPath: /var/run
+          readOnly: false
+        - name: sys
+          mountPath: /sys
+          readOnly: true
+        - name: docker
+          mountPath: /var/lib/docker
+          readOnly: true
+        ports:
+          - name: http
+            containerPort: 4194
+            protocol: TCP
+        readinessProbe:
+          tcpSocket:
+            port: 4194
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        args:
+          - --housekeeping_interval=10s
+          - --port=4194
+      imagePullSecrets:
+      - name: harbor
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: rootfs
+        hostPath:
+          path: /
+      - name: var-run
+        hostPath:
+          path: /var/run
+      - name: sys
+        hostPath:
+          path: /sys
+      - name: docker
+        hostPath:
+          path: /data/docker
+{% endcode %}
+<!-- endtab -->
+{% endtabs %}
+
+### 应用资源配置清单
+任意运算节点上：
+```
+[root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/cadvisor/deamon.yaml
+daemonset.apps/cadvisor created
+[root@hdss7-21 ~]# netstat -luntp|grep 4194
+tcp6       0      0 :::4194                 :::*                    LISTEN      49153/cadvisor
 ```
 
 ## 部署blackbox-exporter
@@ -827,6 +936,10 @@ v2.9.1: digest: sha256:2357e59541f5596dd90d9f4218deddecd9b4880c1e417a42592b00b30
 ```
 
 ### 准备资源配置清单
+运维主机`HDSS7-200.host.com`上：
+```pwd /data/k8s-yaml
+[root@hdss7-200 k8s-yaml]# mkdir /data/k8s-yaml/prometheus && mkdir -p /data/nfs-volume/prometheus/etc && cd /data/k8s-yaml/prometheus 
+```
 {% tabs prometheus%}
 <!-- tab RBAC-->
 vi /data/k8s-yaml/prometheus/rbac.yaml
@@ -950,10 +1063,10 @@ spec:
       serviceAccount: prometheus
       serviceAccountName: prometheus
       volumes:
-      - hostPath:
-          path: /data/k8s-volume/prometheus
-          type: ""
-        name: data
+      - name: data
+        nfs:
+          server: hdss7-200
+          path: /data/nfs-volume/prometheus
 
 {% endcode %}
 <!-- endtab -->
@@ -1073,6 +1186,16 @@ scrape_configs:
     regex: (.+)
     target_label: __address__
     replacement: ${1}:10255
+- job_name: 'kubernetes-cadvisor'
+  kubernetes_sd_configs:
+  - role: node
+  relabel_configs:
+  - action: labelmap
+    regex: __meta_kubernetes_node_label_(.+)
+  - source_labels: [__meta_kubernetes_node_name]
+    regex: (.+)
+    target_label: __address__
+    replacement: ${1}:4194
 - job_name: 'kubernetes-kube-state'
   kubernetes_sd_configs:
   - role: pod
@@ -1411,6 +1534,45 @@ v6.1.4: digest: sha256:db87ab263f90bdae66be744ac7935f6980c4bbd30c9756308e7382e00
 
 ### 准备资源配置清单
 {% tabs grafana%}
+<!-- tab RBAC-->
+vi /data/k8s-yaml/grafana/rbac.yaml
+{% code %}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+    kubernetes.io/cluster-service: "true"
+  name: grafana
+rules:
+- apiGroups:
+  - "*"
+  resources:
+  - namespaces
+  - deployments
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+    kubernetes.io/cluster-service: "true"
+  name: grafana
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: grafana
+subjects:
+- kind: User
+  name: k8s-node
+  namespace: infra
+{% endcode %}
+<!-- endtab -->
 <!-- tab Deployment -->
 vi /data/k8s-yaml/grafana/deployment.yaml
 {% code %}
@@ -1458,9 +1620,9 @@ spec:
       securityContext:
         runAsUser: 0
       volumes:
-      - hostPath:
-          path: /data/k8s-volume/grafana
-          type: ""
+      - nfs:
+          server: hdss7-200
+          path: /data/nfs-volume/grafana
         name: data
 {% endcode %}
 <!-- endtab -->
@@ -1551,9 +1713,9 @@ Configuration -> Plugins
 grafana-cli plugins install grafana-kubernetes-app
 ```
 安装方法二：
-[下载地址](https://grafana.com/api/plugins/grafana-kubernetes-app/versions/1.0.1/download -O grafana-kubernetes-app.zip)
-```pwd /data/k8s-volume/grafana/plugins
-[root@hdss7-21 plugins]# wget https://grafana.com/api/plugins/grafana-kubernetes-app/versions/1.0.1/download
+[下载地址](https://grafana.com/api/plugins/grafana-kubernetes-app/versions/1.0.1/download)
+```pwd /data/nfs-volume/grafana/plugins
+[root@hdss7-21 plugins]# wget https://grafana.com/api/plugins/grafana-kubernetes-app/versions/1.0.1/download -O grafana-kubernetes-app.zip
 --2019-04-28 16:15:33--  https://grafana.com/api/plugins/grafana-kubernetes-app/versions/1.0.1/download
 Resolving grafana.com (grafana.com)... 35.241.23.245
 Connecting to grafana.com (grafana.com)|35.241.23.245|:443... connected.
@@ -1569,7 +1731,7 @@ Saving to: ‘grafana-kubernetes-app.zip’
 100%[===================================================================================================================>] 3,084,524    116KB/s   in 12s    
 
 2019-04-28 16:15:51 (250 KB/s) - ‘grafana-kubernetes-app.zip’ saved [3084524/3084524]
-[root@hdss7-21 plugins]# unzip grafana-kubernetes-app.zip
+[root@hdss7-200 plugins]# unzip grafana-kubernetes-app.zip
 ```
 
 - Clock Pannel
