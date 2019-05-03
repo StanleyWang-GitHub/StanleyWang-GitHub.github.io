@@ -54,6 +54,20 @@ server.3=zk3.od.com:2888:3888
 ```
 **注意：**各节点zk配置相同。
 
+### myid
+`HDSS7-11.host.com`上：
+```vi /data/zookeeper/data/myid
+1
+```
+`HDSS7-12.host.com`上：
+```vi /data/zookeeper/data/myid
+2
+```
+`HDSS7-21.host.com`上：
+```vi /data/zookeeper/data/myid
+3
+```
+
 ### 做dns解析
 `HDSS7-11.host.com`上
 ```vi /var/named/od.com.zone
@@ -102,13 +116,13 @@ fe379aecc538: Pull complete
 Digest: sha256:12fd14965de7274b5201653b2bffa62700c5f5f336ec75c945321e2cb70d7af0
 Status: Downloaded newer image for jenkins/jenkins:2.164.1
 
-[root@hdss7-200 ~]# docker tag 256cb12e72d6 harbor.od.com/public/jenkins:2.164.1
-[root@hdss7-200 ~]# docker push harbor.od.com/public/jenkins:2.164.1
+[root@hdss7-200 ~]# docker tag 256cb12e72d6 harbor.od.com/public/jenkins:v2.164.1
+[root@hdss7-200 ~]# docker push harbor.od.com/public/jenkins:v2.164.1
 ```
 ## 自定义Dockerfile
 在运维主机`HDSS7-200.host.com`上编辑自定义dockerfile
 ```vi /data/dockerfile/jenkins/Dockerfile
-FROM harbor.od.com/public/jenkins:2.164.1
+FROM harbor.od.com/public/jenkins:v2.164.1
 USER root
 RUN /bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime &&\ 
     echo 'Asia/Shanghai' >/etc/timezone
@@ -682,7 +696,7 @@ total 24
 -rw------- 1 root root  1679 Jan  17 15:39 id_rsa
 [root@hdss7-200 jenkins]# docker build . -t harbor.od.com/infra/jenkins:v2.164.1
 Sending build context to Docker daemon 19.46 kB
-Step 1 : FROM harbor.od.com/public/jenkins:2.164.1
+Step 1 : FROM harbor.od.com/public/jenkins:v2.164.1
  ---> 256cb12e72d6
 Step 2 : USER root
  ---> Running in d600e9db8305
@@ -755,7 +769,7 @@ Successfully built 64c74242ee28
 
 运维主机`HDSS7-200.host.com`上：
 ```vi /etc/exports
-/data/nfs-volume 10.4.7.0/8(rw,no_root_squash)
+/data/nfs-volume 10.4.7.0/24(rw,no_root_squash)
 ```
 - 启动NFS服务
 
@@ -850,14 +864,14 @@ kind: Service
 apiVersion: v1
 metadata: 
   name: jenkins
-	namespace: infra
+  namespace: infra
 spec:
   ports:
   - protocol: TCP
-	  port: 8080
-		targetPort: 8080
+    port: 8080
+    targetPort: 8080
   selector:
-	  app: jenkins
+    app: jenkins
   clusterIP: None
   type: ClusterIP
   sessionAffinity: None
@@ -876,7 +890,7 @@ spec:
   - host: jenkins.od.com
     http:
       paths:
-			- path: /
+      - path: /
         backend: 
           serviceName: jenkins
           servicePort: 8080
