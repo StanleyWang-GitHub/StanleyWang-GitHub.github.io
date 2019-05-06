@@ -377,7 +377,7 @@ metadata:
     kubernetes.io/cluster-service: "true"
   name: kube-state-metrics
   namespace: kube-system
--\--
+\-\--
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -620,27 +620,27 @@ daemonset.extensions/node-exporter created
 [cadvisor官方dockerhub地址](https://hub.docker.com/r/google/cadvisor)
 [cadvisor官方github地址](https://github.com/google/cadvisor)
 ```
-[root@hdss7-200 ~]# docker pull google/cadvisor:v0.28.0
-v0.28.0: Pulling from google/cadvisor
+[root@hdss7-200 ~]# docker pull google/cadvisor:v0.28.3
+v0.28.3: Pulling from google/cadvisor
 49388a8c9c86: Pull complete 
 21c698e54ae5: Pull complete 
 fafc7cbc1edf: Pull complete 
 Digest: sha256:09c8d73c9b799d30777763b7029cfd8624b8a1bd33af652ec3b51a6b827d492a
-Status: Downloaded newer image for google/cadvisor:v0.28.0
-[root@hdss7-200 ~]# docker tag d60fd8aeb74c harbor.od.com/k8s/cadvisor:v0.28.0
+Status: Downloaded newer image for google/cadvisor:v0.28.3
+[root@hdss7-200 ~]# docker tag d60fd8aeb74c harbor.od.com/k8s/cadvisor:v0.28.3
 [root@hdss7-200 ~]# docker push !$
-docker push harbor.od.com/k8s/cadvisor:v0.28.0
+docker push harbor.od.com/k8s/cadvisor:v0.28.3
 The push refers to a repository [harbor.od.com/k8s/cadvisor]
 daab541dbbf0: Pushed 
 ba67c95cca3d: Pushed 
 ef763da74d91: Pushed 
-v0.28.0: digest: sha256:319812db86e7677767bf6a51ea63b5bdb17dc18ffa576eb6c8a667e899d1329d size: 951
+v0.28.3: digest: sha256:319812db86e7677767bf6a51ea63b5bdb17dc18ffa576eb6c8a667e899d1329d size: 951
 ```
 
 ### 准备资源配置清单
 {% tabs cadvisor%}
 <!-- tab DaemonSet -->
-vi /data/k8s-yaml/cadvisor/daemon.yaml
+vi /data/k8s-yaml/cadvisor/daemonset.yaml
 {% code %}
 apiVersion: apps/v1
 kind: DaemonSet
@@ -667,7 +667,7 @@ spec:
         effect: NoSchedule
       containers:
       - name: cadvisor
-        image: harbor.od.com/k8s/cadvisor:v0.28.0
+        image: harbor.od.com/k8s/cadvisor:v0.28.3
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: rootfs
@@ -675,7 +675,7 @@ spec:
           readOnly: true
         - name: var-run
           mountPath: /var/run
-          readOnly: false
+          readOnly: true
         - name: sys
           mountPath: /sys
           readOnly: true
@@ -692,8 +692,8 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 10
         args:
-          - --housekeeping_interval=10s
-          - --port=4194
+          - -\-housekeeping_interval=10s
+          - -\-port=4194
       imagePullSecrets:
       - name: harbor
       terminationGracePeriodSeconds: 30
@@ -713,6 +713,20 @@ spec:
 {% endcode %}
 <!-- endtab -->
 {% endtabs %}
+
+### 修改运算节点软连接
+所有运算节点上：
+```
+[root@hdss7-21 ~]# mount -o remount,rw /sys/fs/cgroup/
+[root@hdss7-21 ~]# ln -s /sys/fs/cgroup/cpu,cpuacct/ /sys/fs/cgroup/cpuacct,cpu
+[root@hdss7-21 ~]# ll /sys/fs/cgroup/ | grep cpu
+total 0
+lrwxrwxrwx 1 root root 11 Jan 28 22:41 cpu -> cpu,cpuacct
+lrwxrwxrwx 1 root root 11 Jan 28 22:41 cpuacct -> cpu,cpuacct
+lrwxrwxrwx 1 root root 27 May  5 11:15 cpuacct,cpu -> /sys/fs/cgroup/cpu,cpuacct/
+drwxr-xr-x 8 root root  0 Apr 26 11:06 cpu,cpuacct
+drwxr-xr-x 7 root root  0 Jan 28 22:41 cpuset
+```
 
 ### 应用资源配置清单
 任意运算节点上：
@@ -1555,7 +1569,7 @@ rules:
   - get
   - list
   - watch
----
+-\--
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -1570,7 +1584,6 @@ roleRef:
 subjects:
 - kind: User
   name: k8s-node
-  namespace: infra
 {% endcode %}
 <!-- endtab -->
 <!-- tab Deployment -->
@@ -1824,6 +1837,10 @@ key|value
 Datasource|Prometheus
 
 - Save
+
+**注意：**
+- K8S Container中，所有Pannel的
+> pod_name -> container_label_io_kubernetes_pod_name
 
 ### 配置自定义dashboard
 根据Prometheus数据源里的数据，配置如下dashboard：
