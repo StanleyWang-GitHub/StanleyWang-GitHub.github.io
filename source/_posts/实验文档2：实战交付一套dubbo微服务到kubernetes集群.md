@@ -898,13 +898,6 @@ spec:
 <!-- endtab -->
 {% endtabs %}
 
-## 配置挂载目录
-`HDSS7-22.host.com`上
-```
-[root@hdss7-22 ~]# mkdir -p /data/k8s-volume/jenkins_home
-```
-**注意：**这里没有使用k8s的pv/pvc，可以进一步改善
-
 ## 应用资源配置清单
 任意一个k8s运算节点上
 ```
@@ -938,8 +931,8 @@ http://jenkins.od.com
 ## 页面配置jenkins
 ![jenkins初始化页面](/images/jenkins-init.png "jenkins初始化页面")
 ### 初始化密码
-```cat /data/k8s-volume/jenkins_home/secrets/initialAdminPassword
-[root@hdss7-22 secrets]# cat initialAdminPassword 
+```cat /data/nfs-volume/jenkins_home/secrets/initialAdminPassword
+[root@hdss7-200 secrets]# cat initialAdminPassword 
 08d17edc125444a28ad6141ffdfd5c69
 ```
 ### 安装插件
@@ -1075,18 +1068,18 @@ Note: DeployKey only supports pull/fetch operations
 ```
 ## 部署maven软件
 [maven官方下载地址](http://maven.apache.org/docs/history.html)
-在`HDSS7-22.host.com`上二进制部署，这里部署maven-3.6.0版
+在运维主机`HDSS7-200.host.com`上二进制部署，这里部署maven-3.6.0版
 ```pwd /opt/src
 [root@hdss7-22 src]# ls -l
 total 8852
 -rw-r--r-- 1 root root 9063587 Jan  17 19:57 apache-maven-3.6.0-bin.tar.gz
-[root@hdss7-22 src]# tar xf apache-maven-3.6.0-bin.tar.gz -C /data/k8s-volume/jenkins_home/maven-3.6.0-8u181
-[root@hdss7-22 src]# mv /data/k8s-volume/jenkins_home/apache-maven-3.6.0/ /data/k8s-volume/jenkins_home/maven-3.6.0-8u181
-[root@hdss7-22 src]# ls -ld /data/k8s-volume/jenkins_home/maven-3.6.0-8u181
-drwxr-xr-x 6 root root 99 Jan  17 19:58 /data/k8s-volume/jenkins_home/maven-3.6.0-8u181
+[root@hdss7-200 src]# tar xf apache-maven-3.6.0-bin.tar.gz -C /data/nfs-volume/jenkins_home/maven-3.6.0-8u181
+[root@hdss7-200 src]# mv /data/nfs-volume/jenkins_home/apache-maven-3.6.0/ /data/nfs-volume/jenkins_home/maven-3.6.0-8u181
+[root@hdss7-200 src]# ls -ld /data/nfs-volume/jenkins_home/maven-3.6.0-8u181
+drwxr-xr-x 6 root root 99 Jan  17 19:58 /data/nfs-volume/jenkins_home/maven-3.6.0-8u181
 ```
 设置国内镜像源
-```vi /data/k8s-volume/jenkins_home/maven-3.6.0-8u181/conf/setting.xml
+```vi /data/nfs-volume/jenkins_home/maven-3.6.0-8u181/conf/setting.xml
 <mirror>
   <id>alimaven</id>
   <name>aliyun maven</name>
@@ -1378,7 +1371,7 @@ dubbo-monitor IN A 60 10.9.7.10
 ### 准备k8s资源配置清单
 运维主机`HDSS7-200.host.com`上
 {% tabs dubbo-monitor%}
-<!-- tab deployment.yaml -->
+<!-- tab Deployment -->
 vi /data/k8s-yaml/dubbo-monitor/deployment.yaml
 {% code %}
 kind: Deployment
@@ -1425,7 +1418,7 @@ spec:
   progressDeadlineSeconds: 600
 {% endcode %}
 <!-- endtab -->
-<!-- tab svc.yaml-->
+<!-- tab Service-->
 vi /data/k8s-yaml/dubbo-monitor/svc.yaml
 {% code %}
 kind: Service
@@ -1445,7 +1438,7 @@ spec:
   sessionAffinity: None
 {% endcode %}
 <!-- endtab -->
-<!-- tab ingress.yaml-->
+<!-- tab Ingress -->
 vi /data/k8s-yaml/dubbo-monitor/ingress.yaml
 {% code %}
 kind: Ingress

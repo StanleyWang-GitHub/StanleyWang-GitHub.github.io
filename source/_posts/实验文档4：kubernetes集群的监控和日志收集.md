@@ -1879,7 +1879,7 @@ Datasource|Prometheus
 [root@hdss7-12 src]# ln -s /opt/elasticsearch-5.6.15/ /opt/elasticsearch
 ```
 ### 配置
-- elasticsearch.yml
+#### elasticsearch.yml
 
 ```
 [root@hdss7-12 src]# mkdir -p /data/elasticsearch/{data,logs}
@@ -1892,16 +1892,43 @@ bootstrap.memory_lock: true
 network.host: 10.4.7.12
 http.port: 9200
 ```
-- jvm.options
-
+#### jvm.options
 ```
 [root@hdss7-12 elasticsearch]# vi config/jvm.options
--Xms1g
--Xmx1g
+-Xms512m
+-Xmx512m
+```
+#### 创建普通用户
+```
+[root@hdss7-12 elasticsearch]# useradd -s /bin/bash -M es
+[root@hdss7-12 elasticsearch]# chown -R es.es /opt/elasticsearch-5.6.15
+[root@hdss7-12 elasticsearch]# chown -R es.es /data/elasticsearch
+```
+
+#### 文件描述符
+```vi /etc/security/limits.d/es.conf
+es hard nofile 65536
+es soft fsize unlimited
+es hard memlock unlimited
+es soft memlock unlimited
+```
+
+#### 调整内核参数
+```
+[root@hdss7-12 elasticsearch]# sysctl -w vm.max_map_count=262144
+or
+[root@hdss7-12 elasticsearch]# echo "vm.max_map_count=262144" > /etc/sysctl.conf
+[root@hdss7-12 elasticsearch]# sysctl -p
 ```
 
 ### 启动
 ```
+[root@hdss7-12 elasticsearch]# su - es
+su: warning: cannot change directory to /home/es: No such file or directory
+-bash-4.2$ /opt/elasticsearch/bin/elasticsearch &
+[1] 8714
+[root@hdss7-12 elasticsearch]# ps -ef|grep elastic|grep -v grep
+es        8714     1 58 10:29 pts/0    00:00:19 /usr/java/jdk/bin/java -Xms512m -Xmx512m -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=75 -XX:+UseCMSInitiatingOccupancyOnly -XX:+AlwaysPreTouch -server -Xss1m -Djava.awt.headless=true -Dfile.encoding=UTF-8 -Djna.nosys=true -Djdk.io.permissionsUseCanonicalPath=true -Dio.netty.noUnsafe=true -Dio.netty.noKeySetOptimization=true -Dio.netty.recycler.maxCapacityPerThread=0 -Dlog4j.shutdownHookEnabled=false -Dlog4j2.disable.jmx=true -Dlog4j.skipJansi=true -XX:+HeapDumpOnOutOfMemoryError -Des.path.home=/opt/elasticsearch -cp /opt/elasticsearch/lib/* org.elasticsearch.bootstrap.Elasticsearch
 ```
 
 ## 部署kafka
@@ -1917,21 +1944,26 @@ http.port: 9200
 [root@hdss7-11 src]# ln -s /opt/kafka_2.12-2.2.0/ /opt/kafka
 ```
 ### 配置
-
+```vi /opt/kafka/config/server.properties
+log.dirs=/data/kafka/logs
+zookeeper.connect=localhost:2181
+log.flush.interval.messages=10000
+log.flush.interval.ms=1000
+delete.topic.enable=true
+host.name=hdss7-12.host.com
+```
 ### 启动
+```pwd /opt/kafka
+[root@hdss7-12 kafka]# bin/kafka-server-start.sh -daemon config/server.properties
+[root@hdss7-12 kafka]# netstat -luntp|grep 9092
+tcp6       0      0 10.4.7.12:9092         :::*                    LISTEN      17543/java
+```
 
 ## 部署kafka-manager
 [官方github地址](https://github.com/yahoo/kafka-manager)
-[下载地址](https://github.com/yahoo/kafka-manager/archive/2.0.0.2.tar.gz)
+[源码下载地址](https://github.com/yahoo/kafka-manager/archive/2.0.0.2.tar.gz)
 运维主机`HDSS7-200.host.com`上：
-### 下载
-```pwd /opt/src
-[root@hdss7-200 src]# ls -l |grep 2.0.0.2
-drwxrwxr-x   9 root root       189 Apr 12 01:36 2.0.0.2.tar.gz
-[root@hdss7-200 src]# mkdir /data/dockerfile/kafka-manager
-[root@hdss7-200 src]# tar xf 2.0.0.2.tar.gz -C /data/dockerfile/kafka-manager
-```
-### 制作docker镜像
+### 方法一：1、准备Dockerfile
 ```vi /data/dockerfile/kafka-manager/Dockerfile
 FROM hseeberger/scala-sbt
 
@@ -1952,16 +1984,344 @@ WORKDIR /kafka-manager-${KM_VERSION}
 EXPOSE 9000
 ENTRYPOINT ["./bin/kafka-manager","-Dconfig.file=conf/application.conf"]
 ```
-### 准备资源配置清单
+### 方法一：2、制作docker镜像
+```pwd /data/dockerfile/kafka-manager
+[root@hdss7-200 kafka-manager]# docker build . -t harbor.od.com/infra/kafka-manager:v2.0.0.2
+(漫长的过程)
+```
 
+### 方法二：直接下载docker镜像
+[镜像下载地址](https://hub.docker.com/r/sheepkiller/kafka-manager/tags)
+```
+[root@hdss7-200 ~]# docker pull sheepkiller/kafka-manager:stable
+[root@hdss7-200 ~]# docker tag 34627743836f harbor.od.com/infra/kafka-manager:stable
+[root@hdss7-200 ~]# docker push harbor.od.com/infra/kafka-manager:stable
+docker push harbor.od.com/infra/kafka-manager:stable
+The push refers to a repository [harbor.od.com/infra/kafka]
+ef97dbc2670b: Pushed 
+ec01aa005e59: Pushed 
+de05a1bdf878: Pushed 
+9c553f3feafd: Pushed 
+581533427a4f: Pushed 
+f6b229974fdd: Pushed 
+ae150883d6e2: Pushed 
+3df7be729841: Pushed 
+f231cc200afe: Pushed 
+9752c15164a8: Pushed 
+9ab7eda5c826: Pushed 
+402964b3d72e: Pushed 
+6b3f8ebf864c: Pushed 
+stable: digest: sha256:57fd46a3751284818f1bc6c0fdf097250bc0feed03e77135fb8b0a93aa8c6cc7 size: 3056
+```
+
+### 准备资源配置清单
+{% tabs kafka-manager%}
+<!-- tab Deployment -->
+vi /data/k8s-yaml/kafka-manager/deployment.yaml
+{% code %}
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: kafka-manager
+  namespace: infra
+  labels: 
+    name: kafka-manager
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      name: kafka-manager
+  template:
+    metadata:
+      labels: 
+        app: kafka-manager
+        name: kafka-manager
+    spec:
+      containers:
+      - name: kafka-manager
+        image: harbor.od.com/infra/kafka-manager:stable
+        ports:
+        - containerPort: 9000
+          protocol: TCP
+        env:
+        - name: ZK_HOSTS
+          value: zk1.od.com:2181
+        - name: APPLICATION_SECRET
+          value: letmein
+        imagePullPolicy: IfNotPresent
+      imagePullSecrets:
+      - name: harbor
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: Default
+      securityContext: 
+        runAsUser: 0
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: 
+      maxUnavailable: 1
+      maxSurge: 1
+  revisionHistoryLimit: 7
+  progressDeadlineSeconds: 600
+{% endcode %}
+<!-- endtab -->
+<!-- tab Service-->
+vi /data/k8s-yaml/kafka-manager/svc.yaml
+{% code %}
+kind: Service
+apiVersion: v1
+metadata: 
+  name: kafka-manager
+  namespace: infra
+spec:
+  ports:
+  - protocol: TCP
+    port: 9000
+    targetPort: 9000
+  selector: 
+    app: kafka-manager
+  clusterIP: None
+  type: ClusterIP
+  sessionAffinity: None
+{% endcode %}
+<!-- endtab -->
+<!-- tab Ingress -->
+vi /data/k8s-yaml/kafka-manager/ingress.yaml
+{% code %}
+kind: Ingress
+apiVersion: extensions/v1beta1
+metadata: 
+  name: kafka-manager
+  namespace: infra
+spec:
+  rules:
+  - host: km.od.com
+    http:
+      paths:
+      - path: /
+        backend: 
+          serviceName: kafka-manager
+          servicePort: 9000
+{% endcode %}
+<!-- endtab -->
+{% endtabs %}
 ### 应用资源配置清单
+任意一台运算节点上：
+```
+[root@hdss7-21 kafka-manager]# kubectl apply -f http://k8s-yaml.od.com/kafka-manager/deployment.yaml 
+deployment.extensions/kafka-manager created
+[root@hdss7-21 kafka-manager]# kubectl apply -f http://k8s-yaml.od.com/kafka-manager/svc.yaml 
+service/kafka-manager created
+[root@hdss7-21 kafka-manager]# kubectl apply -f http://k8s-yaml.od.com/kafka-manager/ingress.yaml 
+ingress.extensions/kafka-manager created
+```
+
+### 浏览器访问
+http://km.od.com
+
+![kafka-manager](/images/kafka-manager.png "kafka-manager")
 
 ## 部署filebeat
+[官方下载地址](https://www.elastic.co/downloads/beats/filebeat)
+运维主机`HDSS7-200.host.com`上：
 ### 制作docker镜像
-#### 准备底包
 #### 准备Dockerfile
+{% tabs filebeat-dockerfile%}
+<!-- tab Dockerfile -->
+vi /data/dockerfile/filebeat/Dockerfile
+{% code %}
+FROM debian:jessie
+
+ENV FILEBEAT_VERSION=7.0.1 \
+    FILEBEAT_SHA1=fdddfa32a7d9db5ac4504b34499e6259e09b86205bac842f78fddd45e8ee00c3cb76419af2313659fd23db4fcbcc29f7568a3663c5d3c52ac0fc9e641d0ae8b1
+
+RUN set -x && \
+  apt-get update && \
+  apt-get install -y wget && \
+  wget https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-${FILEBEAT_VERSION}-linux-x86_64.tar.gz -O /opt/filebeat.tar.gz && \
+  cd /opt && \
+  echo "${FILEBEAT_SHA1}  filebeat.tar.gz" | sha512sum -c - && \
+  tar xzvf filebeat.tar.gz && \
+  cd filebeat-\* && \
+  cp filebeat /bin && \
+  cd /opt && \
+  rm -rf filebeat\* && \
+  apt-get purge -y wget && \
+  apt-get autoremove -y && \
+  apt-get clean && rm -rf /var/lib/apt/lists/\* /tmp/\* /var/tmp/\*
+
+COPY docker-entrypoint.sh /
+ENTRYPOINT ["/docker-entrypoint.sh"]
+{% endcode %}
+<!-- endtab -->
+<!-- tab Entrypoint -->
+vi /data/dockerfile/filebeat/docker-entrypoint.sh
+{% code %}
+#!/bin/bash
+
+ENV=${ENV:-"test"}
+PROJ_NAME=${PROJ_NAME:-"no-define"}
+MULTILINE=${MULTILINE:-"^\d{2}|^\["}
+
+cat > /etc/filebeat.yaml << EOF
+filebeat.inputs:
+- type: log
+  fields_under_root: true
+  fields:
+    topic: logm-${PROJ_NAME}
+  paths:
+    - /logm/\*.log
+    - /logm/\*/\*.log
+    - /logm/\*/\*/\*.log
+    - /logm/\*/\*/\*/\*.log
+    - /logm/\*/\*/\*/\*/\*.log
+  scan_frequency: 120s
+  max_bytes: 10485760
+  multiline.pattern: '$MULTILINE'
+  multiline.negate: true
+  multiline.match: after
+  multiline.max_lines: 100
+- type: log
+  fields_under_root: true
+  fields:
+    topic: logu-${PROJ_NAME}
+  paths:
+    - /logu/\*.log
+    - /logu/\*/\*.log
+    - /logu/\*/\*/\*.log
+    - /logu/\*/\*/\*/\*.log
+    - /logu/\*/\*/\*/\*/\*.log
+    - /logu/\*/\*/\*/\*/\*/\*.log
+output.kafka:
+  hosts: ["10.4.7.12:9092"]
+  topic: k8s-fb-$ENV-%{[topic]}
+  version: 0.11.0.1
+  required_acks: 0
+  max_message_bytes: 10485760
+EOF
+
+set -xe
+
+# If user don't provide any command
+# Run filebeat
+if [[ "$1" == "" ]]; then
+     exec filebeat  -c /etc/filebeat.yaml 
+else
+    # Else allow the user to run arbitrarily commands like bash
+    exec "$@"
+fi
+
+{% endcode %}
+<!-- endtab -->
+{% endtabs %}
+
 #### 制作镜像
+```pwd /data/dockerfile/filebeat
+[root@hdss7-200 filebeat]# docker build . -t harbor.od.com/infra/filebeat:v7.0.1
+...
++ apt-get autoremove -y
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following packages will be REMOVED:
+  ca-certificates libicu52 libidn11 libpsl0 libssl1.0.0 openssl
+0 upgraded, 0 newly installed, 6 to remove and 6 not upgraded.
+After this operation, 33.6 MB disk space will be freed.
+(Reading database ... 7962 files and directories currently installed.)
+Removing ca-certificates (20141019+deb8u4) ...
+Removing dangling symlinks from /etc/ssl/certs... done.
+Removing libpsl0:amd64 (0.5.1-1) ...
+Removing libicu52:amd64 (52.1-8+deb8u7) ...
+Removing libidn11:amd64 (1.29-1+deb8u3) ...
+Removing openssl (1.0.1t-1+deb8u11) ...
+Removing libssl1.0.0:amd64 (1.0.1t-1+deb8u11) ...
+Processing triggers for libc-bin (2.19-18+deb8u10) ...
++ apt-get clean
++ rm -rf /var/lib/apt/lists/deb.debian.org_debian_dists_jessie_Release /var/lib/apt/lists/deb.debian.org_debian_dists_jessie_Release.gpg /var/lib/apt/lists/deb.debian.org_debian_dists_jessie_main_binary-amd64_Packages.gz /var/lib/apt/lists/lock /var/lib/apt/lists/partial /var/lib/apt/lists/security.debian.org_debian-security_dists_jessie_updates_InRelease /var/lib/apt/lists/security.debian.org_debian-security_dists_jessie_updates_main_binary-amd64_Packages.gz /tmp/* /var/tmp/*
+ ---> a78678659f2c
+Removing intermediate container 2cfff130c15c
+Step 4 : COPY docker-entrypoint.sh /
+ ---> 62dc7fe5a98f
+Removing intermediate container 87e271482593
+Step 5 : ENTRYPOINT /docker-entrypoint.sh
+ ---> Running in d367b6e3bb5a
+ ---> 23c8fbdc088a
+Removing intermediate container d367b6e3bb5a
+Successfully built 23c8fbdc088a
+[root@hdss7-200 filebeat]# docker tag 23c8fbdc088a harbor.od.com/infra/filebeat:v7.0.1
+[root@hdss7-200 filebeat]# docker push !$
+docker push harbor.od.com/infra/filebeat:v7.0.1
+The push refers to a repository [harbor.od.com/infra/filebeat]
+6a765e653161: Pushed 
+8e89ae5c6fc2: Pushed 
+9abb3997a540: Pushed 
+v7.0.1: digest: sha256:c35d7cdba29d8555388ad41ac2fc1b063ed9ec488082e33b5d0e91864b3bb35c size: 948
+```
 ### 修改资源配置清单
+**使用dubbo-demo-consumer的Tomcat版镜像**
+```vi /data/k8s-yaml/dubbo-demo-consumer/deployment.yaml
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: dubbo-demo-consumer
+  namespace: app
+  labels: 
+    name: dubbo-demo-consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      name: dubbo-demo-consumer
+  template:
+    metadata:
+      labels: 
+        app: dubbo-demo-consumer
+        name: dubbo-demo-consumer
+    spec:
+      containers:
+      - name: dubbo-demo-consumer
+        image: harbor.od.com/app/dubbo-demo-web:tomcat
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        env:
+        - name: C_OPTS
+          value: -Denv=dev -Dapollo.meta=apollo-configservice:8080
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - mountPath: /opt/tomcat/logs
+          name: logm
+      - name: filebeat
+        image: harbor.od.com/infra/filebeat:v7.0.1
+        env:
+        - name: ENV
+          value: test
+        - name: PROJ_NAME
+          value: dubbo-demo-web
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - mountPath: /logm
+          name: logm
+      volumes:
+      - emptyDir: {}
+        name: logm
+      imagePullSecrets:
+      - name: harbor
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: Default
+      securityContext: 
+        runAsUser: 0
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: 
+      maxUnavailable: 1
+      maxSurge: 1
+  revisionHistoryLimit: 7
+  progressDeadlineSeconds: 600
+```
 
 ## 部署logstash
 ### 准备docker镜像
