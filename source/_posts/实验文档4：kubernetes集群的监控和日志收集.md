@@ -1848,6 +1848,7 @@ Datasource|Prometheus
 - traefik dashboard
 - generic dashboard
 - JMX dashboard
+- blackbox dashboard
 
 {% tabs grafana-dashboard %}
 <!-- tab ETCD -->
@@ -1930,18 +1931,29 @@ su: warning: cannot change directory to /home/es: No such file or directory
 [root@hdss7-12 elasticsearch]# ps -ef|grep elastic|grep -v grep
 es        8714     1 58 10:29 pts/0    00:00:19 /usr/java/jdk/bin/java -Xms512m -Xmx512m -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=75 -XX:+UseCMSInitiatingOccupancyOnly -XX:+AlwaysPreTouch -server -Xss1m -Djava.awt.headless=true -Dfile.encoding=UTF-8 -Djna.nosys=true -Djdk.io.permissionsUseCanonicalPath=true -Dio.netty.noUnsafe=true -Dio.netty.noKeySetOptimization=true -Dio.netty.recycler.maxCapacityPerThread=0 -Dlog4j.shutdownHookEnabled=false -Dlog4j2.disable.jmx=true -Dlog4j.skipJansi=true -XX:+HeapDumpOnOutOfMemoryError -Des.path.home=/opt/elasticsearch -cp /opt/elasticsearch/lib/* org.elasticsearch.bootstrap.Elasticsearch
 ```
+### 调整ES日志模板
+```
+[root@hdss7-12 elasticsearch]# curl -XPUT http://10.4.7.12:9200/_template/k8s -d '{
+  "template" : "k8s*",
+  "index_patterns": ["k8s*"],  
+  "settings": {
+    "number_of_shards": 5,
+    "number_of_replicas": 0
+  }
+}'
+```
 
 ## 部署kafka
 [官网](http://kafka.apache.org/)
 [官方github地址](https://github.com/apache/kafka)
-[下载地址](http://mirrors.tuna.tsinghua.edu.cn/apache/kafka/2.2.0/kafka_2.12-2.2.0.tgz)
+[下载地址](http://mirrors.tuna.tsinghua.edu.cn/apache/kafka/2.1.1/kafka_2.12-2.1.1.tgz)
 `HDSS7-11.host.com`上：
 ### 安装
 ```pwd /opt/src
 [root@hdss7-11 src]# ls -l|grep kafka
 -rw-r--r-- 1 root root  57028557 Mar 23 08:57 kafka_2.12-2.2.0.tgz
-[root@hdss7-11 src]# tar xf kafka_2.12-2.2.0.tgz -C /opt
-[root@hdss7-11 src]# ln -s /opt/kafka_2.12-2.2.0/ /opt/kafka
+[root@hdss7-11 src]# tar xf kafka_2.12-2.1.1.tgz -C /opt
+[root@hdss7-11 src]# ln -s /opt/kafka_2.12-2.1.1/ /opt/kafka
 ```
 ### 配置
 ```vi /opt/kafka/config/server.properties
@@ -1950,12 +1962,12 @@ zookeeper.connect=localhost:2181
 log.flush.interval.messages=10000
 log.flush.interval.ms=1000
 delete.topic.enable=true
-host.name=hdss7-12.host.com
+host.name=hdss7-11.host.com
 ```
 ### 启动
 ```pwd /opt/kafka
-[root@hdss7-12 kafka]# bin/kafka-server-start.sh -daemon config/server.properties
-[root@hdss7-12 kafka]# netstat -luntp|grep 9092
+[root@hdss7-11 kafka]# bin/kafka-server-start.sh -daemon config/server.properties
+[root@hdss7-11 kafka]# netstat -luntp|grep 9092
 tcp6       0      0 10.4.7.12:9092         :::*                    LISTEN      17543/java
 ```
 
@@ -1967,7 +1979,7 @@ tcp6       0      0 10.4.7.12:9092         :::*                    LISTEN      1
 ```vi /data/dockerfile/kafka-manager/Dockerfile
 FROM hseeberger/scala-sbt
 
-ENV ZK_HOSTS=10.4.7.12:2181 \
+ENV ZK_HOSTS=10.4.7.11:2181 \
      KM_VERSION=2.0.0.2
 
 RUN mkdir -p /tmp && \
@@ -2116,6 +2128,11 @@ service/kafka-manager created
 [root@hdss7-21 kafka-manager]# kubectl apply -f http://k8s-yaml.od.com/kafka-manager/ingress.yaml 
 ingress.extensions/kafka-manager created
 ```
+### 解析域名
+`HDSS7-11.host.com`上
+```vi /var/named/od.com.zone
+km	60 IN A 10.4.7.10
+```
 
 ### 浏览器访问
 http://km.od.com
@@ -2162,7 +2179,7 @@ vi /data/dockerfile/filebeat/docker-entrypoint.sh
 
 ENV=${ENV:-"test"}
 PROJ_NAME=${PROJ_NAME:-"no-define"}
-MULTILINE=${MULTILINE:-"^\d{2}|^\["}
+MULTILINE=${MULTILINE:-"^\d{2}"}
 
 cat > /etc/filebeat.yaml << EOF
 filebeat.inputs:
@@ -2194,9 +2211,9 @@ filebeat.inputs:
     - /logu/\*/\*/\*/\*/\*.log
     - /logu/\*/\*/\*/\*/\*/\*.log
 output.kafka:
-  hosts: ["10.4.7.12:9092"]
+  hosts: ["10.4.7.11:9092"]
   topic: k8s-fb-$ENV-%{[topic]}
-  version: 0.11.0.1
+  version: 2.0.0
   required_acks: 0
   max_message_bytes: 10485760
 EOF
@@ -2287,7 +2304,7 @@ spec:
           protocol: TCP
         env:
         - name: C_OPTS
-          value: -Denv=dev -Dapollo.meta=apollo-configservice:8080
+          value: -Denv=dev -Dapollo.meta=config.od.com
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - mountPath: /opt/tomcat/logs
@@ -2322,13 +2339,153 @@ spec:
   revisionHistoryLimit: 7
   progressDeadlineSeconds: 600
 ```
+### 浏览器访问http://km.od.com
+看到kafaka-manager里，topic打进来，即为成功。
+![kafka-topic](/images/kafka-topic.png "kafka-topic")
+
+### 验证数据
+```pwd /opt/kafka/bin
+./kafka-console-consumer.sh --bootstrap-server 10.9.6.200:9092 --topic k8s-fb-test-logm-dubbo-demo-web --from-beginning
+```
 
 ## 部署logstash
+运维主机`HDSS7-200.host.com`上：
+
+### 选版本
+[logstash选型](https://www.elastic.co/support/matrix)
+![compatibility](/images/es-logstash.png "compatibility")
+
 ### 准备docker镜像
+- 下载官方镜像
+
+```
+[root@hdss7-200 ~]# docker pull logstash:6.7.2
+6.7.2: Pulling from library/logstash
+8ba884070f61: Pull complete 
+063405b57b96: Pull complete 
+0a0115b8825c: Pull complete 
+825b124900cb: Pull complete 
+ed736d9e3c41: Pull complete 
+6efb3934697a: Pull complete 
+c0a3a0c8ebc2: Pull complete 
+f55d8adfbc3d: Pull complete 
+3a6c56fbbef8: Pull complete 
+ca45dc8946a2: Pull complete 
+8b852a079ea9: Pull complete 
+Digest: sha256:46eaff19af5e14edd9b78e1d5bf16f6abcd9ad50e0338cbaf3024f2aadb2903b
+Status: Downloaded newer image for logstash:6.7.2
+
+[root@hdss7-200 ~]# docker tag 857d9a1f8221 harbor.od.com/public/logstash:v6.7.2
+
+[root@hdss7-200 ~]# docker push harbor.od.com/public/logstash:v6.7.2
+docker push harbor.od.com/public/logstash:v6.7.2
+The push refers to a repository [harbor.od.com/public/logstash]
+c2b00f70cade: Mounted from public/filebeat 
+9a2c2851596d: Mounted from public/filebeat 
+86564f3ca0e2: Mounted from public/filebeat 
+e9bc8faf823a: Mounted from public/filebeat 
+3f3bcfa85067: Mounted from public/filebeat 
+65d3b56913bd: Mounted from public/filebeat 
+9b48a60607ee: Mounted from public/filebeat 
+df859db41dd0: Mounted from public/filebeat 
+1cbe912d7c00: Mounted from public/filebeat 
+ab5fbaca7e70: Mounted from public/filebeat 
+d69483a6face: Mounted from public/filebeat 
+v6.7.2: digest: sha256:6aacf97dfbcc5c64c2f1a12f43ee48a8dadb98657b9b8d4149d0fee0ec18be81 size: 2823
+```
+- 自定义Dockerfile
+
+{% tabs logstash %}
+<!-- tab Dockerfile -->
+{% code %}
+From harbor.od.com/public/logstash:v6.7.2
+ADD logstash.yml /usr/share/logstash/config
+{% endcode %}
+<!-- endtab -->
+<!-- tab logstash.yml-->
+{% code %}
+http.host: "0.0.0.0"
+path.config: /etc/logstash
+xpack.monitoring.enabled: false
+{% endcode %}
+<!-- endtab -->
+{% endtabs %}
+
+- 创建自定义镜像
+
+```pwd /data/dockerfile/logstash
+[root@hdss7-200 logstash]# docker build . -t harbor.od.com/infra/logstash:v6.7.2
+Sending build context to Docker daemon 249.3 MB
+Step 1 : FROM harbor.od.com/public/logstash:v6.7.2
+v6.7.2: Pulling from public/logstash
+e60be144a6a5: Pull complete 
+6292c2b22d35: Pull complete 
+1bb4586d90e7: Pull complete 
+3f11f6d21132: Pull complete 
+f0aaeeafebd3: Pull complete 
+38c751a91f0f: Pull complete 
+b80e2bad9681: Pull complete 
+e3c97754ddde: Pull complete 
+840f2d82a9fb: Pull complete 
+32063a9aaefb: Pull complete 
+e87b22bf50f5: Pull complete 
+Digest: sha256:6aacf97dfbcc5c64c2f1a12f43ee48a8dadb98657b9b8d4149d0fee0ec18be81
+Status: Downloaded newer image for harbor.od.com/public/logstash:v6.7.2
+ ---> 857d9a1f8221
+Step 2 : ADD logstash.yml /usr/share/logstash/config
+ ---> 2ad32d3f5fef
+Removing intermediate container 1d3a1488c1b7
+Successfully built 2ad32d3f5fef
+[root@hdss7-200 logstash]# docker push harbor.od.com/infra/logstash:v6.7.2
+```
+
 ### 启动docker镜像
+- 创建配置
+
+```vi /etc/logstash/logstash-test.conf
+input {
+  kafka {
+    bootstrap_servers => "10.4.7.11:9092"
+    client_id => "10.4.7.200"
+    consumer_threads => 4
+    group_id => "k8s_test"
+    topics_pattern => "k8s-fb-test-.*"
+  }
+}
+
+filter {
+  json {
+    source => "message"
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => ["10.4.7.12:9200"]
+    index => "k8s-test-%{+YYYY.MM}"
+  }
+}
+```
+
+- 启动logstash镜像
+
+```
+[root@hdss7-200 ~]# docker run -d --name logstash-test -v /etc/logstash:/etc/logstash harbor.od.com/infra/logstash:v6.7.2 -f /etc/logstash/logstash-test.conf
+[root@hdss7-200 ~]# docker ps -a|grep logstash
+a5dcf56faa9a        harbor.od.com/infra/logstash:v6.7.2                                                                                "/usr/local/bin/docke"   8 seconds ago       Up 6 seconds                5044/tcp, 9600/tcp           jovial_swanson
+```
+
+- 验证ElasticSearch里的索引
+
+```
+[root@hdss7-200 ~]# curl http://10.4.7.12:9200/_cat/indices?v
+health status index            uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+green  open   k8s-test-2019.04 H3MY9d8WSbqQ6uL0DFhenQ   5   0         55            0    249.9kb        249.9kb
+```
 
 ## 部署Kibana
 ### 准备docker镜像
+
 ### 准备资源配置清单
 ### 应用资源配置清单
 
