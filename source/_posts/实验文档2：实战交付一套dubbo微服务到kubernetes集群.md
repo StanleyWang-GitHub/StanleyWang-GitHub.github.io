@@ -3,6 +3,9 @@ author: Stanley Wang
 categories: Kubernetes容器云技术专题
 date: 2019-1-18 21:12:56
 ---
+- - -
+{% cq %}欢迎加入王导的VIP学习qq群：==>[<font color="FF7F50">932194668</font>](http://shang.qq.com/wpa/qunwpa?idkey=78869fddc5a661acb0639315eb52997c108de6625df5f0ee2f0372f176a032a6)<=={% endcq %}
+- - -
 # 基础架构
 主机名|角色|ip
 -|-|-
@@ -1107,7 +1110,7 @@ CMD ["/entrypoint.sh"]
 <!-- tab config.yml -->
 vi config.yml
 {% code %}
----
+\--\-
 rules:
   - pattern: '.*'
 {% endcode %}
@@ -1256,7 +1259,7 @@ spec:
           protocol: TCP
         env:
         - name: JAR_BALL
-          value: dubbo-client.jar
+          value: dubbo-server.jar
         imagePullPolicy: IfNotPresent
       imagePullSecrets:
       - name: harbor
@@ -1396,8 +1399,8 @@ spec:
       - name: dubbo-monitor
         image: harbor.od.com/infra/dubbo-monitor:latest
         ports:
-				- containerPort: 8080
-				  protocol: TCP
+        - containerPort: 8080
+          protocol: TCP
         - containerPort: 20880
           protocol: TCP
         imagePullPolicy: IfNotPresent
@@ -1451,7 +1454,7 @@ spec:
   - host: dubbo-monitor.od.com
     http:
       paths:
-			- path: /
+      - path: /
         backend: 
           serviceName: dubbo-monitor
           servicePort: 8080
@@ -1528,7 +1531,7 @@ demo IN A 60 10.9.7.10
 ### 准备k8s资源配置清单
 运维主机`HDSS7-200.host.com`上，准备资源配置清单
 {% tabs dubbo-demo-consumer%}
-<!-- tab deployment.yaml -->
+<!-- tab Deployment -->
 vi /data/k8s-yaml/dubbo-demo-consumer/deployment.yaml
 {% code %}
 kind: Deployment
@@ -1578,7 +1581,7 @@ spec:
   progressDeadlineSeconds: 600
 {% endcode %}
 <!-- endtab -->
-<!-- tab svc.yaml-->
+<!-- tab Service -->
 vi /data/k8s-yaml/dubbo-demo-consumer/svc.yaml
 {% code %}
 kind: Service
@@ -1598,7 +1601,7 @@ spec:
   sessionAffinity: None
 {% endcode %}
 <!-- endtab -->
-<!-- tab ingress.yaml-->
+<!-- tab Ingress -->
 vi /data/k8s-yaml/dubbo-demo-consumer/ingress.yaml
 {% code %}
 kind: Ingress
