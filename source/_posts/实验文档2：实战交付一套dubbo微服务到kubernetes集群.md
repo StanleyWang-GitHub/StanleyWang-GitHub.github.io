@@ -847,7 +847,6 @@ spec:
       - name: harbor
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
-      dnsPolicy: Default
       securityContext: 
         runAsUser: 0
       schedulerName: default-scheduler
@@ -871,11 +870,10 @@ metadata:
 spec:
   ports:
   - protocol: TCP
-    port: 8080
+    port: 80
     targetPort: 8080
   selector:
     app: jenkins
-  clusterIP: None
   type: ClusterIP
   sessionAffinity: None
 {% endcode %}
@@ -896,7 +894,7 @@ spec:
       - path: /
         backend: 
           serviceName: jenkins
-          servicePort: 8080
+          servicePort: 80
 {% endcode %}
 <!-- endtab -->
 {% endtabs %}
@@ -1060,8 +1058,14 @@ ADD ${params.target_dir}/project_dir /opt/project_dir"""
 ```
 
 # 最后的准备工作
-## 检查SSH key
-进入jenkins的docker里，检查ssh连接git仓库，确认是否能拉到代码。
+## 检查jenkins容器里的docker客户端
+进入jenkins的docker容器里，检查docker客户端是否可用。
+```
+[root@hdss7-22 ~]# docker exec -ti 52e250789b78 bash
+root@52e250789b78:/# docker ps -a
+```
+## 检查jenkins容器里的SSH key
+进入jenkins的docker容器里，检查ssh连接git仓库，确认是否能拉到代码。
 ```
 [root@hdss7-22 ~]# docker exec -ti 52e250789b78 bash
 root@52e250789b78:/# ssh -i /root/.ssh/id_rsa -T git@gitee.com                                                                                              
@@ -1265,7 +1269,6 @@ spec:
       - name: harbor
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
-      dnsPolicy: Default
       securityContext: 
         runAsUser: 0
       schedulerName: default-scheduler
@@ -1408,7 +1411,6 @@ spec:
       - name: harbor
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
-      dnsPolicy: Default
       securityContext: 
         runAsUser: 0
       schedulerName: default-scheduler
@@ -1568,7 +1570,6 @@ spec:
       - name: harbor
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
-      dnsPolicy: Default
       securityContext: 
         runAsUser: 0
       schedulerName: default-scheduler
@@ -1648,8 +1649,3 @@ http://demo.od.com/hello?name=wangdao
 ## 扩容（scaling）
 - k8s的dashboard上直接操作
 
-## 节点宕机（failover）
-- 全自动故障转移
-
-## 增加节点
-略

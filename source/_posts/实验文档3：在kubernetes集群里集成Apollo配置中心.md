@@ -106,7 +106,6 @@ spec:
       - name: harbor
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
-      dnsPolicy: Default
       securityContext: 
         runAsUser: 0
       schedulerName: default-scheduler
@@ -437,7 +436,6 @@ spec:
       - name: harbor
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
-      dnsPolicy: Default
       securityContext: 
         runAsUser: 0
       schedulerName: default-scheduler
@@ -719,7 +717,6 @@ spec:
       - name: harbor
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
-      dnsPolicy: Default
       securityContext: 
         runAsUser: 0
       schedulerName: default-scheduler
@@ -986,7 +983,6 @@ spec:
       - name: harbor
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
-      dnsPolicy: Default
       securityContext: 
         runAsUser: 0
       schedulerName: default-scheduler
@@ -1242,7 +1238,6 @@ spec:
       - name: harbor
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
-      dnsPolicy: Default
       securityContext: 
         runAsUser: 0
       schedulerName: default-scheduler
@@ -1348,7 +1343,6 @@ spec:
       - name: harbor
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
-      dnsPolicy: Default
       securityContext: 
         runAsUser: 0
       schedulerName: default-scheduler

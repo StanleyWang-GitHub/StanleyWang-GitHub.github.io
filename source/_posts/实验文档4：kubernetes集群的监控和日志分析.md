@@ -1,4 +1,4 @@
-title: 实验文档4：kubernetes集群的监控和日志收集
+title: 实验文档4：kubernetes集群的监控和日志分析
 author: Stanley Wang
 categories: Kubernetes容器云技术专题
 date: 2019-1-18 19:12:56
@@ -503,7 +503,6 @@ spec:
         imagePullPolicy: IfNotPresent
       imagePullSecrets:
       - name: harbor
-      dnsPolicy: ClusterFirst
       restartPolicy: Always
       serviceAccount: kube-state-metrics
       serviceAccountName: kube-state-metrics
@@ -603,7 +602,6 @@ spec:
       imagePullSecrets:
       - name: harbor
       restartPolicy: Always
-      dnsPolicy: ClusterFirst
       hostNetwork: true
 ```
 
@@ -850,7 +848,6 @@ spec:
       imagePullSecrets:
       - name: harbor
       restartPolicy: Always
-      dnsPolicy: ClusterFirst
 {% endcode %}
 <!-- endtab -->
 <!-- tab Service-->
@@ -1627,7 +1624,6 @@ spec:
           name: data
       imagePullSecrets:
       - name: harbor
-      dnsPolicy: Default
       nodeName: 10.4.7.21
       restartPolicy: Always
       securityContext:
@@ -1842,6 +1838,21 @@ Datasource|Prometheus
 - K8S Container中，所有Pannel的
 > pod_name -> container_label_io_kubernetes_pod_name
 
+{% tabs k8s-dashboard %}
+<!-- tab K8S-Cluster -->
+见附件
+<!-- endtab -->
+<!-- tab K8S-Node -->
+见附件
+<!-- endtab -->
+<!-- tab K8S-Deployment -->
+见附件
+<!-- endtab -->
+<!-- tab K8S-Container -->
+见附件
+<!-- endtab -->
+{% endtabs %}
+
 ### 配置自定义dashboard
 根据Prometheus数据源里的数据，配置如下dashboard：
 - etcd dashboard
@@ -1861,6 +1872,9 @@ Datasource|Prometheus
 见附件
 <!-- endtab -->
 <!-- tab JMX -->
+见附件
+<!-- endtab -->
+<!-- tab BlackBox -->
 见附件
 <!-- endtab -->
 {% endtabs %}
@@ -2065,7 +2079,6 @@ spec:
       - name: harbor
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
-      dnsPolicy: Default
       securityContext: 
         runAsUser: 0
       schedulerName: default-scheduler
@@ -2327,7 +2340,6 @@ spec:
       - name: harbor
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
-      dnsPolicy: Default
       securityContext: 
         runAsUser: 0
       schedulerName: default-scheduler
@@ -2484,15 +2496,176 @@ green  open   k8s-test-2019.04 H3MY9d8WSbqQ6uL0DFhenQ   5   0         55        
 ```
 
 ## 部署Kibana
+运维主机`HDSS7-200.host.com`上：
 ### 准备docker镜像
+[kibana官方镜像下载地址](https://hub.docker.com/_/kibana?tab=tags)
+```
+[root@hdss7-200 ~]# docker pull kibana:5.6.16
+5.6.16: Pulling from library/kibana
 
+8014725ed6f5: Pull complete 
+19b590251e94: Pull complete 
+7fa3e54c0b5a: Pull complete 
+60ee9811b356: Pull complete 
+d18bafa420f4: Pull complete 
+8cee55751899: Pull complete 
+c395be470eb2: Pull complete 
+Digest: sha256:71f776596244877597fd679b2fa6fb0f1fa9c5b11388199997781d1ce77b73b1
+Status: Downloaded newer image for kibana:5.6.16
+[root@hdss7-200 ~]# docker tag 62079cf74c23 harbor.od.com/infra/kibana:v5.6.16
+[root@hdss7-200 ~]# docker push harbor.od.com/infra/kibana:v5.6.16
+docker push harbor.od.com/infra/kibana:v5.6.16
+The push refers to a repository [harbor.od.com/infra/kibana]
+be94745c5390: Pushed 
+652dcbd52cdd: Pushed 
+a3508a095ca7: Pushed 
+56d52080e2fe: Pushed 
+dbce28d91bf0: Pushed 
+dcddc432ebdf: Pushed 
+3e466685bf43: Pushed 
+d69483a6face: Mounted from infra/logstash 
+v5.6.16: digest: sha256:17dd243d6cc4e572f74f3de83eafc981e54c1710f8fe2d0bf74357b28bddaf08 size: 1991
+```
+### 解析域名
+`HDSS7-11.host.com`上
+```vi /var/named/od.com.zone
+kibana	60 IN A 10.4.7.10
+```
 ### 准备资源配置清单
+{% tabs kibana %}
+<!-- tab Deployment -->
+vi /data/k8s-yaml/kibana/deployment.yaml
+{% code %}
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: kibana
+  namespace: infra
+  labels: 
+    name: kibana
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      name: kibana
+  template:
+    metadata:
+      labels: 
+        app: kibana
+        name: kibana
+    spec:
+      containers:
+      - name: kibana
+        image: harbor.od.com/infra/kibana:v5.6.16
+        ports:
+        - containerPort: 5601
+          protocol: TCP
+        env:
+        - name: ELASTICSEARCH_URL
+          value: http://10.4.7.12:9200
+        imagePullPolicy: IfNotPresent
+      imagePullSecrets:
+      - name: harbor
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      securityContext: 
+        runAsUser: 0
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: 
+      maxUnavailable: 1
+      maxSurge: 1
+  revisionHistoryLimit: 7
+  progressDeadlineSeconds: 600
+{% endcode %}
+<!-- endtab -->
+<!-- tab Service -->
+vi /data/k8s-yaml/kibana/svc.yaml
+{% code %}
+kind: Service
+apiVersion: v1
+metadata: 
+  name: kibana
+  namespace: infra
+spec:
+  ports:
+  - protocol: TCP
+    port: 5601
+    targetPort: 5601
+  selector: 
+    app: kibana
+  clusterIP: None
+  type: ClusterIP
+  sessionAffinity: None
+{% endcode %}
+<!-- endtab -->
+<!-- tab Ingress -->
+vi /data/k8s-yaml/kibana/ingress.yaml
+{% code %}
+kind: Ingress
+apiVersion: extensions/v1beta1
+metadata: 
+  name: kibana
+  namespace: infra
+spec:
+  rules:
+  - host: kibana.od.com
+    http:
+      paths:
+      - path: /
+        backend: 
+          serviceName: kibana
+          servicePort: 5601
+{% endcode %}
+<!-- endtab -->
+{% endtabs %}
 ### 应用资源配置清单
+任意运算节点上：
+```
+[root@hdss7-21 ~]# kubectl apply -f deployment.yaml 
+deployment.extensions/kibana created
+[root@hdss7-21 ~]# kubectl apply -f svc.yaml 
+service/kibana created
+[root@hdss7-21 ~]# kubectl apply -f ingress.yaml 
+ingress.extensions/kibana created
+```
+### 浏览器访问
+http://kibana.od.com
+![kibana页面](/images/kibana.png "kibana页面")
 
 ## kibana的使用
+![kibana用法](/images/kibana-usage.png "kibana用法")
+### 选择区域
+- @timestamp
+> 对应日志的时间戳
+
+- log.file.path
+> 对应日志文件名
+
+- message
+> 对应日志内容
+
 ### 时间选择器
+- 选择日志时间
+> 快速时间
+> 绝对时间
+> 相对时间
+
 ### 环境选择器
+- 选择对应环境的日志
+> k8s-test-*
+> k8s-prod-*
+
 ### 项目选择器
+- 对应filebeat的PROJ_NAME值
+- Add a fillter
+- topic is ${PROJ_NAME}
+> dubbo-demo-service
+> dubbo-demo-web
+
 ### 关键字选择器
+- exception
+- error
 
 
