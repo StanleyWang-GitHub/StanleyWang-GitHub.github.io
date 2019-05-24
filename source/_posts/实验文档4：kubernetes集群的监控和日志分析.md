@@ -1464,7 +1464,7 @@ jvm_gc_collection_seconds_sum{gc="PS MarkSweep",}|1.867
 
 ### 修改traefik服务接入prometheus监控
 `dashboard`上：
-kube-system名称空间->daemonset->traefik-ingress-controller->spec.template下，添加
+kube-system名称空间->daemonset->traefik-ingress-controller->spec->template->metadata下，添加
 ```
 "annotations": {
   "prometheus_io_scheme": "traefik",
@@ -1487,7 +1487,7 @@ kube-system名称空间->daemonset->traefik-ingress-controller->spec.template下
 ```
 ### 修改dubbo-service服务接入prometheus监控
 `dashboard`上：
-app名称空间->deployment->dubbo-demo-service->spec.template下，添加
+app名称空间->deployment->dubbo-demo-service->spec->template=>metadata下，添加
 ```
 "annotations": {
   "prometheus_io_scrape": "true",
@@ -1500,7 +1500,7 @@ app名称空间->deployment->dubbo-demo-service->spec.template下，添加
 删除pod，重启traefik，观察监控
 
 ### 修改dubbo-consumer服务接入prometheus监控
-app名称空间->deployment->dubbo-demo-consumer->spec.template下，添加
+app名称空间->deployment->dubbo-demo-consumer->spec->template->metadata下，添加
 ```
 "annotations": {
   "prometheus_io_scrape": "true",
