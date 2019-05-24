@@ -1136,7 +1136,7 @@ mkdir: created directory ‘/data/k8s-volume/prometheus/prom-db’
 ```
 - 准备配置
 
-```vi /data/k8s-volume/promethues/etc/prometheus.yml
+```vi /data/k8s-volume/prometheus/etc/prometheus.yml
 global:
   scrape_interval:     15s
   evaluation_interval: 15s

@@ -159,7 +159,7 @@ ingress.extensions/minio created
 ## 浏览器访问
 http://minio.od.com
 
-# 部署redis
+# 部署Redis
 ## 准备docker镜像
 运维主机`HDSS7-200.host.com`上：
 [镜像下载地址](https://hub.docker.com/_/redis)
@@ -251,6 +251,15 @@ spec:
 {% endcode %}
 <!-- endtab -->
 {% endtabs %}
+
+## 应用资源配置清单
+任意运算节点上：
+```
+[root@hdss7-21 ~]# kubectl apply -f https://k8s-yaml.od.com/redis/deployment.yaml 
+deployment.extensions/redis created
+[root@hdss7-21 ~]# kubectl apply -f https://k8s-yaml.od.com/redis/svc.yaml 
+service/redis created
+```
 
 # 部署CloudDriver
 运维主机`HDSS7-200.host.com`上：
