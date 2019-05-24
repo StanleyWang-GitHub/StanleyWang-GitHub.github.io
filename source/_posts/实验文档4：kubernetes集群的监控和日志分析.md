@@ -1479,7 +1479,7 @@ kube-system名称空间->daemonset->traefik-ingress-controller->spec.template下
 "annotations": {
   "prometheus_io_scheme": "traefik",
   "prometheus_io_path": "/metrics",
-  "prometheus_io_port": "8080"
+  "prometheus_io_port": "8080",
   "blackbox_path": "/",
   "blackbox_port": "8080",
   "blackbox_scheme": "http"
