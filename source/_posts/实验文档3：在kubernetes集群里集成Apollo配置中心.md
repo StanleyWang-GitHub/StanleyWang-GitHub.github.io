@@ -293,7 +293,7 @@ tail -f /dev/null
 
 - 写Dockerfile
 ```vi /data/dockerfile/apollo-configservice/Dockerfile
-FROM openjdk:8-jre-alpine
+FROM openjdk:8-jre-alpine3.8
 
 ENV VERSION 1.3.0
 
@@ -314,7 +314,7 @@ CMD ["/apollo-configservice/scripts/startup.sh"]
 ```
 [root@hdss7-200 apollo-configservice]# docker build . -t harbor.od.com/infra/apollo-configservice:v1.3.0
 Sending build context to Docker daemon 111.9 MB
-Step 1 : FROM openjdk:8-jre-alpine
+Step 1 : FROM openjdk:8-jre-alpine3.8
  ---> ce8477c7d086
 Step 2 : ENV VERSION 1.3.0
  ---> Running in 1b216dfe65f4
@@ -613,7 +613,7 @@ tail -f /dev/null
 
 - 写Dockerfile
 ```vi /data/dockerfile/apollo-adminservice/Dockerfile
-FROM openjdk:8-jre-alpine
+FROM openjdk:8-jre-alpine3.8
 
 ENV VERSION 1.3.0
 
@@ -635,7 +635,7 @@ CMD ["/apollo-adminservice/scripts/startup.sh"]
 ```
 [root@hdss7-200 apollo-adminservice]# docker build . -t harbor.od.com/infra/apollo-adminservice:v1.3.0
 Sending build context to Docker daemon 55.57 MB
-Step 1 : FROM openjdk:8-jre-alpine
+Step 1 : FROM openjdk:8-jre-alpine3.8
  ---> ce8477c7d086
 Step 2 : ENV VERSION 1.3.0
  ---> Using cache
@@ -876,7 +876,7 @@ tail -f /dev/null
 ```
 - 写Dockerfile
 ```vi /data/dockerfile/apollo-portal/Dockerfile
-FROM openjdk:8-jre-alpine
+FROM openjdk:8-jre-alpine3.8
 
 ENV VERSION 1.3.0
 
@@ -897,7 +897,7 @@ CMD ["/apollo-portal/scripts/startup.sh"]
 ```
 [root@hdss7-200 apollo-portal]# docker build . -t harbor.od.com/infra/apollo-portal:v1.3.0
 Sending build context to Docker daemon  40.6 MB
-Step 1 : FROM openjdk:8-jre-alpine
+Step 1 : FROM openjdk:8-jre-alpine3.8
  ---> ce8477c7d086
 Step 2 : ENV VERSION 1.3.0
  ---> Using cache
