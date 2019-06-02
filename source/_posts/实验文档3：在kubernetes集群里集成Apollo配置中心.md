@@ -183,6 +183,27 @@ Archive:  apollo-configservice-1.3.0-github.zip
 ```
 ### 执行数据库脚本
 在数据库主机`HDSS7-11.host.com`上：
+**注意：**MySQL版本应为5.6或以上！
+- 更新yum源
+
+```vi /etc/yum.repos.d/MariaDB.repo
+[mariadb]
+name = MariaDB
+baseurl = https://mirrors.ustc.edu.cn/mariadb/yum/10.1/centos7-amd64/
+gpgkey=https://mirrors.ustc.edu.cn/mariadb/yum/RPM-GPG-KEY-MariaDB
+gpgcheck=1
+```
+
+- 导入GPG-KEY
+```
+[root@hdss7-11 ~]# rpm --import https://mirrors.ustc.edu.cn/mariadb/yum/RPM-GPG-KEY-MariaDB
+```
+
+- 更新数据库版本
+```
+[root@hdss7-11 ~]# yum update MariaDB-server -y
+```
+
 [数据库脚本地址](https://raw.githubusercontent.com/ctripcorp/apollo/master/scripts/db/migration/configdb/V1.0.0__initialization.sql)
 ```
 [root@hdss7-11 ~]# mysql -uroot -p
@@ -193,7 +214,7 @@ mysql> source ./apolloconfig.sql
 
 ### 数据库用户授权
 ```
-mysql> grant INSERT,DELETE,UPDATE,SELECT on ApolloConfigDB.* to "apolloconfig"@"172.7.%" identified by "123456";
+mysql> grant INSERT,DELETE,UPDATE,SELECT on ApolloConfigDB.* to "apolloconfig"@"10.4.7.%" identified by "123456";
 ```
 
 ### 修改初始数据
@@ -293,16 +314,12 @@ tail -f /dev/null
 
 - 写Dockerfile
 ```vi /data/dockerfile/apollo-configservice/Dockerfile
-FROM openjdk:8-jre-alpine3.8
+FROM stanleyws/jre8:8u112
 
 ENV VERSION 1.3.0
 
-RUN echo "http://mirrors.aliyun.com/alpine/v3.8/main" > /etc/apk/repositories \
-    && echo "http://mirrors.aliyun.com/alpine/v3.8/community" >> /etc/apk/repositories \
-    && apk update upgrade \
-    && apk add --no-cache procps unzip curl bash tzdata \
-    && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
-    && echo "Asia/Shanghai" > /etc/timezone
+RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime &&\
+    echo "Asia/Shanghai" > /etc/timezone
 
 ADD apollo-configservice-${VERSION}.jar /apollo-configservice/apollo-configservice.jar
 ADD config/ /apollo-configservice/config
@@ -313,61 +330,34 @@ CMD ["/apollo-configservice/scripts/startup.sh"]
 - 制作镜像并推送
 ```
 [root@hdss7-200 apollo-configservice]# docker build . -t harbor.od.com/infra/apollo-configservice:v1.3.0
-Sending build context to Docker daemon 111.9 MB
-Step 1 : FROM openjdk:8-jre-alpine3.8
- ---> ce8477c7d086
+Sending build context to Docker daemon 61.91 MB
+Step 1 : FROM stanleyws/jre8:8u112
+ ---> fa3a085d6ef1
 Step 2 : ENV VERSION 1.3.0
- ---> Running in 1b216dfe65f4
- ---> 02291afc5c51
-Removing intermediate container 1b216dfe65f4
-Step 3 : RUN echo "http://mirrors.aliyun.com/alpine/v3.8/main" > /etc/apk/repositories     && echo "http://mirrors.aliyun.com/alpine/v3.8/community" >> /etc/apk/repositories     && apk update upgrade     && apk add --no-cache procps unzip curl bash tzdata     && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime     && echo "Asia/Shanghai" > /etc/timezone
- ---> Running in ef3bf63405ba
-fetch http://mirrors.aliyun.com/alpine/v3.8/main/x86_64/APKINDEX.tar.gz
-fetch http://mirrors.aliyun.com/alpine/v3.8/community/x86_64/APKINDEX.tar.gz
-v3.8.4-22-g92c8ab7e2e [http://mirrors.aliyun.com/alpine/v3.8/main]
-v3.8.4-22-g92c8ab7e2e [http://mirrors.aliyun.com/alpine/v3.8/community]
-OK: 9597 distinct packages available
-fetch http://mirrors.aliyun.com/alpine/v3.8/main/x86_64/APKINDEX.tar.gz
-fetch http://mirrors.aliyun.com/alpine/v3.8/community/x86_64/APKINDEX.tar.gz
-(1/16) Installing ncurses-terminfo-base (6.1_p20180818-r1)
-(2/16) Installing ncurses-terminfo (6.1_p20180818-r1)
-(3/16) Installing ncurses-libs (6.1_p20180818-r1)
-(4/16) Installing readline (7.0.003-r0)
-(5/16) Installing bash (4.4.19-r1)
-Executing bash-4.4.19-r1.post-install
-(6/16) Installing libressl2.7-libcrypto (2.7.5-r0)
-(7/16) Installing nghttp2-libs (1.32.0-r0)
-(8/16) Installing libssh2 (1.8.2-r0)
-(9/16) Installing libressl2.7-libssl (2.7.5-r0)
-(10/16) Installing libcurl (7.61.1-r2)
-(11/16) Installing curl (7.61.1-r2)
-(12/16) Installing libintl (0.19.8.1-r2)
-(13/16) Installing libproc (3.3.15-r0)
-(14/16) Installing procps (3.3.15-r0)
-(15/16) Installing tzdata (2018f-r0)
-(16/16) Installing unzip (6.0-r4)
-Executing busybox-1.29.3-r10.trigger
-Executing ca-certificates-20190108-r0.trigger
-OK: 100 MiB in 69 packages
- ---> bfcc40fdf2a2
-Removing intermediate container ef3bf63405ba
+ ---> [Warning] IPv4 forwarding is disabled. Networking will not work.
+ ---> Running in 685d51b5adb4
+ ---> feb4c0289f04
+Removing intermediate container 685d51b5adb4
+Step 3 : RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime &&    echo "Asia/Shanghai" > /etc/timezone
+ ---> [Warning] IPv4 forwarding is disabled. Networking will not work.
+ ---> Running in eaa05073feeb
+ ---> a3e3fd61ae35
+Removing intermediate container eaa05073feeb
 Step 4 : ADD apollo-configservice-${VERSION}.jar /apollo-configservice/apollo-configservice.jar
- ---> 47446152080a
-Removing intermediate container 535a15e62c53
-Step 5 : ADD apollo-configservice.conf /apollo-configservice/apollo-configservice.conf
- ---> 8133e438abe6
-Removing intermediate container 623a17ff715c
-Step 6 : ADD config/ /apollo-configservice/config
- ---> 7c78e8a039c4
-Removing intermediate container 5b5d21ee39ef
-Step 7 : ADD scripts/ /apollo-configservice/scripts
- ---> 3c5e73da046e
-Removing intermediate container 1517d8a51322
-Step 8 : CMD /apollo-configservice/scripts/startup.sh
- ---> Running in 5cb6b42ba6ba
- ---> a498f9f1e57b
-Removing intermediate container 5cb6b42ba6ba
-Successfully built a498f9f1e57b
+ ---> be09a59b83a2
+Removing intermediate container ac6b8af3979b
+Step 5 : ADD config/ /apollo-configservice/config
+ ---> fb64fc0f3194
+Removing intermediate container b73c5315ad20
+Step 6 : ADD scripts/ /apollo-configservice/scripts
+ ---> 96ff3d9b9456
+Removing intermediate container 67ba203b3101
+Step 7 : CMD /apollo-configservice/scripts/startup.sh
+ ---> [Warning] IPv4 forwarding is disabled. Networking will not work.
+ ---> Running in 80bd3f53fefc
+ ---> 551ea2ba8de3
+Removing intermediate container 80bd3f53fefc
+Successfully built 551ea2ba8de3
 
 [root@hdss7-200 apollo-configservice]# docker push harbor.od.com/infra/apollo-configservice:v1.3.0
 The push refers to a repository [harbor.od.com/infra/apollo-configservice]
@@ -613,16 +603,12 @@ tail -f /dev/null
 
 - 写Dockerfile
 ```vi /data/dockerfile/apollo-adminservice/Dockerfile
-FROM openjdk:8-jre-alpine3.8
+FROM stanleyws/jre8:8u112
 
 ENV VERSION 1.3.0
 
-RUN echo "http://mirrors.aliyun.com/alpine/v3.8/main" > /etc/apk/repositories \
-    && echo "http://mirrors.aliyun.com/alpine/v3.8/community" >> /etc/apk/repositories \
-    && apk update upgrade \
-    && apk add --no-cache procps unzip curl bash tzdata \
-    && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
-    && echo "Asia/Shanghai" > /etc/timezone
+RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime &&\
+    echo "Asia/Shanghai" > /etc/timezone
 
 ADD apollo-adminservice-${VERSION}.jar /apollo-adminservice/apollo-adminservice.jar
 ADD config/ /apollo-adminservice/config
@@ -634,29 +620,30 @@ CMD ["/apollo-adminservice/scripts/startup.sh"]
 - 制作镜像并推送
 ```
 [root@hdss7-200 apollo-adminservice]# docker build . -t harbor.od.com/infra/apollo-adminservice:v1.3.0
-Sending build context to Docker daemon 55.57 MB
-Step 1 : FROM openjdk:8-jre-alpine3.8
- ---> ce8477c7d086
+Sending build context to Docker daemon 58.31 MB
+Step 1 : FROM stanleyws/jre8:8u112
+ ---> fa3a085d6ef1
 Step 2 : ENV VERSION 1.3.0
  ---> Using cache
- ---> 02291afc5c51
-Step 3 : RUN echo "http://mirrors.aliyun.com/alpine/v3.8/main" > /etc/apk/repositories     && echo "http://mirrors.aliyun.com/alpine/v3.8/community" >> /etc/apk/repositories     && apk update upgrade     && apk add --no-cache procps unzip curl bash tzdata     && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime     && echo "Asia/Shanghai" > /etc/timezone
+ ---> feb4c0289f04
+Step 3 : RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime &&    echo "Asia/Shanghai" > /etc/timezone
  ---> Using cache
- ---> bfcc40fdf2a2
+ ---> a3e3fd61ae35
 Step 4 : ADD apollo-adminservice-${VERSION}.jar /apollo-adminservice/apollo-adminservice.jar
- ---> c9f1cacd3b3f
-Removing intermediate container d12af621413e
+ ---> 6a1eb9565777
+Removing intermediate container 7196df9af6af
 Step 5 : ADD config/ /apollo-adminservice/config
- ---> e3f8f596fdf7
-Removing intermediate container 759fe7344b6b
+ ---> 9f364b732d46
+Removing intermediate container 9b24669c6c78
 Step 6 : ADD scripts/ /apollo-adminservice/scripts
- ---> 383e3be822ca
-Removing intermediate container a66111ed5ea6
+ ---> b7bc5517b0fc
+Removing intermediate container f3e34e759148
 Step 7 : CMD /apollo-adminservice/scripts/startup.sh
- ---> Running in 8a7736aecf0c
- ---> c79bd0ef7a9a
-Removing intermediate container 8a7736aecf0c
-Successfully built c79bd0ef7a9a
+ ---> [Warning] IPv4 forwarding is disabled. Networking will not work.
+ ---> Running in 18c6597914b4
+ ---> 82145db3ee88
+Removing intermediate container 18c6597914b4
+Successfully built 82145db3ee88
 
 [root@hdss7-200 apollo-adminservice]# docker push harbor.od.com/infra/apollo-adminservice:v1.3.0
 docker push harbor.od.com/infra/apollo-adminservice:v1.3.0
@@ -875,17 +862,14 @@ fi
 tail -f /dev/null
 ```
 - 写Dockerfile
+
 ```vi /data/dockerfile/apollo-portal/Dockerfile
-FROM openjdk:8-jre-alpine3.8
+FROM stanleyws/jre8:8u112
 
 ENV VERSION 1.3.0
 
-RUN echo "http://mirrors.aliyun.com/alpine/v3.8/main" > /etc/apk/repositories \
-    && echo "http://mirrors.aliyun.com/alpine/v3.8/community" >> /etc/apk/repositories \
-    && apk update upgrade \
-    && apk add --no-cache procps unzip curl bash tzdata \
-    && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
-    && echo "Asia/Shanghai" > /etc/timezone
+RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime &&\
+    echo "Asia/Shanghai" > /etc/timezone
 
 ADD apollo-portal-${VERSION}.jar /apollo-portal/apollo-portal.jar
 ADD config/ /apollo-portal/config
@@ -894,31 +878,33 @@ ADD scripts/ /apollo-portal/scripts
 CMD ["/apollo-portal/scripts/startup.sh"]
 ```
 - 制作镜像并推送
+
 ```
 [root@hdss7-200 apollo-portal]# docker build . -t harbor.od.com/infra/apollo-portal:v1.3.0
-Sending build context to Docker daemon  40.6 MB
-Step 1 : FROM openjdk:8-jre-alpine3.8
- ---> ce8477c7d086
+Sending build context to Docker daemon 43.35 MB
+Step 1 : FROM stanleyws/jre8:8u112
+ ---> fa3a085d6ef1
 Step 2 : ENV VERSION 1.3.0
  ---> Using cache
- ---> 02291afc5c51
-Step 3 : RUN echo "http://mirrors.aliyun.com/alpine/v3.8/main" > /etc/apk/repositories     && echo "http://mirrors.aliyun.com/alpine/v3.8/community" >> /etc/apk/repositories     && apk update upgrade     && apk add --no-cache procps unzip curl bash tzdata     && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime     && echo "Asia/Shanghai" > /etc/timezone
+ ---> feb4c0289f04
+Step 3 : RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime &&    echo "Asia/Shanghai" > /etc/timezone
  ---> Using cache
- ---> bfcc40fdf2a2
+ ---> a3e3fd61ae35
 Step 4 : ADD apollo-portal-${VERSION}.jar /apollo-portal/apollo-portal.jar
- ---> f18e4617638c
-Removing intermediate container 5c1ba8001ff3
+ ---> cfcf63e8eedc
+Removing intermediate container 860b55bd3fc5
 Step 5 : ADD config/ /apollo-portal/config
- ---> 201162bf7bf8
-Removing intermediate container a5d89acc0779
+ ---> 3ee780369431
+Removing intermediate container 6b67ee4224b5
 Step 6 : ADD scripts/ /apollo-portal/scripts
- ---> 17acba32839f
-Removing intermediate container fc702b1bb605
+ ---> 42c9aea2e9e3
+Removing intermediate container 2dcf8d1bf4cf
 Step 7 : CMD /apollo-portal/scripts/startup.sh
- ---> Running in b88cf490171f
- ---> 76409781a792
-Removing intermediate container b88cf490171f
-Successfully built 76409781a792
+ ---> [Warning] IPv4 forwarding is disabled. Networking will not work.
+ ---> Running in 9162dab8b63a
+ ---> 0c020b79c36f
+Removing intermediate container 9162dab8b63a
+Successfully built 0c020b79c36f
 [root@hdss7-200 apollo-portal]# docker push harbor.od.com/infra/apollo-portal:v1.3.0
 docker push harbor.od.com/infra/apollo-portal:v1.3.0
 The push refers to a repository [harbor.od.com/infra/apollo-portal]
@@ -931,6 +917,7 @@ dee6aef5c2b6: Mounted from infra/apollo-adminservice
 a464c54f93a9: Mounted from infra/apollo-adminservice 
 v1.3.0: digest: sha256:1aa30aac8642cceb97c053b7d74632240af08f64c49b65d8729021fef65628a4 size: 1785
 ```
+
 ### 解析域名
 DNS主机`HDSS7-11.host.com`上：
 ```vi /var/named/od.com.zone
@@ -1392,10 +1379,10 @@ HDSS7-200.host.com|运维主机，harbor仓库|10.4.7.200
 
 环境|命名空间|应用
 -|-|-
-测试环境（TEST）|infra-test|apollo-config，apollo-admin
-测试环境（TEST）|app-test|dubbo-demo-service，dubbo-demo-web
-生产环境（PROD）|infra-prod|apollo-config，apollo-admin
-生产环境（PROD）|app-prod|dubbo-demo-service，dubbo-demo-web
+测试环境（TEST）|test|apollo-config，apollo-admin
+测试环境（TEST）|test|dubbo-demo-service，dubbo-demo-web
+生产环境（PROD）|prod|apollo-config，apollo-admin
+生产环境（PROD）|prod|dubbo-demo-service，dubbo-demo-web
 ops环境（infra）|infra|jenkins，dubbo-monitor，apollo-portal
 
 ## 修改/添加域名解析
@@ -1410,7 +1397,7 @@ demo-prod 60 IN A 10.4.7.10
 ```
 
 ## Apollo的k8s应用配置
-- 删除app命名空间内应用，创建infra-test命名空间，创建infra-prod命名空间
+- 删除app命名空间内应用，创建test命名空间，创建prod命名空间
 - 删除infra命名空间内apollo-configservice，apollo-adminservice应用
 - 数据库内删除ApolloConfigDB，创建ApolloConfigTestDB，创建ApolloConfigProdDB
 
@@ -1421,13 +1408,13 @@ mysql> create database ApolloConfigTestDB;
 mysql> use ApolloConfigTestDB;
 mysql> source ./apolloconfig.sql
 mysql> update ApolloConfigTestDB.ServerConfig set ServerConfig.Value="http://config-test.od.com/eureka" where ServerConfig.Key="eureka.service.url";
-mysql> grant INSERT,DELETE,UPDATE,SELECT on ApolloConfigTestDB.* to "apolloconfig"@"172.7.%" identified by "123456";
+mysql> grant INSERT,DELETE,UPDATE,SELECT on ApolloConfigTestDB.* to "apolloconfig"@"10.4.7.%" identified by "123456";
 
 mysql> create database ApolloConfigProdDB;
 mysql> use ApolloConfigProdDB;
 mysql> source ./apolloconfig.sql
 mysql> update ApolloConfigProdDB.ServerConfig set ServerConfig.Value="http://config-prod.od.com/eureka" where ServerConfig.Key="eureka.service.url";
-mysql> grant INSERT,DELETE,UPDATE,SELECT on ApolloConfigProdDB.* to "apolloconfig"@"172.7.%" identified by "123456";
+mysql> grant INSERT,DELETE,UPDATE,SELECT on ApolloConfigProdDB.* to "apolloconfig"@"10.4.7.%" identified by "123456";
 ```
 - 准备apollo-config，apollo-admin的资源配置清单（各2套）
 
@@ -1453,7 +1440,7 @@ application-github.properties: |
     eureka.service.url = http://config-prod.od.com/eureka
 ```
 
-- 依次应用，分别发布在infra-test和infra-prod命名空间
+- 依次应用，分别发布在test和prod命名空间
 - 修改apollo-portal的configmap并重启portal
 
 ```
