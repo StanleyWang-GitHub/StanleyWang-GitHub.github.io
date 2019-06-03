@@ -2006,7 +2006,7 @@ coredns-7ccccdf57c-5b9ch   1/1     Running   0          3m4s
 NAME      TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)         AGE
 coredns   ClusterIP   192.168.0.2   <none>        53/UDP,53/TCP   29s
 
-[root@hdss7-21 ~]# dig -t A nginx-ds.default.svc.cluster.local. @172.7.21.2 +short
+[root@hdss7-21 ~]# dig -t A nginx-ds.default.svc.cluster.local. @192.168.0.2 +short
 192.168.0.3
 ```
 
