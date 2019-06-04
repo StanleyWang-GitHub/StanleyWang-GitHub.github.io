@@ -2457,6 +2457,16 @@ deployment.apps/kubernetes-dashboard created
 http://dashboard.od.com
 
 ### 配置认证
+- 下载新版dashboard
+
+```
+[root@hdss7-200 ~]# docker pull hexun/kubernetes-dashboard-amd64:v1.10.1
+[root@hdss7-200 ~]# docker tag f9aed6605b81 harbor.od.com/k8s/dashboard:v1.10.1
+[root@hdss7-200 ~]# docker push harbor.od.com/k8s/dashboard:v1.10.1
+```
+
+- 应用新版dashboard
+
 - 修改nginx配置，走https
 
 ```vi /etc/nginx/conf.d/dashboard.od.com.conf
@@ -2486,6 +2496,7 @@ server {
 ```
 
 - 获取token
+
 ```
 [root@hdsss7-21 ~]# kubectl describe secret kubernetes-dashboard-admin-token-rhr62 -n kube-system
 Name:         kubernetes-dashboard-admin-token-rhr62
