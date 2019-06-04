@@ -2455,3 +2455,51 @@ deployment.apps/kubernetes-dashboard created
 
 ### 浏览器访问
 http://dashboard.od.com
+
+### 配置认证
+- 修改nginx配置，走https
+
+```vi /etc/nginx/conf.d/dashboard.od.com.conf
+server {
+    listen       80;
+    server_name  dashboard.od.com;
+
+    rewrite ^(.*)$ https://${server_name}$1 permanent;
+}
+server {
+    listen       443 ssl;
+    server_name  dashboard.od.com;
+
+    ssl_certificate "certs/dashboard.od.com.crt";
+    ssl_certificate_key "certs/dashboard.od.com.key";
+    ssl_session_cache shared:SSL:1m;
+    ssl_session_timeout  10m;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+    client_max_body_size 1000m;
+
+    location / {
+        proxy_pass http://default_backend_traefik;
+	proxy_set_header Host       $http_host;
+        proxy_set_header x-forwarded-for $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+- 获取token
+```
+[root@hdsss7-21 ~]# kubectl describe secret kubernetes-dashboard-admin-token-rhr62 -n kube-system
+Name:         kubernetes-dashboard-admin-token-rhr62
+Namespace:    kube-system
+Labels:       <none>
+Annotations:  kubernetes.io/service-account.name: kubernetes-dashboard-admin
+              kubernetes.io/service-account.uid: cdd3c552-856d-11e9-ae34-782bcb321c07
+
+Type:  kubernetes.io/service-account-token
+
+Data
+====
+ca.crt:     1354 bytes
+namespace:  11 bytes
+token:      eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJrdWJlcm5ldGVzLWRhc2hib2FyZC1hZG1pbi10b2tlbi1yaHI2MiIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50Lm5hbWUiOiJrdWJlcm5ldGVzLWRhc2hib2FyZC1hZG1pbiIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6ImNkZDNjNTUyLTg1NmQtMTFlOS1hZTM0LTc4MmJjYjMyMWMwNyIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDprdWJlLXN5c3RlbTprdWJlcm5ldGVzLWRhc2hib2FyZC1hZG1pbiJ9.72OcJZCm_3I-7QZcEJTRPyIJSxQwSwZfVsB6Bx_RAZRJLOv3-BXy88PclYgxRy2dDqeX6cpjvFPBrmNOGQoxT9oD8_H49pvBnqdCdNuoJbXK7aBIZdkZxATzXd-63zmhHhUBsM3Ybgwy5XxD3vj8VUYfux5c5Mr4TzU_rnGLCj1H5mq_JJ3hNabv0rwil-ZAV-3HLikOMiIRhEK7RdMs1bfXF2yvse4VOabe9xv47TvbEYns97S4OlZvsurmOk0B8dD85OSaREEtqa8n_ND9GrHeeL4CcALqWYJHLrr7vLfndXi1QHDVrUzFKvgkAeYpDVAzGwIWL7rgHwp3sQguGA
+```
