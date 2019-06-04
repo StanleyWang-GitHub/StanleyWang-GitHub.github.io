@@ -132,13 +132,15 @@ RUN /bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime &&\
 ADD id_rsa /root/.ssh/id_rsa
 ADD config.json /root/.docker/config.json
 ADD get-docker.sh /get-docker.sh
-RUN /get-docker.sh
+RUN echo "    StrictHostKeyChecking no" >> /etc/ssh/sshd_config &&\
+    /get-docker.sh
 ```
 这个Dockerfile里我们主要做了以下几件事
 - 设置容器用户为root
 - 设置容器内的时区
 - 将ssh私钥加入（使用git拉代码时要用到，配对的公钥应配置在gitlab中）
 - 加入了登录自建harbor仓库的config文件
+- 修改了ssh客户端的
 - 安装一个docker的客户端
 
 生成ssh密钥对：
