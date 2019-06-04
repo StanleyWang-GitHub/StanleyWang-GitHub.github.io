@@ -2476,11 +2476,10 @@ server {
     ssl_session_timeout  10m;
     ssl_ciphers HIGH:!aNULL:!MD5;
     ssl_prefer_server_ciphers on;
-    client_max_body_size 1000m;
 
     location / {
         proxy_pass http://default_backend_traefik;
-	proxy_set_header Host       $http_host;
+	      proxy_set_header Host       $http_host;
         proxy_set_header x-forwarded-for $proxy_add_x_forwarded_for;
     }
 }
