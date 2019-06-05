@@ -2513,3 +2513,117 @@ ca.crt:     1354 bytes
 namespace:  11 bytes
 token:      eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJrdWJlcm5ldGVzLWRhc2hib2FyZC1hZG1pbi10b2tlbi1yaHI2MiIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50Lm5hbWUiOiJrdWJlcm5ldGVzLWRhc2hib2FyZC1hZG1pbiIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6ImNkZDNjNTUyLTg1NmQtMTFlOS1hZTM0LTc4MmJjYjMyMWMwNyIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDprdWJlLXN5c3RlbTprdWJlcm5ldGVzLWRhc2hib2FyZC1hZG1pbiJ9.72OcJZCm_3I-7QZcEJTRPyIJSxQwSwZfVsB6Bx_RAZRJLOv3-BXy88PclYgxRy2dDqeX6cpjvFPBrmNOGQoxT9oD8_H49pvBnqdCdNuoJbXK7aBIZdkZxATzXd-63zmhHhUBsM3Ybgwy5XxD3vj8VUYfux5c5Mr4TzU_rnGLCj1H5mq_JJ3hNabv0rwil-ZAV-3HLikOMiIRhEK7RdMs1bfXF2yvse4VOabe9xv47TvbEYns97S4OlZvsurmOk0B8dD85OSaREEtqa8n_ND9GrHeeL4CcALqWYJHLrr7vLfndXi1QHDVrUzFKvgkAeYpDVAzGwIWL7rgHwp3sQguGA
 ```
+
+## 部署heapster
+[heapster官方github地址](https://github.com/kubernetes-retired/heapster)
+### 准备heapster镜像
+运维主机`HDSS7-200.host.com`上
+```
+[root@hdss7-200 ~]# docker pull quay.io/bitnami/heapster:1.5.4
+1.5.4: Pulling from bitnami/heapster
+4018396ca1ba: Pull complete 
+0e4723f815c4: Pull complete 
+d8569f30adeb: Pull complete 
+Digest: sha256:6d891479611ca06a5502bc36e280802cbf9e0426ce4c008dd2919c2294ce0324
+Status: Downloaded newer image for quay.io/bitnami/heapster:1.5.4
+[root@hdss7--200 ~]# docker tag c359b95ad38b harbor.od.com/k8s/heapster:v1.5.4
+[root@hdss7--200 ~]# docker push !$
+docker push harbor.od.com/k8s/heapster:v1.5.4
+The push refers to a repository [harbor.od.com/k8s/heapster]
+20d37d828804: Pushed 
+b9b192015e25: Pushed 
+b76dba5a0109: Pushed 
+v1.5.4: digest: sha256:1203b49f2b2b07e02e77263bce8bb30563a91e1d7ee7c6742e9d125abcb3abe6 size: 952
+```
+
+### 准备资源配置清单
+{% tabs heapster%}
+<!-- tab RBAC -->
+vi /data/k8s-yaml/dashboard/heapster/rbac.yaml
+{% code %}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: heapster
+  namespace: kube-system
+\--\-
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: heapster
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:heapster
+subjects:
+- kind: ServiceAccount
+  name: heapster
+  namespace: kube-system
+{% endcode %}
+<!-- endtab -->
+<!-- tab Deployment-->
+vi /data/k8s-yaml/dashboard/heapster/deployment.yaml
+{% code %}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: heapster
+  namespace: kube-system
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        task: monitoring
+        k8s-app: heapster
+    spec:
+      serviceAccountName: heapster
+      containers:
+      - name: heapster
+        image: harbor.od.com/k8s/heapster:v1.5.4
+        imagePullPolicy: IfNotPresent
+        command:
+        - /opt/bitnami/heapster/bin/heapster
+        - \--source=kubernetes:https://kubernetes.default
+{% endcode %}
+<!-- endtab -->
+<!-- tab Service-->
+vi /data/k8s-yaml/dashboard/heapster/svc.yaml
+{% code %}
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    task: monitoring
+    # For use as a Cluster add-on (https://github.com/kubernetes/kubernetes/tree/master/cluster/addons)
+    # If you are NOT using this as an addon, you should comment out this line.
+    kubernetes.io/cluster-service: 'true'
+    kubernetes.io/name: Heapster
+  name: heapster
+  namespace: kube-system
+spec:
+  ports:
+  - port: 80
+    targetPort: 8082
+  selector:
+    k8s-app: heapster
+{% endcode %}
+<!-- endtab -->
+{% endtabs %}
+
+### 应用资源配置清单
+任意运算节点上：
+```
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dashboard/heapster/rbac.yaml 
+serviceaccount/heapster created
+clusterrolebinding.rbac.authorization.k8s.io/heapster created
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dashboard/heapster/deployment.yaml 
+deployment.extensions/heapster created
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dashboard/heapster/svc.yaml 
+service/heapster created
+```
+
+### 重启dashboard
+浏览器访问：http://dashboard.od.com
+![加入heapster插件的dashboard](/images/heapster.png "加入heapster插件的dashboard")
+
