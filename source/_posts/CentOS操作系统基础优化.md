@@ -79,5 +79,5 @@ fi
 ```
 # 安装基础工具
 ```
-# yum install net-tools telnet tree nmap sysstat lrzsz dos2unix -y 
+# yum install wget net-tools telnet tree nmap sysstat lrzsz dos2unix -y 
 ```
