@@ -1,7 +1,6 @@
-title: 实验文档3：在kubernetes集群里集成Apollo配置中心
+title: Day4：在kubernetes集群里集成Apollo配置中心
 author: Stanley Wang
-categories: Kubernetes容器云技术专题
-date: 2019-1-18 20:12:56
+date: 2019-6-18 19:12:56
 ---
 - - -
 {% cq %}欢迎加入王导的VIP学习qq群：==>[<font color="FF7F50">932194668</font>](http://shang.qq.com/wpa/qunwpa?idkey=78869fddc5a661acb0639315eb52997c108de6625df5f0ee2f0372f176a032a6)<=={% endcq %}
@@ -166,19 +165,19 @@ Apollo（阿波罗）是携程框架部门研发的分布式配置中心，能�
 ## 交付apollo-configservice
 ### 准备软件包
 在运维主机`HDSS7-200.host.com`上：
-[下载官方release包](https://github.com/ctripcorp/apollo/releases/download/v1.3.0/apollo-configservice-1.3.0-github.zip)
+[下载官方release包](https://github.com/ctripcorp/apollo/releases/download/v1.4.0/apollo-configservice-1.4.0-github.zip)
 ```pwd /opt/src
 [root@hdss7-200 src]# ls -l|grep apollo
--rw-r--r-- 1 root root 52713404 Feb 16 23:29 apollo-configservice-1.3.0-github.zip
-[root@hdss7-200 src]# mkdir /data/dockerfile/apollo-configservice && unzip -o apollo-configservice-1.3.0-github.zip -d /data/dockerfile/apollo-configservice
-Archive:  apollo-configservice-1.3.0-github.zip
+-rw-r--r-- 1 root root 52713404 Feb 16 23:29 apollo-configservice-1.4.0-github.zip
+[root@hdss7-200 src]# mkdir /data/dockerfile/apollo-configservice && unzip -o apollo-configservice-1.4.0-github.zip -d /data/dockerfile/apollo-configservice
+Archive:  apollo-configservice-1.4.0-github.zip
    creating: /data/dockerfile/apollo-configservice/scripts/
   inflating: /data/dockerfile/apollo-configservice/config/application-github.properties  
   inflating: /data/dockerfile/apollo-configservice/scripts/shutdown.sh  
-  inflating: /data/dockerfile/apollo-configservice/apollo-configservice-1.3.0-sources.jar  
+  inflating: /data/dockerfile/apollo-configservice/apollo-configservice-1.4.0-sources.jar  
   inflating: /data/dockerfile/apollo-configservice/scripts/startup.sh  
   inflating: /data/dockerfile/apollo-configservice/config/app.properties  
-  inflating: /data/dockerfile/apollo-configservice/apollo-configservice-1.3.0.jar  
+  inflating: /data/dockerfile/apollo-configservice/apollo-configservice-1.4.0.jar  
   inflating: /data/dockerfile/apollo-configservice/apollo-configservice.conf
 ```
 ### 执行数据库脚本
@@ -332,7 +331,7 @@ tail -f /dev/null
 ```vi /data/dockerfile/apollo-configservice/Dockerfile
 FROM stanleyws/jre8:8u112
 
-ENV VERSION 1.3.0
+ENV VERSION 1.4.0
 
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime &&\
     echo "Asia/Shanghai" > /etc/timezone
@@ -346,11 +345,11 @@ CMD ["/apollo-configservice/scripts/startup.sh"]
 - 制作镜像并推送
 
 ```
-[root@hdss7-200 apollo-configservice]# docker build . -t harbor.od.com/infra/apollo-configservice:v1.3.0
+[root@hdss7-200 apollo-configservice]# docker build . -t harbor.od.com/infra/apollo-configservice:v1.4.0
 Sending build context to Docker daemon 61.91 MB
 Step 1 : FROM stanleyws/jre8:8u112
  ---> fa3a085d6ef1
-Step 2 : ENV VERSION 1.3.0
+Step 2 : ENV VERSION 1.4.0
  ---> [Warning] IPv4 forwarding is disabled. Networking will not work.
  ---> Running in 685d51b5adb4
  ---> feb4c0289f04
@@ -376,7 +375,7 @@ Step 7 : CMD /apollo-configservice/scripts/startup.sh
 Removing intermediate container 80bd3f53fefc
 Successfully built 551ea2ba8de3
 
-[root@hdss7-200 apollo-configservice]# docker push harbor.od.com/infra/apollo-configservice:v1.3.0
+[root@hdss7-200 apollo-configservice]# docker push harbor.od.com/infra/apollo-configservice:v1.4.0
 The push refers to a repository [harbor.od.com/infra/apollo-configservice]
 25efb9a44683: Pushed 
 b3572bb46247: Pushed 
@@ -386,7 +385,7 @@ ebfb473df5c2: Pushed
 aae5c057d1b6: Pushed 
 dee6aef5c2b6: Pushed 
 a464c54f93a9: Pushed 
-v1.3.0: digest: sha256:6a8e4fdda58de0dfba9985ebbf91c4d6f46f5274983d2efa8853b03f4e45fa06 size: 1992
+v1.4.0: digest: sha256:6a8e4fdda58de0dfba9985ebbf91c4d6f46f5274983d2efa8853b03f4e45fa06 size: 1992
 ```
 
 ### 解析域名
@@ -429,7 +428,7 @@ spec:
           name: apollo-configservice-cm
       containers:
       - name: apollo-configservice
-        image: harbor.od.com/infra/apollo-configservice:v1.3.0
+        image: harbor.od.com/infra/apollo-configservice:v1.4.0
         ports:
         - containerPort: 8080
           protocol: TCP
@@ -470,9 +469,6 @@ spec:
     targetPort: 8080
   selector: 
     app: apollo-configservice
-  clusterIP: None
-  type: ClusterIP
-  sessionAffinity: None
 {% endcode %}
 <!-- endtab -->
 <!-- tab Ingress-->
@@ -534,13 +530,13 @@ http://config.od.com
 ## 交付apollo-adminservice
 ### 准备软件包
 在运维主机`HDSS7-200.host.com`上：
-[下载官方release包](https://github.com/ctripcorp/apollo/releases/download/v1.3.0/apollo-adminservice-1.3.0-github.zip)
+[下载官方release包](https://github.com/ctripcorp/apollo/releases/download/v1.4.0/apollo-adminservice-1.4.0-github.zip)
 ```
 [root@hdss7-200 src]# ls -l|grep apollo
--rw-r--r-- 1 root root 52713404 Feb 16 08:47 apollo-configservice-1.3.0-github.zip
--rw-r--r-- 1 root root 49418246 Feb 16 09:54 apollo-adminservice-1.3.0-github.zip
+-rw-r--r-- 1 root root 52713404 Feb 16 08:47 apollo-configservice-1.4.0-github.zip
+-rw-r--r-- 1 root root 49418246 Feb 16 09:54 apollo-adminservice-1.4.0-github.zip
 
-[root@hdss7-200 src]# mkdir /data/dockerfile/apollo-adminservice && unzip -o apollo-adminservice-1.3.0-github.zip -d /data/dockerfile/apollo-adminservice
+[root@hdss7-200 src]# mkdir /data/dockerfile/apollo-adminservice && unzip -o apollo-adminservice-1.4.0-github.zip -d /data/dockerfile/apollo-adminservice
 ```
 
 ### 制作Docker镜像
@@ -622,7 +618,7 @@ tail -f /dev/null
 ```vi /data/dockerfile/apollo-adminservice/Dockerfile
 FROM stanleyws/jre8:8u112
 
-ENV VERSION 1.3.0
+ENV VERSION 1.4.0
 
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime &&\
     echo "Asia/Shanghai" > /etc/timezone
@@ -636,11 +632,11 @@ CMD ["/apollo-adminservice/scripts/startup.sh"]
 
 - 制作镜像并推送
 ```
-[root@hdss7-200 apollo-adminservice]# docker build . -t harbor.od.com/infra/apollo-adminservice:v1.3.0
+[root@hdss7-200 apollo-adminservice]# docker build . -t harbor.od.com/infra/apollo-adminservice:v1.4.0
 Sending build context to Docker daemon 58.31 MB
 Step 1 : FROM stanleyws/jre8:8u112
  ---> fa3a085d6ef1
-Step 2 : ENV VERSION 1.3.0
+Step 2 : ENV VERSION 1.4.0
  ---> Using cache
  ---> feb4c0289f04
 Step 3 : RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime &&    echo "Asia/Shanghai" > /etc/timezone
@@ -662,8 +658,8 @@ Step 7 : CMD /apollo-adminservice/scripts/startup.sh
 Removing intermediate container 18c6597914b4
 Successfully built 82145db3ee88
 
-[root@hdss7-200 apollo-adminservice]# docker push harbor.od.com/infra/apollo-adminservice:v1.3.0
-docker push harbor.od.com/infra/apollo-adminservice:v1.3.0
+[root@hdss7-200 apollo-adminservice]# docker push harbor.od.com/infra/apollo-adminservice:v1.4.0
+docker push harbor.od.com/infra/apollo-adminservice:v1.4.0
 The push refers to a repository [harbor.od.com/infra/apollo-adminservice]
 19b1ca6c066d: Pushed 
 8fa6cde49908: Pushed 
@@ -672,7 +668,7 @@ ebfb473df5c2: Mounted from infra/apollo-configservice
 aae5c057d1b6: Mounted from infra/apollo-configservice 
 dee6aef5c2b6: Mounted from infra/apollo-configservice 
 a464c54f93a9: Mounted from infra/apollo-configservice 
-v1.3.0: digest: sha256:75367caab9bad3d0d281eb3324451a0734e84b6aa3ee860e38ad758d7166a7d1 size: 1785
+v1.4.0: digest: sha256:75367caab9bad3d0d281eb3324451a0734e84b6aa3ee860e38ad758d7166a7d1 size: 1785
 ```
 ### 准备资源配置清单
 在运维主机`HDSS7-200.host.com`上
@@ -707,7 +703,7 @@ spec:
           name: apollo-adminservice-cm
       containers:
       - name: apollo-adminservice
-        image: harbor.od.com/infra/apollo-adminservice:v1.3.0
+        image: harbor.od.com/infra/apollo-adminservice:v1.4.0
         ports:
         - containerPort: 8080
           protocol: TCP
@@ -769,24 +765,24 @@ http://config.od.com
 ## 交付apollo-portal
 ### 准备软件包
 在运维主机`HDSS7-200.host.com`上：
-[下载官方release包](https://github.com/ctripcorp/apollo/releases/download/v1.3.0/apollo-portal-1.3.0-github.zip)
+[下载官方release包](https://github.com/ctripcorp/apollo/releases/download/v1.4.0/apollo-portal-1.4.0-github.zip)
 ```
 [root@hdss7-200 src]# ls -l|grep apollo
--rw-r--r-- 1 root root 52713404 Feb 16 08:37 apollo-configservice-1.3.0-github.zip
--rw-r--r-- 1 root root 49418246 Feb 16 09:54 apollo-adminservice-1.3.0-github.zip
--rw-r--r-- 1 root root 36459359 Feb 16 10:00 apollo-portal-1.3.0-github.zip
+-rw-r--r-- 1 root root 52713404 Feb 16 08:37 apollo-configservice-1.4.0-github.zip
+-rw-r--r-- 1 root root 49418246 Feb 16 09:54 apollo-adminservice-1.4.0-github.zip
+-rw-r--r-- 1 root root 36459359 Feb 16 10:00 apollo-portal-1.4.0-github.zip
 
-[root@hdss7-200 src]# mkdir /data/dockerfile/apollo-portal && unzip -o apollo-portal-1.3.0-github.zip -d /data/dockerfile/apollo-portal
-Archive:  apollo-portal-1.3.0-github.zip
+[root@hdss7-200 src]# mkdir /data/dockerfile/apollo-portal && unzip -o apollo-portal-1.4.0-github.zip -d /data/dockerfile/apollo-portal
+Archive:  apollo-portal-1.4.0-github.zip
   inflating: /data/dockerfile/apollo-portal/scripts/shutdown.sh  
   inflating: /data/dockerfile/apollo-portal/apollo-portal.conf  
-  inflating: /data/dockerfile/apollo-portal/apollo-portal-1.3.0-sources.jar  
+  inflating: /data/dockerfile/apollo-portal/apollo-portal-1.4.0-sources.jar  
    creating: /data/dockerfile/apollo-portal/config/
   inflating: /data/dockerfile/apollo-portal/config/application-github.properties  
   inflating: /data/dockerfile/apollo-portal/scripts/startup.sh  
   inflating: /data/dockerfile/apollo-portal/config/apollo-env.properties  
   inflating: /data/dockerfile/apollo-portal/config/app.properties  
-  inflating: /data/dockerfile/apollo-portal/apollo-portal-1.3.0.jar
+  inflating: /data/dockerfile/apollo-portal/apollo-portal-1.4.0.jar
 ```
 ### 执行数据库脚本
 在数据库主机`HDSS7-11.host.com`上：
@@ -798,7 +794,7 @@ mysql> source ./apolloportal.sql
 ```
 ### 数据库用户授权
 ```
-mysql> grant INSERT,DELETE,UPDATE,SELECT on ApolloPortalDB.* to "apolloportal"@"172.7.%" identified by "123456";
+mysql> grant INSERT,DELETE,UPDATE,SELECT on ApolloPortalDB.* to "apolloportal"@"10.4.7.%" identified by "123456";
 ```
 ### 制作Docker镜像
 在运维主机`HDSS7-200.host.com`上：
@@ -883,7 +879,7 @@ tail -f /dev/null
 ```vi /data/dockerfile/apollo-portal/Dockerfile
 FROM stanleyws/jre8:8u112
 
-ENV VERSION 1.3.0
+ENV VERSION 1.4.0
 
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime &&\
     echo "Asia/Shanghai" > /etc/timezone
@@ -897,11 +893,11 @@ CMD ["/apollo-portal/scripts/startup.sh"]
 - 制作镜像并推送
 
 ```
-[root@hdss7-200 apollo-portal]# docker build . -t harbor.od.com/infra/apollo-portal:v1.3.0
+[root@hdss7-200 apollo-portal]# docker build . -t harbor.od.com/infra/apollo-portal:v1.4.0
 Sending build context to Docker daemon 43.35 MB
 Step 1 : FROM stanleyws/jre8:8u112
  ---> fa3a085d6ef1
-Step 2 : ENV VERSION 1.3.0
+Step 2 : ENV VERSION 1.4.0
  ---> Using cache
  ---> feb4c0289f04
 Step 3 : RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime &&    echo "Asia/Shanghai" > /etc/timezone
@@ -922,8 +918,8 @@ Step 7 : CMD /apollo-portal/scripts/startup.sh
  ---> 0c020b79c36f
 Removing intermediate container 9162dab8b63a
 Successfully built 0c020b79c36f
-[root@hdss7-200 apollo-portal]# docker push harbor.od.com/infra/apollo-portal:v1.3.0
-docker push harbor.od.com/infra/apollo-portal:v1.3.0
+[root@hdss7-200 apollo-portal]# docker push harbor.od.com/infra/apollo-portal:v1.4.0
+docker push harbor.od.com/infra/apollo-portal:v1.4.0
 The push refers to a repository [harbor.od.com/infra/apollo-portal]
 e7c0e96ded4e: Pushed 
 0076c5344476: Pushed 
@@ -932,7 +928,7 @@ ebfb473df5c2: Mounted from infra/apollo-adminservice
 aae5c057d1b6: Mounted from infra/apollo-adminservice 
 dee6aef5c2b6: Mounted from infra/apollo-adminservice 
 a464c54f93a9: Mounted from infra/apollo-adminservice 
-v1.3.0: digest: sha256:1aa30aac8642cceb97c053b7d74632240af08f64c49b65d8729021fef65628a4 size: 1785
+v1.4.0: digest: sha256:1aa30aac8642cceb97c053b7d74632240af08f64c49b65d8729021fef65628a4 size: 1785
 ```
 
 ### 解析域名
@@ -973,7 +969,7 @@ spec:
           name: apollo-portal-cm
       containers:
       - name: apollo-portal
-        image: harbor.od.com/infra/apollo-portal:v1.3.0
+        image: harbor.od.com/infra/apollo-portal:v1.4.0
         ports:
         - containerPort: 8080
           protocol: TCP
@@ -1014,9 +1010,6 @@ spec:
     targetPort: 8080
   selector: 
     app: apollo-portal
-  clusterIP: None
-  type: ClusterIP
-  sessionAffinity: None
 {% endcode %}
 <!-- endtab -->
 <!-- tab Ingress-->

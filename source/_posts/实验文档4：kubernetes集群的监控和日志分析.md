@@ -355,10 +355,10 @@ cd784148e348: Pull complete
 f622528a393e: Pull complete 
 Digest: sha256:b7a3143bd1eb7130759c9259073b9f239d0eeda09f5210f1cd31f1a530599ea1
 Status: Downloaded newer image for quay.io/coreos/kube-state-metrics:v1.5.0
-[root@hdss7-200 ~]# docker tag 91599517197a harbor.od.com/k8s/kube-state-metrics:v1.5.0
-[root@hdss7-200 ~]# docker push harbor.od.com/k8s/kube-state-metrics:v1.5.0
-docker push harbor.od.com/k8s/kube-state-metrics:v1.5.0
-The push refers to a repository [harbor.od.com/k8s/kube-state-metrics]
+[root@hdss7-200 ~]# docker tag 91599517197a harbor.od.com/public/kube-state-metrics:v1.5.0
+[root@hdss7-200 ~]# docker push harbor.od.com/public/kube-state-metrics:v1.5.0
+docker push harbor.od.com/public/kube-state-metrics:v1.5.0
+The push refers to a repository [harbor.od.com/public/kube-state-metrics]
 5b3c36501a0a: Pushed 
 7bff100f35cb: Pushed 
 v1.5.0: digest: sha256:0d9bea882f25586543254d9ceeb54703eb6f8f94c0dd88875df216b6a0f60589 size: 739
@@ -484,7 +484,7 @@ spec:
         app: kube-state-metrics
     spec:
       containers:
-      - image: harbor.od.com/k8s/kube-state-metrics:v1.5.0
+      - image: harbor.od.com/public/kube-state-metrics:v1.5.0
         name: kube-state-metrics
         ports:
         - containerPort: 8080
@@ -540,10 +540,10 @@ f508012419d8: Pull complete
 d764f7880123: Pull complete 
 Digest: sha256:c390c8fea4cd362a28ad5070aedd6515aacdfdffd21de6db42ead05e332be5a9
 Status: Downloaded newer image for prom/node-exporter:v0.15.0
-[root@hdss7-200 ~]# docker tag b3e7f67a1480 harbor.od.com/k8s/node-exporter:v0.15.0
-[root@hdss7-200 ~]# docker push harbor.od.com/k8s/node-exporter:v0.15.0
-docker push harbor.od.com/k8s/node-exporter:v0.15.0
-The push refers to a repository [harbor.od.com/k8s/node-exporter]
+[root@hdss7-200 ~]# docker tag b3e7f67a1480 harbor.od.com/public/node-exporter:v0.15.0
+[root@hdss7-200 ~]# docker push harbor.od.com/public/node-exporter:v0.15.0
+docker push harbor.od.com/public/node-exporter:v0.15.0
+The push refers to a repository [harbor.od.com/public/node-exporter]
 0bf893ee7433: Pushed 
 17ab2671f87e: Pushed 
 b8873621dfbc: Pushed 
@@ -583,7 +583,7 @@ spec:
           type: ""
       containers:
       - name: node-exporter
-        image: harbor.od.com/k8s/node-exporter:v0.15.0
+        image: harbor.od.com/public/node-exporter:v0.15.0
         args:
         - --path.procfs=/host_proc
         - --path.sysfs=/host_sys
@@ -625,10 +625,10 @@ v0.28.3: Pulling from google/cadvisor
 fafc7cbc1edf: Pull complete 
 Digest: sha256:09c8d73c9b799d30777763b7029cfd8624b8a1bd33af652ec3b51a6b827d492a
 Status: Downloaded newer image for google/cadvisor:v0.28.3
-[root@hdss7-200 ~]# docker tag d60fd8aeb74c harbor.od.com/k8s/cadvisor:v0.28.3
+[root@hdss7-200 ~]# docker tag d60fd8aeb74c harbor.od.com/public/cadvisor:v0.28.3
 [root@hdss7-200 ~]# docker push !$
-docker push harbor.od.com/k8s/cadvisor:v0.28.3
-The push refers to a repository [harbor.od.com/k8s/cadvisor]
+docker push harbor.od.com/public/cadvisor:v0.28.3
+The push refers to a repository [harbor.od.com/public/cadvisor]
 daab541dbbf0: Pushed 
 ba67c95cca3d: Pushed 
 ef763da74d91: Pushed 
@@ -665,7 +665,7 @@ spec:
         effect: NoSchedule
       containers:
       - name: cadvisor
-        image: harbor.od.com/k8s/cadvisor:v0.28.3
+        image: harbor.od.com/public/cadvisor:v0.28.3
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: rootfs
@@ -673,7 +673,6 @@ spec:
           readOnly: true
         - name: var-run
           mountPath: /var/run
-          readOnly: true
         - name: sys
           mountPath: /sys
           readOnly: true
@@ -749,10 +748,10 @@ f1989cfd335b: Pull complete
 a128dce6256a: Pull complete 
 Digest: sha256:c20445e0cc628fa4b227fe2f694c22a314beb43fd8297095b6ee6cbc67161336
 Status: Downloaded newer image for prom/blackbox-exporter:v0.14.0
-[root@hdss7-200 ~]# docker tag d3a00aea3a01 harbor.od.com/k8s/blackbox-exporter:v0.14.0
-[root@hdss7-200 ~]# docker push harbor.od.com/k8s/blackbox-exporter:v0.14.0
-docker push harbor.od.com/k8s/blackbox-exporter:v0.14.0
-The push refers to a repository [harbor.od.com/k8s/blackbox-exporter]
+[root@hdss7-200 ~]# docker tag d3a00aea3a01 harbor.od.com/public/blackbox-exporter:v0.14.0
+[root@hdss7-200 ~]# docker push harbor.od.com/public/blackbox-exporter:v0.14.0
+docker push harbor.od.com/public/blackbox-exporter:v0.14.0
+The push refers to a repository [harbor.od.com/public/blackbox-exporter]
 256c4aa8ebe5: Pushed 
 4b6cc55de649: Pushed 
 986894c42222: Mounted from infra/prometheus 
@@ -817,7 +816,7 @@ spec:
           defaultMode: 420
       containers:
       - name: blackbox-exporter
-        image: harbor.od.com/k8s/blackbox-exporter:v0.14.0
+        image: harbor.od.com/public/blackbox-exporter:v0.14.0
         args:
         - -\-config.file=/etc/blackbox_exporter/blackbox.yml
         - -\-log.level=debug
@@ -1126,17 +1125,17 @@ spec:
 - 拷贝证书
 
 ```
-[root@hdss7-21 ~]# mkdir -pv /data/k8s-volume/prometheus/{etc,prom-db}
-mkdir: created directory ‘/data/k8s-volume/prometheus/etc’
-mkdir: created directory ‘/data/k8s-volume/prometheus/prom-db’
-[root@hdss7-21 ~]# cd /data/k8s-volume/prometheus/etc
+[root@hdss7-21 ~]# mkdir -pv /data/nfs-volume/prometheus/{etc,prom-db}
+mkdir: created directory ‘/data/nfs-volume/prometheus/etc’
+mkdir: created directory ‘/data/nfs-volume/prometheus/prom-db’
+[root@hdss7-21 ~]# cd /data/nfs-volume/prometheus/etc
 [root@hdss7-21 ~]# scp root@10.4.7.200:/opt/certs/ca.pem .
 [root@hdss7-21 ~]# scp root@10.4.7.200:/opt/certs/client.pem .
 [root@hdss7-21 ~]# scp root@10.4.7.200:/opt/certs/client-key.pem .
 ```
 - 准备配置
 
-```vi /data/k8s-volume/prometheus/etc/prometheus.yml
+```vi /data/nfs-volume/prometheus/etc/prometheus.yml
 global:
   scrape_interval:     15s
   evaluation_interval: 15s
