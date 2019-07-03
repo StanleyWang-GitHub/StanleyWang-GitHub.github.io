@@ -1040,7 +1040,6 @@ spec:
       labels:
         app: prometheus
     spec:
-      nodeName: 10.4.7.21
       containers:
       - image: harbor.od.com/infra/prometheus:v2.9.1
         args:
@@ -1053,13 +1052,6 @@ spec:
         ports:
         - containerPort: 9090
           protocol: TCP
-        resources:
-          limits:
-            cpu: 500m
-            memory: 2500Mi
-          requests:
-            cpu: 100m
-            memory: 100Mi
         volumeMounts:
         - mountPath: /data
           name: data
