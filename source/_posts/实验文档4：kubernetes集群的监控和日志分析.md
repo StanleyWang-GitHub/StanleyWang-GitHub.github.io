@@ -15,7 +15,7 @@ date: 2019-1-18 19:12:56
 ```pwd /opt/src
 [root@hdss7-200 src]# ls -l|grep tomcat
 -rw-r--r-- 1 root root   9690027 Apr 10 22:57 apache-tomcat-8.5.40.tar.gz
-[root@hdss7-200 src]# mkdir -p /data/dockerfile/tomcat8 && tar xf apache-tomcat-8.5.40.tar.gz -C /data/dockerfile/tomcat
+[root@hdss7-200 src]# mkdir -p /data/dockerfile/tomcat8 && tar xf apache-tomcat-8.5.40.tar.gz -C /data/dockerfile/tomcat8
 [root@hdss7-200 src]# cd /data/dockerfile/tomcat8 && rm -fr apache-tomcat-8.5.40/webapps/*
 ```
 
