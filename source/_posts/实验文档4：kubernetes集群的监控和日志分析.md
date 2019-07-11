@@ -2348,7 +2348,7 @@ spec:
 
 ### 验证数据
 ```pwd /opt/kafka/bin
-./kafka-console-consumer.sh --bootstrap-server 10.9.6.200:9092 --topic k8s-fb-test-logm-dubbo-demo-web --from-beginning
+./kafka-console-consumer.sh --bootstrap-server 10.4.7.11:9092 --topic k8s-fb-test-logm-dubbo-demo-web --from-beginning
 ```
 
 ## 部署logstash
