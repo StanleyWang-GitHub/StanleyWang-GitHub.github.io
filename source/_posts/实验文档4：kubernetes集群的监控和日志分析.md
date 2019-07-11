@@ -11,37 +11,37 @@ date: 2019-1-18 19:12:56
 ## 准备Tomcat的镜像底包
 ### 准备tomcat二进制包
 运维主机`HDSS7-200.host.com`上：
-[Tomcat8下载链接](http://mirrors.tuna.tsinghua.edu.cn/apache/tomcat/tomcat-8/v8.5.40/bin/apache-tomcat-8.5.40.tar.gz)
+[Tomcat8下载链接](http://mirrors.tuna.tsinghua.edu.cn/apache/tomcat/tomcat-8/v8.5.43/bin/apache-tomcat-8.5.43.tar.gz)
 ```pwd /opt/src
 [root@hdss7-200 src]# ls -l|grep tomcat
--rw-r--r-- 1 root root   9690027 Apr 10 22:57 apache-tomcat-8.5.40.tar.gz
-[root@hdss7-200 src]# mkdir -p /data/dockerfile/tomcat8 && tar xf apache-tomcat-8.5.40.tar.gz -C /data/dockerfile/tomcat8
-[root@hdss7-200 src]# cd /data/dockerfile/tomcat8 && rm -fr apache-tomcat-8.5.40/webapps/*
+-rw-r--r-- 1 root root   9690027 Apr 10 22:57 apache-tomcat-8.5.43.tar.gz
+[root@hdss7-200 src]# mkdir -p /data/dockerfile/tomcat8 && tar xf apache-tomcat-8.5.43.tar.gz -C /data/dockerfile/tomcat
+[root@hdss7-200 src]# cd /data/dockerfile/tomcat && rm -fr apache-tomcat-8.5.43/webapps/*
 ```
 
 ### 简单配置tomcat
 1. 关闭AJP端口
 
-```vi /data/dockerfile/tomcat/apache-tomcat-8.5.40/conf/server.xml
+```vi /data/dockerfile/tomcat/apache-tomcat-8.5.43/conf/server.xml
 <!-- <Connector port="8009" protocol="AJP/1.3" redirectPort="8443" /> -->
 ```
 2. 配置日志
 
 - 删除3manager，4host-manager的handlers
 
-```vi /data/dockerfile/tomcat/apache-tomcat-8.5.40/conf/logging.properties
+```vi /data/dockerfile/tomcat/apache-tomcat-8.5.43/conf/logging.properties
 handlers = 1catalina.org.apache.juli.AsyncFileHandler, 2localhost.org.apache.juli.AsyncFileHandler,java.util.logging.ConsoleHandler
 ```
 - 日志级别改为INFO
 
-```vi /data/dockerfile/tomcat/apache-tomcat-8.5.40/conf/logging.properties
+```vi /data/dockerfile/tomcat/apache-tomcat-8.5.43/conf/logging.properties
 1catalina.org.apache.juli.AsyncFileHandler.level = INFO
 2localhost.org.apache.juli.AsyncFileHandler.level = INFO
 java.util.logging.ConsoleHandler.level = INFO
 ```
 - 注释掉所有关于3manager，4host-manager日志的配置
 
-```vi /data/dockerfile/tomcat/apache-tomcat-8.5.40/conf/logging.properties
+```vi /data/dockerfile/tomcat/apache-tomcat-8.5.43/conf/logging.properties
 #3manager.org.apache.juli.AsyncFileHandler.level = FINE
 #3manager.org.apache.juli.AsyncFileHandler.directory = ${catalina.base}/logs
 #3manager.org.apache.juli.AsyncFileHandler.prefix = manager.
@@ -60,7 +60,7 @@ RUN /bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime &&\
     echo 'Asia/Shanghai' >/etc/timezone
 ENV CATALINA_HOME /opt/tomcat
 ENV LANG zh_CN.UTF-8
-ADD apache-tomcat-8.5.40/ /opt/tomcat
+ADD apache-tomcat-8.5.43/ /opt/tomcat
 ADD config.yml /opt/prom/config.yml
 ADD jmx_javaagent-0.3.1.jar /opt/prom/jmx_javaagent-0.3.1.jar
 WORKDIR /opt/tomcat
@@ -103,7 +103,7 @@ cd /opt/tomcat && /opt/tomcat/bin/catalina.sh run
 
 ### 制作镜像并推送
 ```
-[root@hdss7-200 tomcat]# docker build . -t harbor.od.com/base/tomcat:v8.5.40
+[root@hdss7-200 tomcat]# docker build . -t harbor.od.com/base/tomcat:v8.5.43
 Sending build context to Docker daemon 9.502 MB
 Step 1 : FROM stanleyws/jre8:8u112
  ---> fa3a085d6ef1
@@ -118,7 +118,7 @@ Step 4 : ENV LANG zh_CN.UTF-8
  ---> Running in 50516133f65b
  ---> 421d67c4c188
 Removing intermediate container 50516133f65b
-Step 5 : ADD apache-tomcat-8.5.40/ /opt/tomcat
+Step 5 : ADD apache-tomcat-8.5.43/ /opt/tomcat
  ---> 460a5d0ef93b
 Removing intermediate container 0be2b4897d23
 Step 6 : ADD config.yml /opt/prom/config.yml
@@ -140,7 +140,7 @@ Step 10 : CMD /entrypoint.sh
 Removing intermediate container c2df6e511c00
 Successfully built 8d735515bb42
 
-[root@hdss7-200 tomcat8]# docker push harbor.od.com/base/tomcat:v8.5.40
+[root@hdss7-200 tomcat8]# docker push harbor.od.com/base/tomcat:v8.5.43
 The push refers to a repository [harbor.od.com/base/tomcat]
 498eaadf86a8: Pushed 
 fab679acf269: Pushed 
@@ -152,7 +152,7 @@ c843b2cf4e12: Mounted from app/dubbo-demo-web
 fddd8887b725: Mounted from base/jre8 
 42052a19230c: Mounted from base/jre8 
 8d4d1ab5ff74: Mounted from base/jre8 
-v8.5.40: digest: sha256:407c6abd7c4fa5119376efa71090b49637d7a52ef2fc202f4019ab4c91f6dc50 size: 2409
+v8.5.43: digest: sha256:407c6abd7c4fa5119376efa71090b49637d7a52ef2fc202f4019ab4c91f6dc50 size: 2409
 ```
 ## 改造dubbo-demo-web项目
 ### 修改dubbo-client/pom.xml
@@ -264,7 +264,7 @@ public class ServletInitializer extends SpringBootServletInitializer {
 > Name : base_image
 > Default Value : 
 > - base/tomcat:v7.0.94
-> - base/tomcat:v8.5.40
+> - base/tomcat:v8.5.43
 > - base/tomcat:v9.0.17
 > Description : project base image list in harbor.od.com.
 
