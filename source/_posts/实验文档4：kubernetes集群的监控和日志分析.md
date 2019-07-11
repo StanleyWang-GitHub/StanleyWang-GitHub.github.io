@@ -1923,7 +1923,7 @@ es soft memlock unlimited
 ```
 [root@hdss7-12 elasticsearch]# sysctl -w vm.max_map_count=262144
 or
-[root@hdss7-12 elasticsearch]# echo "vm.max_map_count=262144" > /etc/sysctl.conf
+[root@hdss7-12 elasticsearch]# echo "vm.max_map_count=262144" >> /etc/sysctl.conf
 [root@hdss7-12 elasticsearch]# sysctl -p
 ```
 
@@ -1938,7 +1938,7 @@ es        8714     1 58 10:29 pts/0    00:00:19 /usr/java/jdk/bin/java -Xms512m 
 ```
 ### 调整ES日志模板
 ```
-[root@hdss7-12 elasticsearch]# curl -XPUT http://10.4.7.12:9200/_template/k8s -d '{
+[root@hdss7-12 elasticsearch]# curl -H "Content-Type:application/json" -XPUT http://10.4.7.12:9200/_template/k8s -d '{
   "template" : "k8s*",
   "index_patterns": ["k8s*"],  
   "settings": {
