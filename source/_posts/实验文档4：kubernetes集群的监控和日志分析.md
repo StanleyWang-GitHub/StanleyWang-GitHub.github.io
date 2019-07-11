@@ -2154,7 +2154,7 @@ vi /data/dockerfile/filebeat/Dockerfile
 {% code %}
 FROM debian:jessie
 
-ENV FILEBEAT_VERSION=7.0.1 \
+ENV FILEBEAT_VERSION=7.2.0 \
     FILEBEAT_SHA1=fdddfa32a7d9db5ac4504b34499e6259e09b86205bac842f78fddd45e8ee00c3cb76419af2313659fd23db4fcbcc29f7568a3663c5d3c52ac0fc9e641d0ae8b1
 
 RUN set -x && \
@@ -2239,7 +2239,7 @@ fi
 
 #### 制作镜像
 ```pwd /data/dockerfile/filebeat
-[root@hdss7-200 filebeat]# docker build . -t harbor.od.com/infra/filebeat:v7.0.1
+[root@hdss7-200 filebeat]# docker build . -t harbor.od.com/infra/filebeat:v7.2.0
 ...
 + apt-get autoremove -y
 Reading package lists...
@@ -2270,14 +2270,14 @@ Step 5 : ENTRYPOINT /docker-entrypoint.sh
  ---> 23c8fbdc088a
 Removing intermediate container d367b6e3bb5a
 Successfully built 23c8fbdc088a
-[root@hdss7-200 filebeat]# docker tag 23c8fbdc088a harbor.od.com/infra/filebeat:v7.0.1
+[root@hdss7-200 filebeat]# docker tag 23c8fbdc088a harbor.od.com/infra/filebeat:v7.2.0
 [root@hdss7-200 filebeat]# docker push !$
-docker push harbor.od.com/infra/filebeat:v7.0.1
+docker push harbor.od.com/infra/filebeat:v7.2.0
 The push refers to a repository [harbor.od.com/infra/filebeat]
 6a765e653161: Pushed 
 8e89ae5c6fc2: Pushed 
 9abb3997a540: Pushed 
-v7.0.1: digest: sha256:c35d7cdba29d8555388ad41ac2fc1b063ed9ec488082e33b5d0e91864b3bb35c size: 948
+v7.2.0: digest: sha256:c35d7cdba29d8555388ad41ac2fc1b063ed9ec488082e33b5d0e91864b3bb35c size: 948
 ```
 ### 修改资源配置清单
 **使用dubbo-demo-consumer的Tomcat版镜像**
@@ -2286,7 +2286,7 @@ kind: Deployment
 apiVersion: extensions/v1beta1
 metadata:
   name: dubbo-demo-consumer
-  namespace: app
+  namespace: test
   labels: 
     name: dubbo-demo-consumer
 spec:
@@ -2308,13 +2308,13 @@ spec:
           protocol: TCP
         env:
         - name: C_OPTS
-          value: -Denv=dev -Dapollo.meta=config.od.com
+          value: -Denv=fat -Dapollo.meta=http://config.od.com
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - mountPath: /opt/tomcat/logs
           name: logm
       - name: filebeat
-        image: harbor.od.com/infra/filebeat:v7.0.1
+        image: harbor.od.com/infra/filebeat:v7.2.0
         env:
         - name: ENV
           value: test
