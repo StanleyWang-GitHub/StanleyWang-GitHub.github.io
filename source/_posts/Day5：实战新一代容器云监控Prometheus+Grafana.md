@@ -1514,13 +1514,13 @@ Datasource|Prometheus
 - blackbox dashboard
 
 {% tabs grafana-dashboard %}
-<!-- tab generic -->
+<!-- tab Generic -->
 ![generic](/images/grafana-generic.png "generic")
 <!-- endtab -->
-<!-- tab ETCD-->
+<!-- tab Etcd-->
 ![Etcd](/images/grafana-etcd.png "Etcd")
 <!-- endtab -->
-<!-- tab TRAEFIK -->
+<!-- tab Traefik -->
 ![Traefik](/images/grafana-traefik.png "Traefik")
 <!-- endtab -->
 <!-- tab JMX -->
