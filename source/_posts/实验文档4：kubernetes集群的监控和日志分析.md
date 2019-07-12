@@ -1875,14 +1875,14 @@ Datasource|Prometheus
 ## 部署ElasticSearch
 [官网](https://www.elastic.co/)
 [官方github地址](https://github.com/elastic/elasticsearch)
-[下载地址](https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.6.15.tar.gz)
+[下载地址](https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.8.1.tar.gz)
 `HDSS7-12.host.com`上：
 ### 安装
 ```pwd /opt/src
-[root@hdss7-12 src]# ls -l|grep elasticsearch-5.6.15.tar.gz
--rw-r--r-- 1 root root  72262257 Jan 30 15:18 elasticsearch-5.6.15.tar.gz
-[root@hdss7-12 src]# tar xf elasticsearch-5.6.15.tar.gz -C /opt
-[root@hdss7-12 src]# ln -s /opt/elasticsearch-5.6.15/ /opt/elasticsearch
+[root@hdss7-12 src]# ls -l|grep elasticsearch-6.8.1.tar.gz
+-rw-r--r-- 1 root root  72262257 Jan 30 15:18 elasticsearch-6.8.1.tar.gz
+[root@hdss7-12 src]# tar xf elasticsearch-6.8.1.tar.gz -C /opt
+[root@hdss7-12 src]# ln -s /opt/elasticsearch-6.8.1/ /opt/elasticsearch
 ```
 ### 配置
 #### elasticsearch.yml
@@ -1907,7 +1907,7 @@ http.port: 9200
 #### 创建普通用户
 ```
 [root@hdss7-12 elasticsearch]# useradd -s /bin/bash -M es
-[root@hdss7-12 elasticsearch]# chown -R es.es /opt/elasticsearch-5.6.15
+[root@hdss7-12 elasticsearch]# chown -R es.es /opt/elasticsearch-6.8.1
 [root@hdss7-12 elasticsearch]# chown -R es.es /data/elasticsearch
 ```
 
@@ -2491,8 +2491,8 @@ green  open   k8s-test-2019.04 H3MY9d8WSbqQ6uL0DFhenQ   5   0         55        
 ### 准备docker镜像
 [kibana官方镜像下载地址](https://hub.docker.com/_/kibana?tab=tags)
 ```
-[root@hdss7-200 ~]# docker pull kibana:5.6.16
-5.6.16: Pulling from library/kibana
+[root@hdss7-200 ~]# docker pull kibana:6.8.1
+6.8.1: Pulling from library/kibana
 
 8014725ed6f5: Pull complete 
 19b590251e94: Pull complete 
@@ -2502,10 +2502,10 @@ d18bafa420f4: Pull complete
 8cee55751899: Pull complete 
 c395be470eb2: Pull complete 
 Digest: sha256:71f776596244877597fd679b2fa6fb0f1fa9c5b11388199997781d1ce77b73b1
-Status: Downloaded newer image for kibana:5.6.16
-[root@hdss7-200 ~]# docker tag 62079cf74c23 harbor.od.com/infra/kibana:v5.6.16
-[root@hdss7-200 ~]# docker push harbor.od.com/infra/kibana:v5.6.16
-docker push harbor.od.com/infra/kibana:v5.6.16
+Status: Downloaded newer image for kibana:6.8.1
+[root@hdss7-200 ~]# docker tag 62079cf74c23 harbor.od.com/infra/kibana:v6.8.1
+[root@hdss7-200 ~]# docker push harbor.od.com/infra/kibana:v6.8.1
+docker push harbor.od.com/infra/kibana:v6.8.1
 The push refers to a repository [harbor.od.com/infra/kibana]
 be94745c5390: Pushed 
 652dcbd52cdd: Pushed 
@@ -2515,7 +2515,7 @@ dbce28d91bf0: Pushed
 dcddc432ebdf: Pushed 
 3e466685bf43: Pushed 
 d69483a6face: Mounted from infra/logstash 
-v5.6.16: digest: sha256:17dd243d6cc4e572f74f3de83eafc981e54c1710f8fe2d0bf74357b28bddaf08 size: 1991
+v6.8.1: digest: sha256:17dd243d6cc4e572f74f3de83eafc981e54c1710f8fe2d0bf74357b28bddaf08 size: 1991
 ```
 ### 解析域名
 `HDSS7-11.host.com`上
@@ -2547,7 +2547,7 @@ spec:
     spec:
       containers:
       - name: kibana
-        image: harbor.od.com/infra/kibana:v5.6.16
+        image: harbor.od.com/infra/kibana:v6.8.1
         ports:
         - containerPort: 5601
           protocol: TCP
