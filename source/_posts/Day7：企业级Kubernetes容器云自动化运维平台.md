@@ -18,9 +18,9 @@ e5fc8b080393: Pull complete
 3b5383aad564: Pull complete 
 Digest: sha256:1a594faffab833866e43154c31b943d49ca1146d2c164ec3279382d7530d2ede
 Status: Downloaded newer image for minio/minio:latest
-[root@hdss7-200 ~]# docker tag ed5e2b2624bf harbor.od.com/spinnaker/minio:latest
-[root@hdss7-200 ~]# docker push harbor.od.com/spinnaker/minio:latest
-The push refers to a repository [harbor.od.com/spinnaker/minio]
+[root@hdss7-200 ~]# docker tag ed5e2b2624bf harbor.od.com/armory/minio:latest
+[root@hdss7-200 ~]# docker push harbor.od.com/armory/minio:latest
+The push refers to a repository [harbor.od.com/armory/minio]
 e8c528077536: Pushed 
 ad774a44659e: Pushed 
 1a734f934625: Pushed 
@@ -68,7 +68,7 @@ spec:
           value: admin
         - name: MINIO_SECRET_KEY
           value: poiuytrewq
-        image: harbor.od.com/spinnaker/minio:latest
+        image: harbor.od.com/armory/minio:latest
         imagePullPolicy: IfNotPresent
         name: minio
         ports:
@@ -173,10 +173,10 @@ fbef10bd7a65: Pull complete
 e0659698d44a: Pull complete 
 Digest: sha256:2e82b9fc2c0396f6056b180743f5cf05219908b9e0c9e7046041588ebd1363d1
 Status: Downloaded newer image for redis:4.0.14
-[root@hdss7-200 ~]# docker tag 720768125f4f harbor.od.com/spinnaker/redis:v4.0.14
-[root@hdss7-200 ~]# docker push harbor.od.com/spinnaker/redis:v4.0.14
-docker push harbor.od.com/spinnaker/redis:v4.0.14
-The push refers to a repository [harbor.od.com/spinnaker/redis]
+[root@hdss7-200 ~]# docker tag 720768125f4f harbor.od.com/armory/redis:v4.0.14
+[root@hdss7-200 ~]# docker push harbor.od.com/armory/redis:v4.0.14
+docker push harbor.od.com/armory/redis:v4.0.14
+The push refers to a repository [harbor.od.com/armory/redis]
 675b01d6b533: Pushed 
 a6104c28b530: Pushed 
 49be6cb1f430: Pushed 
@@ -217,7 +217,7 @@ spec:
     spec:
       containers:
       - name: redis
-        image: harbor.od.com/spinnaker/redis:v4.0.14
+        image: harbor.od.com/armory/redis:v4.0.14
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 6379
