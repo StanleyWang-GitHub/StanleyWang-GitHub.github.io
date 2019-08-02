@@ -19,9 +19,7 @@ HDSS7-200.host.com|k8s运维节点(docker仓库)|10.4.7.200
 
 ## 软件环境
 - OS: CentOS Linux release 7.6.1810 (Core)
-- docker: v1.12.6
-> [docker引擎官方下载地址](https://yum.dockerproject.org/repo/main/centos/7/Packages/docker-engine-1.12.6-1.el7.centos.x86_64.rpm)
-> [docker引擎官方selinux包](https://yum.dockerproject.org/repo/main/centos/7/Packages/docker-engine-selinux-1.12.6-1.el7.centos.noarch.rpm)
+- docker-ce: v19.03.0
 - kubernetes: v1.13.2
 > [kubernetes官方下载地址](https://github.com/kubernetes/kubernetes/releases)
 - etcd: v3.1.18
@@ -303,61 +301,77 @@ PS C:\Users\Administrator> ping hdss7-200.host.com
 ## 部署docker环境
 `HDSS7-200.host.com`,`HDSS7-21.host.com`,`HDSS7-22.host.com`上：
 ### 安装
-- docker: v1.12.6
-> [docker引擎官方下载地址](https://yum.dockerproject.org/repo/main/centos/7/Packages/docker-engine-1.12.6-1.el7.centos.x86_64.rpm)
-> [docker引擎官方selinux包](https://yum.dockerproject.org/repo/main/centos/7/Packages/docker-engine-selinux-1.12.6-1.el7.centos.noarch.rpm)
-
 ```
-# ls -l|grep docker-engine
--rw-r--r--  1 root root  20013304 Jan 16 18:16 docker-engine-1.12.6-1.el7.centos.x86_64.rpm
--rw-r--r--  1 root root     29112 Jan 16 18:15 docker-engine-selinux-1.12.6-1.el7.centos.noarch.rpm
-# yum localinstall *.rpm
+[root@hdss7-200 ~]# curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
+# Executing docker install script, commit: 6bf300318ebaab958c4adc341a8c7bb9f3a54a1a
++ sh -c 'yum install -y -q yum-utils'
++ sh -c 'yum-config-manager --add-repo https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo'
+Loaded plugins: fastestmirror
+adding repo from: https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+grabbing file https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo to /etc/yum.repos.d/docker-ce.repo
+repo saved to /etc/yum.repos.d/docker-ce.repo
++ '[' stable '!=' stable ']'
++ sh -c 'yum makecache'
+Loaded plugins: fastestmirror
+Loading mirror speeds from cached hostfile
+epel/x86_64/metalink                                                                                                      | 8.5 kB  00:00:00     
+ * epel: mirrors.tuna.tsinghua.edu.cn
+base                                                                                                                      | 3.6 kB  00:00:00     
+docker-ce-stable                                                                                                          | 3.5 kB  00:00:00     
+epel                                                                                                                      | 5.3 kB  00:00:00     
+extras                                                                                                                    | 3.4 kB  00:00:00     
+updates                                                                                                                   | 3.4 kB  00:00:00     
+(1/14): docker-ce-stable/x86_64/updateinfo                                                                                |   55 B  00:00:00     
+(2/14): docker-ce-stable/x86_64/filelists_db                                                                              |  15 kB  00:00:00     
+(3/14): docker-ce-stable/x86_64/primary_db                                                                                |  31 kB  00:00:00     
+(4/14): docker-ce-stable/x86_64/other_db                                                                                  | 112 kB  00:00:00     
+(5/14): epel/x86_64/filelists_db                                                                                          |  12 MB  00:00:05     
+(6/14): epel/x86_64/prestodelta                                                                                           | 1.7 kB  00:00:00     
+(7/14): epel/x86_64/other_db                                                                                              | 3.3 MB  00:00:01     
+(8/14): epel/x86_64/updateinfo_zck                                                                                        | 1.5 MB  00:00:00     
+(9/14): extras/7/x86_64/prestodelta                                                                                       |  65 kB  00:00:00     
+(10/14): extras/7/x86_64/other_db                                                                                         | 127 kB  00:00:00     
+(11/14): extras/7/x86_64/filelists_db                                                                                     | 246 kB  00:00:00     
+(12/14): updates/7/x86_64/prestodelta                                                                                     | 857 kB  00:00:00     
+(13/14): updates/7/x86_64/other_db                                                                                        | 672 kB  00:00:00     
+(14/14): updates/7/x86_64/filelists_db                                                                                    | 4.9 MB  00:00:02     
+Metadata Cache Created
++ '[' -n '' ']'
++ sh -c 'yum install -y -q docker-ce'
+warning: /var/cache/yum/x86_64/7/docker-ce-stable/packages/docker-ce-19.03.0-3.el7.x86_64.rpm: Header V4 RSA/SHA512 Signature, key ID 621e9f35: NOKEY
+Public key for docker-ce-19.03.0-3.el7.x86_64.rpm is not installed
+Importing GPG key 0x621E9F35:
+ Userid     : "Docker Release (CE rpm) <docker@docker.com>"
+ Fingerprint: 060a 61c5 1b55 8a7f 742b 77aa c52f eb6b 621e 9f35
+ From       : https://mirrors.aliyun.com/docker-ce/linux/centos/gpg
+setsebool:  SELinux is disabled.
+If you would like to use Docker as a non-root user, you should now consider
+adding your user to the "docker" group with something like:
+
+  sudo usermod -aG docker your-user
+
+Remember that you will have to log out and back in for this to take effect!
+
+WARNING: Adding a user to the "docker" group will grant the ability to run
+         containers which can be used to obtain root privileges on the
+         docker host.
+         Refer to https://docs.docker.com/engine/security/security/#docker-daemon-attack-surface
+         for more information.
 ```
 
 ### 配置
 ```vi /etc/docker/daemon.json 
 {
   "graph": "/data/docker",
-  "storage-driver": "overlay",
+  "storage-driver": "overlay2",
   "insecure-registries": ["registry.access.redhat.com","quay.io","harbor.od.com"],
+  "registry-mirrors": ["https://q2gr04ke.mirror.aliyuncs.com"],
   "bip": "172.7.21.1/24",
   "exec-opts": ["native.cgroupdriver=systemd"],
   "live-restore": true
 }
 ```
 **注意：**这里bip要根据宿主机ip变化
-
-### 启动脚本
-```vi /usr/lib/systemd/system/docker.service
-[Unit]
-Description=Docker Application Container Engine
-Documentation=https://docs.docker.com
-After=network.target
-
-[Service]
-Type=notify
-# the default is not to use systemd for cgroups because the delegate issues still
-# exists and systemd currently does not support the cgroup feature set required
-# for containers run by docker
-ExecStart=/usr/bin/dockerd
-ExecReload=/bin/kill -s HUP $MAINPID
-# Having non-zero Limit*s causes performance problems due to accounting overhead
-# in the kernel. We recommend using cgroups to do container-local accounting.
-LimitNOFILE=infinity
-LimitNPROC=infinity
-LimitCORE=infinity
-# Uncomment TasksMax if your systemd version supports it.
-# Only systemd 226 and above support this version.
-#TasksMax=infinity
-TimeoutStartSec=0
-# set delegate yes so that systemd does not reset the cgroups of docker containers
-Delegate=yes
-# kill only the docker process, not all processes in the cgroup
-KillMode=process
-
-[Install]
-WantedBy=multi-user.target
-```
 
 ### 启动
 ```
@@ -568,7 +582,7 @@ specifically, section 10.2.3 ("Information Requirements").
 [root@hdss7-12 ~]# useradd -s /sbin/nologin -M etcd
 ```
 ### 下载软件，解压，做软连接
-[etcd下载地址](https://github.com/etcd-io/etcd/releases/download/v3.1.8/etcd-v3.1.8-linux-amd64.tar.gz)
+[etcd下载地址](https://github.com/etcd-io/etcd/releases)
 `HDSS7-12.host.com`上：
 ```pwd /opt/src
 [root@hdss7-12 src]# ls -l

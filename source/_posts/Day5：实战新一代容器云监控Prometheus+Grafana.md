@@ -1276,7 +1276,6 @@ spec:
           name: data
       imagePullSecrets:
       - name: harbor
-      nodeName: 10.4.7.21
       restartPolicy: Always
       securityContext:
         runAsUser: 0
