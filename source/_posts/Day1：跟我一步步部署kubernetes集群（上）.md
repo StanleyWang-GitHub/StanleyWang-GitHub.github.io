@@ -20,17 +20,17 @@ HDSS7-200.host.com|k8s运维节点(docker仓库)|10.4.7.200
 ## 软件环境
 - OS: CentOS Linux release 7.6.1810 (Core)
 - docker-ce: v19.03.0
-- kubernetes: v1.13.2
+- kubernetes: v1.15.2
 > [kubernetes官方下载地址](https://github.com/kubernetes/kubernetes/releases)
-- etcd: v3.1.18
+- etcd: v3.1.20
 > [etcd官方下载地址](https://github.com/etcd-io/etcd/releases)
 - bind9: v9.9.4
 > [bind9官方下载地址](https://www.isc.org/downloads/#)
-- harbor: v1.7.1
+- harbor: v1.7.5
 > [harbor官方下载地址](https://github.com/goharbor/harbor/releases)
 - 证书签发工具CFSSL: R1.2
 > [cfssl下载地址](https://pkg.cfssl.org/R1.2/cfssl_linux-amd64)
-> [cfssljson下载地址](https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64)
+> [cfssl-json下载地址](https://pkg.cfssl.org/R1.2/cfssl-json_linux-amd64)
 > [cfssl-certinfo下载地址](https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64)
 - 其他
 > 其他可能用到的软件，均使用操作系统自带的yum源和epel源进行安装
@@ -75,6 +75,9 @@ Installing:
 ```vi /etc/named/named.conf
 listen-on port 53 { 10.4.7.11; };
 allow-query     { any; };
+forwarders      { 8.8.8.8; };
+dnssec-enable no;
+dnssec-validation no;
 ```
 #### 区域配置文件
 ```vi /etc/named/named.rfc1912.zones
@@ -195,56 +198,15 @@ PS C:\Users\Administrator> ping hdss7-200.host.com
 ### 安装CFSSL
 - 证书签发工具CFSSL: R1.2
 > [cfssl下载地址](https://pkg.cfssl.org/R1.2/cfssl_linux-amd64)
-> [cfssljson下载地址](https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64)
+> [cfssl-json下载地址](https://pkg.cfssl.org/R1.2/cfssl-json_linux-amd64)
 > [cfssl-certinfo下载地址](https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64)
 
 ```
 [root@hdss7-200 ~]# wget  https://pkg.cfssl.org/R1.2/cfssl_linux-amd64 -O /usr/bin/cfssl
-[root@hdss7-200 ~]# wget  https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64 -O /usr/bin/cfssljson
+[root@hdss7-200 ~]# wget  https://pkg.cfssl.org/R1.2/cfssl-json_linux-amd64 -O /usr/bin/cfssl-json
 [root@hdss7-200 ~]# wget  https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64 -O /usr/bin/cfssl-certinfo
 [root@hdss7-200 ~]# chmod +x /usr/bin/cfssl*
 ```
-### 创建生成CA证书的JSON配置文件
-```vi /opt/certs/ca-config.json
-{
-    "signing": {
-        "default": {
-            "expiry": "175200h"
-        },
-        "profiles": {
-            "server": {
-                "expiry": "175200h",
-                "usages": [
-                    "signing",
-                    "key encipherment",
-                    "server auth"
-                ]
-            },
-            "client": {
-                "expiry": "175200h",
-                "usages": [
-                    "signing",
-                    "key encipherment",
-                    "client auth"
-                ]
-            },
-            "peer": {
-                "expiry": "175200h",
-                "usages": [
-                    "signing",
-                    "key encipherment",
-                    "server auth",
-                    "client auth"
-                ]
-            }
-        }
-    }
-}
-```
-> 证书类型
-> client certificate： 客户端使用，用于服务端认证客户端,例如etcdctl、etcd proxy、fleetctl、docker客户端
-> server certificate: 服务端使用，客户端以此验证服务端身份,例如docker服务端、kube-apiserver
-> peer certificate: 双向证书，用于etcd集群成员间通信
 
 ### 创建生成CA证书签名请求（csr）的JSON配置文件
 ```vi /opt/certs/ca-csr.json
@@ -279,7 +241,7 @@ PS C:\Users\Administrator> ping hdss7-200.host.com
 
 ### 生成CA证书和私钥
 ```pwd /opt/certs
-[root@hdss7-200 certs]# cfssl gencert -initca ca-csr.json | cfssljson -bare ca
+[root@hdss7-200 certs]# cfssl gencert -initca ca-csr.json | cfssl-json -bare ca
 2019/01/18 09:31:19 [INFO] generating a new CA key and certificate from CSR
 2019/01/18 09:31:19 [INFO] generate received request
 2019/01/18 09:31:19 [INFO] received CSR
@@ -288,10 +250,9 @@ PS C:\Users\Administrator> ping hdss7-200.host.com
 2019/01/18 09:31:19 [INFO] signed certificate with serial number 345276964513449660162382535043012874724976422200
 
 ```
-生成ca.pem、ca.csr、ca-key.pem(CA私钥,需妥善保管)
+生成ca.pem、ca.csr、ca-key.pem(CA证书、私钥,需妥善保管)
 ```pwd /opt/certs
 [root@hdss7-200 certs]# ls -l
--rw-r--r-- 1 root root  836 Jan 16 11:04 ca-config.json
 -rw-r--r-- 1 root root  332 Jan 16 11:10 ca-csr.json
 -rw------- 1 root root 1675 Jan 16 11:17 ca-key.pem
 -rw-r--r-- 1 root root 1001 Jan 16 11:17 ca.csr
@@ -382,14 +343,15 @@ WARNING: Adding a user to the "docker" group will grant the ability to run
 ## 部署docker镜像私有仓库harbor
 **`HDSS7-200.host.com`上：**
 ### 下载软件二进制包并解压
-[harbor下载地址](https://storage.googleapis.com/harbor-releases/release-1.7.0/harbor-offline-installer-v1.7.1.tgz)
+[harbor官方github地址](https://github.com/goharbor/harbor)
+[harbor下载地址](https://storage.googleapis.com/harbor-releases/release-1.7.0/harbor-offline-installer-v1.7.5.tgz)
 ```pwd /opt/src/harbor
-[root@hdss7-200 harbor]# tar xf harbor-offline-installer-v1.7.1.tgz -C /opt
+[root@hdss7-200 harbor]# tar xf harbor-offline-installer-v1.7.5.tgz -C /opt
 
 [root@hdss7-200 harbor]# ll
 total 583848
 drwxr-xr-x 3 root root       242 Jan 23 15:28 harbor
--rw-r--r-- 1 root root 597857483 Jan 17 14:58 harbor-offline-installer-v1.7.1.tgz
+-rw-r--r-- 1 root root 597857483 Jan 17 14:58 harbor-offline-installer-v1.7.5.tgz
 ```
 
 ### 配置
@@ -437,7 +399,7 @@ registryctl          /harbor/start.sh                 Up
 - 配置
 
 ```vi /var/named/od.com.zone
-harbor	60 IN A 10.4.7.200
+harbor                     A    10.4.7.200
 ```
 - 检查
 
@@ -526,7 +488,49 @@ HDSS7-22.host.com|etcd follow|10.4.7.22
 
 **注意：**这里部署文档以`HDSS7-12.host.com`主机为例，另外两台主机安装部署方法类似
 
-### 创建生成证书签名请求（csr）的JSON配置文件
+### 创建根证书的config配置文件
+```vi /opt/certs/ca-config.json
+{
+    "signing": {
+        "default": {
+            "expiry": "175200h"
+        },
+        "profiles": {
+            "server": {
+                "expiry": "175200h",
+                "usages": [
+                    "signing",
+                    "key encipherment",
+                    "server auth"
+                ]
+            },
+            "client": {
+                "expiry": "175200h",
+                "usages": [
+                    "signing",
+                    "key encipherment",
+                    "client auth"
+                ]
+            },
+            "peer": {
+                "expiry": "175200h",
+                "usages": [
+                    "signing",
+                    "key encipherment",
+                    "server auth",
+                    "client auth"
+                ]
+            }
+        }
+    }
+}
+```
+> 证书类型
+> client certificate： 客户端使用，用于服务端认证客户端,例如etcdctl、etcd proxy、fleetctl、docker客户端
+> server certificate: 服务端使用，客户端以此验证服务端身份,例如docker服务端、kube-apiserver
+> peer certificate: 双向证书，用于etcd集群成员间通信
+
+### 创建生成自签证书签名请求（csr）的JSON配置文件
 运维主机`HDSS7-200.host.com`上：
 ```vi /opt/certs/etcd-peer-csr.json
 {
@@ -555,7 +559,7 @@ HDSS7-22.host.com|etcd follow|10.4.7.22
 ```
 ### 生成etcd证书和私钥
 ```pwd /opt/certs
-[root@hdss7-200 certs]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=peer etcd-peer-csr.json | cfssljson -bare etcd-peer
+[root@hdss7-200 certs]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=peer etcd-peer-csr.json | cfssl-json -bare etcd-peer
 2019/01/18 09:35:09 [INFO] generate received request
 2019/01/18 09:35:09 [INFO] received CSR
 2019/01/18 09:35:09 [INFO] generating key: rsa-2048
@@ -587,26 +591,30 @@ specifically, section 10.2.3 ("Information Requirements").
 ```pwd /opt/src
 [root@hdss7-12 src]# ls -l
 total 9604
--rw-r--r-- 1 root root 9831476 Jan 18 10:45 etcd-v3.1.18-linux-amd64.tar.gz
-[root@hdss7-12 src]# tar xf etcd-v3.1.18-linux-amd64.tar.gz -C /opt
-[root@hdss7-12 src]# ln -s /opt/etcd-v3.1.18-linux-amd64 /opt/etcd
+-rw-r--r-- 1 root root 9831476 Jan 18 10:45 etcd-v3.1.20-linux-amd64.tar.gz
+[root@hdss7-12 src]# tar xf etcd-v3.1.20-linux-amd64.tar.gz -C /opt
+[root@hdss7-12 src]# ln -s /opt/etcd-v3.1.20-linux-amd64 /opt/etcd
 [root@hdss7-12 src]# ls -l /opt
 total 0
-lrwxrwxrwx 1 root   root   24 Jan 18 14:21 etcd -> etcd-v3.1.18-linux-amd64
-drwxr-xr-x 4 478493 89939 166 Jun 16  2018 etcd-v3.1.18-linux-amd64
+lrwxrwxrwx 1 root   root   24 Jan 18 14:21 etcd -> etcd-v3.1.20-linux-amd64
+drwxr-xr-x 4 478493 89939 166 Jun 16  2018 etcd-v3.1.20-linux-amd64
 drwxr-xr-x 2 root   root   45 Jan 18 14:21 src
 ```
 ### 创建目录，拷贝证书、私钥
 `HDSS7-12.host.com`上：
+- 创建目录
+
 ```
-[root@hdss7-12 src]# mkdir -p /data/etcd /data/logs/etcd-server 
-[root@hdss7-12 src]# chown -R etcd.etcd /data/etcd /data/logs/etcd-server/
-[root@hdss7-12 src]# mkdir -p /opt/etcd/certs
+[root@hdss7-12 src]# mkdir -p /opt/etcd/certs /data/etcd /data/logs/etcd-server 
 ```
-将运维主机上生成的`ca.pem`、`etcd-peer-key.pem`、`etcd-peer.pem`拷贝到`/opt/etcd/certs`目录中，注意私钥文件权限600
+
+- 拷贝证书
+>将运维主机上生成的`ca.pem`、`etcd-peer-key.pem`、`etcd-peer.pem`拷贝到`/opt/etcd/certs`目录中，注意私钥文件权限600
+
+- 修改权限
+
 ```pwd /opt/etcd/certs
-[root@hdss7-12 certs]# chmod 600 etcd-peer-key.pem
-[root@hdss7-12 certs]# chown -R etcd.etcd /opt/etcd/certs/
+[root@hdss7-12 certs]# chown -R etcd.etcd /opt/etcd/certs /data/etcd /data/logs/etcd-server
 [root@hdss7-12 certs]# ls -l
 total 12
 -rw-r--r-- 1 etcd etcd 1354 Jan 18 14:45 ca.pem
@@ -683,7 +691,7 @@ stderr_events_enabled=false                                     ; emit events on
 ### 启动etcd服务并检查
 `HDSS7-12.host.com`上：
 ```
-[root@hdss7-12 certs]# supervisorctl start all
+[root@hdss7-12 certs]# supervisorctl update
 etcd-server-7-12: started
 [root@hdss7-12 certs]# supervisorctl status   
 etcd-server-7-12                 RUNNING   pid 6692, uptime 0:00:05
@@ -715,23 +723,25 @@ HDSS7-21.host.com|kube-apiserver|10.4.7.21
 HDSS7-22.host.com|kube-apiserver|10.4.7.22
 HDSS7-11.host.com|4层负载均衡|10.4.7.11
 HDSS7-12.host.com|4层负载均衡|10.4.7.12
+
 **注意：**这里`10.4.7.11`和`10.4.7.12`使用nginx做4层负载均衡器，用keepalived跑一个vip：10.4.7.10，代理两个kube-apiserver，实现高可用
 
 这里部署文档以`HDSS7-21.host.com`主机为例，另外一台运算节点安装部署方法类似
 
 ### 下载软件，解压，做软连接
 `HDSS7-21.host.com`上：
-[kubernetes下载地址](https://dl.k8s.io/v1.13.5/kubernetes-server-linux-amd64.tar.gz)
+[kubernetes官方Github地址](https://github.com/kubernetes/kubernetes)
+[kubernetes下载地址](https://dl.k8s.io/v1.15.2/kubernetes-server-linux-amd64.tar.gz)
 ```pwd /opt/src
 [root@hdss7-21 src]# ls -l|grep kubernetes
 -rw-r--r-- 1 root root 417761204 Jan 17 16:46 kubernetes-server-linux-amd64.tar.gz
 [root@hdss7-21 src]# tar xf kubernetes-server-linux-amd64.tar.gz -C /opt
-[root@hdss7-21 src]# mv /opt/kubernetes /opt/kubernetes-v1.13.2-linux-amd64
-[root@hdss7-21 src]# ln -s /opt/kubernetes-v1.13.2-linux-amd64 /opt/kubernetes
+[root@hdss7-21 src]# mv /opt/kubernetes /opt/kubernetes-v1.15.2-linux-amd64
+[root@hdss7-21 src]# ln -s /opt/kubernetes-v1.15.2-linux-amd64 /opt/kubernetes
 [root@hdss7-21 src]# mkdir /opt/kubernetes/server/bin/{cert,conf}
 [root@hdss7-21 src]# ls -l /opt|grep kubernetes
-lrwxrwxrwx 1 root   root         31 Jan 18 10:49 kubernetes -> kubernetes-v1.13.2-linux-amd64/
-drwxr-xr-x 4 root   root         50 Jan 17 17:40 kubernetes-v1.13.2-linux-amd64
+lrwxrwxrwx 1 root   root         31 Jan 18 10:49 kubernetes -> kubernetes-v1.15.2-linux-amd64/
+drwxr-xr-x 4 root   root         50 Jan 17 17:40 kubernetes-v1.15.2-linux-amd64
 ```
 ### 签发client证书
 运维主机`HDSS7-200.host.com`上：
@@ -758,7 +768,7 @@ drwxr-xr-x 4 root   root         50 Jan 17 17:40 kubernetes-v1.13.2-linux-amd64
 ```
 #### 生成client证书和私钥
 ```
-[root@hdss7-200 certs]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client client-csr.json | cfssljson -bare client
+[root@hdss7-200 certs]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client client-csr.json | cfssl-json -bare client
 2019/01/18 14:02:50 [INFO] generate received request
 2019/01/18 14:02:50 [INFO] received CSR
 2019/01/18 14:02:50 [INFO] generating key: rsa-2048
@@ -812,7 +822,7 @@ specifically, section 10.2.3 ("Information Requirements").
 ```
 #### 生成kube-apiserver证书和私钥
 ```
-[root@hdss7-200 certs]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=server apiserver-csr.json | cfssljson -bare apiserver 
+[root@hdss7-200 certs]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=server apiserver-csr.json | cfssl-json -bare apiserver 
 2019/01/18 14:05:44 [INFO] generate received request
 2019/01/18 14:05:44 [INFO] received CSR
 2019/01/18 14:05:44 [INFO] generating key: rsa-2048
@@ -968,12 +978,12 @@ stopsignal=QUIT                                                 ; signal used to
 stopwaitsecs=10                                                 ; max num secs to wait b4 SIGKILL (default 10)
 user=root                                                       ; setuid to this UNIX account to run the program
 redirect_stderr=false                                           ; redirect proc stderr to stdout (default false)
-stdout_logfile=/data/logs/kubernetes/kube-apiserver/apiserver.stdout.log        ; stdout log path, NONE for none; default AUTO
+stdout_logfile=/data/logs/kubernetes/kube-apiserver/apiserver.stderr.log        ; stderr log path, NONE for none; default AUTO
 stdout_logfile_maxbytes=64MB                                    ; max # logfile bytes b4 rotation (default 50MB)
 stdout_logfile_backups=4                                        ; # of stdout logfile backups (default 10)
 stdout_capture_maxbytes=1MB                                     ; number of bytes in 'capturemode' (default 0)
 stdout_events_enabled=false                                     ; emit events on stdout writes (default false)
-stderr_logfile=/data/logs/kubernetes/kube-apiserver/apiserver.stderr.log        ; stderr log path, NONE for none; default AUTO
+stderr_logfile=/data/logs/kubernetes/kube-apiserver/apiserver.stdout.log        ; stdout log path, NONE for none; default AUTO
 stderr_logfile_maxbytes=64MB                                    ; max # logfile bytes b4 rotation (default 50MB)
 stderr_logfile_backups=4                                        ; # of stderr logfile backups (default 10)
 stderr_capture_maxbytes=1MB                                     ; number of bytes in 'capturemode' (default 0)
@@ -1179,12 +1189,12 @@ stopsignal=QUIT                                                                 
 stopwaitsecs=10                                                                   ; max num secs to wait b4 SIGKILL (default 10)
 user=root                                                                         ; setuid to this UNIX account to run the program
 redirect_stderr=false                                                             ; redirect proc stderr to stdout (default false)
-stdout_logfile=/data/logs/kubernetes/kube-controller-manager/controll.stdout.log  ; stdout log path, NONE for none; default AUTO
+stdout_logfile=/data/logs/kubernetes/kube-controller-manager/controll.stderr.log  ; stderr log path, NONE for none; default AUTO
 stdout_logfile_maxbytes=64MB                                                      ; max # logfile bytes b4 rotation (default 50MB)
 stdout_logfile_backups=4                                                          ; # of stdout logfile backups (default 10)
 stdout_capture_maxbytes=1MB                                                       ; number of bytes in 'capturemode' (default 0)
 stdout_events_enabled=false                                                       ; emit events on stdout writes (default false)
-stderr_logfile=/data/logs/kubernetes/kube-controller-manager/controll.stderr.log  ; stderr log path, NONE for none; default AUTO
+stderr_logfile=/data/logs/kubernetes/kube-controller-manager/controll.stdout.log  ; stdout log path, NONE for none; default AUTO
 stderr_logfile_maxbytes=64MB                                                      ; max # logfile bytes b4 rotation (default 50MB)
 stderr_logfile_backups=4                                                          ; # of stderr logfile backups (default 10)
 stderr_capture_maxbytes=1MB                                                       ; number of bytes in 'capturemode' (default 0)
@@ -1247,12 +1257,12 @@ stopsignal=QUIT                                                          ; signa
 stopwaitsecs=10                                                          ; max num secs to wait b4 SIGKILL (default 10)
 user=root                                                                ; setuid to this UNIX account to run the program
 redirect_stderr=false                                                    ; redirect proc stderr to stdout (default false)
-stdout_logfile=/data/logs/kubernetes/kube-scheduler/scheduler.stdout.log ; stdout log path, NONE for none; default AUTO
+stdout_logfile=/data/logs/kubernetes/kube-scheduler/scheduler.stderr.log ; stderr log path, NONE for none; default AUTO
 stdout_logfile_maxbytes=64MB                                             ; max # logfile bytes b4 rotation (default 50MB)
 stdout_logfile_backups=4                                                 ; # of stdout logfile backups (default 10)
 stdout_capture_maxbytes=1MB                                              ; number of bytes in 'capturemode' (default 0)
 stdout_events_enabled=false                                              ; emit events on stdout writes (default false)
-stderr_logfile=/data/logs/kubernetes/kube-scheduler/scheduler.stderr.log ; stderr log path, NONE for none; default AUTO
+stderr_logfile=/data/logs/kubernetes/kube-scheduler/scheduler.stdout.log ; stdout log path, NONE for none; default AUTO
 stderr_logfile_maxbytes=64MB                                             ; max # logfile bytes b4 rotation (default 50MB)
 stderr_logfile_backups=4                                                 ; # of stderr logfile backups (default 10)
 stderr_capture_maxbytes=1MB                                              ; number of bytes in 'capturemode' (default 0)
@@ -1338,7 +1348,7 @@ HDSS7-22.host.com|kubelet|10.4.7.22
 ```
 #### 生成kubelet证书和私钥
 ```pwd /opt/certs
-[root@hdss7-200 certs]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=server kubelet-csr.json | cfssljson -bare kubelet
+[root@hdss7-200 certs]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=server kubelet-csr.json | cfssl-json -bare kubelet
 2019/01/18 17:51:16 [INFO] generate received request
 2019/01/18 17:51:16 [INFO] received CSR
 2019/01/18 17:51:16 [INFO] generating key: rsa-2048
@@ -1390,7 +1400,11 @@ Cluster "myk8s" set.
 ##### set-credentials
 **注意：**在conf目录下
 ```pwd /opt/kubernetes/server/conf
-[root@hdss7-21 conf]# kubectl config set-credentials k8s-node --client-certificate=/opt/kubernetes/server/bin/cert/client.pem --client-key=/opt/kubernetes/server/bin/cert/client-key.pem --embed-certs=true --kubeconfig=kubelet.kubeconfig 
+[root@hdss7-21 conf]# kubectl config set-credentials k8s-node \
+  --client-certificate=/opt/kubernetes/server/bin/cert/client.pem \
+  --client-key=/opt/kubernetes/server/bin/cert/client-key.pem \
+  --embed-certs=true \
+  --kubeconfig=kubelet.kubeconfig 
 
 User "k8s-node" set.
 ```
@@ -1444,37 +1458,36 @@ clusterrolebinding.rbac.authorization.k8s.io/k8s-node created
 NAME           AGE
 k8s-node       3m
 ```
-### 准备infra_pod基础镜像
+### 准备pause基础镜像
 运维主机`HDSS7-200.host.com`上：
 #### 下载
 ```
-[root@hdss7-200 ~]# docker pull xplenty/rhel7-pod-infrastructure:v3.4
-Trying to pull repository docker.io/xplenty/rhel7-pod-infrastructure ... 
-sha256:9314554780673b821cb7113d8c048a90d15077c6e7bfeebddb92a054a1f84843: Pulling from docker.io/xplenty/rhel7-pod-infrastructure
-615bc035f9f8: Pull complete 
-1c5fd9dfeaa8: Pull complete 
-7653a8c7f937: Pull complete 
-Digest: sha256:9314554780673b821cb7113d8c048a90d15077c6e7bfeebddb92a054a1f84843
-Status: Downloaded newer image for docker.io/xplenty/rhel7-pod-infrastructure:v3.4
+[root@hdss7-200 ~]# docker pull kubernetes/pause
+Using default tag: latest
+latest: Pulling from kubernetes/pause
+4f4fb700ef54: Pull complete 
+b9c8ec465f6b: Pull complete 
+Digest: sha256:b31bfb4d0213f254d361e0079deaaebefa4f82ba7aa76ef82e90b4935ad5b105
+Status: Downloaded newer image for kubernetes/pause:latest
+docker.io/kubernetes/pause:latest
 ```
 #### 提交至私有仓库（harbor）中
 - 给镜像打tag
 
 ```
-[root@hdss7-200 ~]# docker images|grep v3.4
-xplenty/rhel7-pod-infrastructure   v3.4                34d3450d733b        2 years ago         205 MB
-[root@hdss7-200 ~]# docker tag 34d3450d733b harbor.od.com/public/pod:v3.4
+[root@hdss7-200 ~]# docker images|grep pause
+kubernetes/pause                   latest              f9d5de079539        5 years ago         240kB
+[root@hdss7-200 ~]# docker tag f9d5de079539 harbor.od.com/public/pause:latest
 ```
 
 - push到harbor
 
 ```
-[root@hdss7-200 ~]# docker push harbor.od.com/public/pod:v3.4
-The push refers to a repository [harbor.od.com/public/pod]
-ba3d4cbbb261: Pushed 
-0a081b45cb84: Pushed 
-df9d2808b9a9: Pushed 
-v3.4: digest: sha256:73cc48728e707b74f99d17b4e802d836e22d373aee901fdcaa781b056cdabf5c size: 948
+[root@hdss7-200 ~]# docker push harbor.od.com/public/pause:latest
+The push refers to repository [harbor.od.com/public/pause]
+5f70bf18a086: Mounted from public/nginx 
+e16a89738269: Pushed 
+latest: digest: sha256:b31bfb4d0213f254d361e0079deaaebefa4f82ba7aa76ef82e90b4935ad5b105 size: 938
 ```
 
 ### 创建kubelet启动脚本
@@ -1496,7 +1509,7 @@ v3.4: digest: sha256:73cc48728e707b74f99d17b4e802d836e22d373aee901fdcaa781b056cd
   --image-gc-low-threshold 10 \
   --kubeconfig ./conf/kubelet.kubeconfig \
   --log-dir /data/logs/kubernetes/kube-kubelet \
-  --pod-infra-container-image harbor.od.com/public/pod:v3.4 \
+  --pod-infra-container-image harbor.od.com/public/pause:latest \
   --root-dir /data/kubelet
 ```
 **注意：**kubelet集群各主机的启动脚本略有不同，部署其他节点时注意修改。
@@ -1519,24 +1532,24 @@ command=/opt/kubernetes/server/bin/kubelet.sh     ; the program (relative uses P
 numprocs=1                                        ; number of processes copies to start (def 1)
 directory=/opt/kubernetes/server/bin              ; directory to cwd to before exec (def no cwd)
 autostart=true                                    ; start at supervisord start (default: true)
-autorestart=true              									  ; retstart at unexpected quit (default: true)
-startsecs=22                  									  ; number of secs prog must stay running (def. 1)
-startretries=3                									  ; max # of serial start failures (default 3)
-exitcodes=0,2                 									  ; 'expected' exit codes for process (default 0,2)
-stopsignal=QUIT               									  ; signal used to kill process (default TERM)
-stopwaitsecs=10               									  ; max num secs to wait b4 SIGKILL (default 10)
+autorestart=true              		          ; retstart at unexpected quit (default: true)
+startsecs=22                                      ; number of secs prog must stay running (def. 1)
+startretries=3                                    ; max # of serial start failures (default 3)
+exitcodes=0,2                                     ; 'expected' exit codes for process (default 0,2)
+stopsignal=QUIT                                   ; signal used to kill process (default TERM)
+stopwaitsecs=10                                   ; max num secs to wait b4 SIGKILL (default 10)
 user=root                                         ; setuid to this UNIX account to run the program
 redirect_stderr=false                             ; redirect proc stderr to stdout (default false)
-stdout_logfile=/data/logs/kubernetes/kube-kubelet/kubelet.stdout.log   ; stdout log path, NONE for none; default AUTO
+stdout_logfile=/data/logs/kubernetes/kube-kubelet/kubelet.stderr.log   ; stderr log path, NONE for none; default AUTO
 stdout_logfile_maxbytes=64MB                      ; max # logfile bytes b4 rotation (default 50MB)
 stdout_logfile_backups=4                          ; # of stdout logfile backups (default 10)
 stdout_capture_maxbytes=1MB                       ; number of bytes in 'capturemode' (default 0)
 stdout_events_enabled=false                       ; emit events on stdout writes (default false)
-stderr_logfile=/data/logs/kubernetes/kube-kubelet/kubelet.stderr.log   ; stderr log path, NONE for none; default AUTO
+stderr_logfile=/data/logs/kubernetes/kube-kubelet/kubelet.stdout.log   ; stdout log path, NONE for none; default AUTO
 stderr_logfile_maxbytes=64MB                      ; max # logfile bytes b4 rotation (default 50MB)
 stderr_logfile_backups=4                          ; # of stderr logfile backups (default 10)
-stderr_capture_maxbytes=1MB   									  ; number of bytes in 'capturemode' (default 0)
-stderr_events_enabled=false   									  ; emit events on stderr writes (default false)
+stderr_capture_maxbytes=1MB                       ; number of bytes in 'capturemode' (default 0)
+stderr_events_enabled=false                       ; emit events on stderr writes (default false)
 ```
 
 ### 启动服务并检查
@@ -1557,12 +1570,19 @@ kube-scheduler-7-21              RUNNING   pid 10041, uptime 18:22:13
 ```
 [root@hdss7-21 bin]# kubectl get node
 NAME        STATUS   ROLES    AGE   VERSION
-10.4.7.21   Ready    <none>   3m   v1.13.2
+10.4.7.21   Ready    <none>   3m   v1.15.2
 ```
-**非常重要！**
 
 ### 安装部署启动检查所有集群规划主机上的kubelet服务
 略
+
+### 检查所有运算节点
+```
+[root@hdss7-21 bin]# kubectl get node
+NAME        STATUS   ROLES    AGE   VERSION
+10.4.7.21   Ready    <none>  15m   v1.15.2
+10.4.7.22   Ready    <none>   3m   v1.15.2
+```
 
 ## 部署kube-proxy
 ### 集群规划
@@ -1576,7 +1596,7 @@ HDSS7-22.host.com|kube-proxy|10.4.7.22
 ### 签发kube-proxy证书
 运维主机`HDSS7-200.host.com`上：
 #### 创建生成证书签名请求（csr）的JSON配置文件
-```vi /opt/certs/kube-proxy-csr.json
+```vi /opt/certs/kube-proxy-client-csr.json
 {
     "CN": "system:kube-proxy",
     "key": {
@@ -1596,7 +1616,7 @@ HDSS7-22.host.com|kube-proxy|10.4.7.22
 ```
 #### 生成kube-proxy证书和私钥
 ```pwd /opt/certs
-[root@hdss7-200 certs]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client kube-proxy-csr.json | cfssljson -bare kube-proxy-client
+[root@hdss7-200 certs]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client kube-proxy-client-csr.json | cfssl-json -bare kube-proxy-client
 2019/01/18 18:14:23 [INFO] generate received request
 2019/01/18 18:14:23 [INFO] received CSR
 2019/01/18 18:14:23 [INFO] generating key: rsa-2048
@@ -1613,7 +1633,7 @@ specifically, section 10.2.3 ("Information Requirements").
 -rw------- 1 root root 1679 Jan 22 17:31 kube-proxy-client-key.pem
 -rw-r--r-- 1 root root 1005 Jan 22 17:31 kube-proxy-client.csr
 -rw-r--r-- 1 root root 1383 Jan 22 17:31 kube-proxy-client.pem
--rw-r--r-- 1 root root  268 Jan 22 17:23 kube-proxy-csr.json
+-rw-r--r-- 1 root root  268 Jan 22 17:23 kube-proxy-client-csr.json
 ```
 ### 拷贝证书至各运算节点，并创建配置
 `HDSS7-21.host.com`上：
@@ -1675,11 +1695,28 @@ Switched to context "myk8s-context".
 ```
 ### 创建kube-proxy启动脚本
 `HDSS7-21.host.com`上：
+- 加载ipvs模块
+
+```vi /root/ipvs.sh
+!/bin/bash
+ipvs_mods_dir="/usr/lib/modules/$(uname -r)/kernel/net/netfilter/ipvs"
+for i in $(ls $ipvs_mods_dir|grep -o "^[^.]*")
+do
+  /sbin/modinfo -F filename $i &>/dev/null
+  if [ $? -eq 0 ];then
+    /sbin/modprobe $i
+  fi
+done
+```
+
+- 创建启动脚本
+
 ```vi /opt/kubernetes/server/bin/kube-proxy.sh
 #!/bin/sh
 ./kube-proxy \
   --cluster-cidr 172.7.0.0/16 \
   --hostname-override 10.4.7.21 \
+  --proxy-mode=ipvs \
   --kubeconfig ./conf/kube-proxy.kubeconfig
 ```
 **注意：**kube-proxy集群各主机的启动脚本略有不同，部署其他节点时注意修改。
@@ -1707,18 +1744,18 @@ startretries=3                                                       ; max # of 
 exitcodes=0,2                                                        ; 'expected' exit codes for process (default 0,2)
 stopsignal=QUIT                                                      ; signal used to kill process (default TERM)
 stopwaitsecs=10                                                      ; max num secs to wait b4 SIGKILL (default 10)
-user=root                                                		         ; setuid to this UNIX account to run the program
-redirect_stderr=false                                           		 ; redirect proc stderr to stdout (default false)
-stdout_logfile=/data/logs/kubernetes/kube-proxy/proxy.stdout.log     ; stdout log path, NONE for none; default AUTO
-stdout_logfile_maxbytes=64MB                                    		 ; max # logfile bytes b4 rotation (default 50MB)
-stdout_logfile_backups=4                                        		 ; # of stdout logfile backups (default 10)
-stdout_capture_maxbytes=1MB                                     		 ; number of bytes in 'capturemode' (default 0)
-stdout_events_enabled=false                                     		 ; emit events on stdout writes (default false)
-stderr_logfile=/data/logs/kubernetes/kube-proxy/proxy.stderr.log     ; stderr log path, NONE for none; default AUTO
-stderr_logfile_maxbytes=64MB                                    		 ; max # logfile bytes b4 rotation (default 50MB)
-stderr_logfile_backups=4                                        		 ; # of stderr logfile backups (default 10)
-stderr_capture_maxbytes=1MB   						                           ; number of bytes in 'capturemode' (default 0)
-stderr_events_enabled=false   						                           ; emit events on stderr writes (default false)
+user=root                                                            ; setuid to this UNIX account to run the program
+redirect_stderr=false                                                ; redirect proc stderr to stdout (default false)
+stdout_logfile=/data/logs/kubernetes/kube-proxy/proxy.stderr.log     ; stderr log path, NONE for none; default AUTO
+stdout_logfile_maxbytes=64MB                                         ; max # logfile bytes b4 rotation (default 50MB)
+stdout_logfile_backups=4                                             ; # of stdout logfile backups (default 10)
+stdout_capture_maxbytes=1MB                                          ; number of bytes in 'capturemode' (default 0)
+stdout_events_enabled=false                                          ; emit events on stdout writes (default false)
+stderr_logfile=/data/logs/kubernetes/kube-proxy/proxy.stdout.log     ; stdout log path, NONE for none; default AUTO
+stderr_logfile_maxbytes=64MB                                         ; max # logfile bytes b4 rotation (default 50MB)
+stderr_logfile_backups=4                                             ; # of stderr logfile backups (default 10)
+stderr_capture_maxbytes=1MB                                          ; number of bytes in 'capturemode' (default 0)
+stderr_events_enabled=false                                          ; emit events on stderr writes (default false)
 ```
 ### 启动服务并检查
 `HDSS7-21.host.com`上：
