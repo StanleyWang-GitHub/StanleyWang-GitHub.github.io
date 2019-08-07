@@ -176,7 +176,7 @@ site_state: true
 # Value before `||` delimeter is the target permalink.
 # Value after `||` delimeter is the name of FontAwesome icon. If icon (with or without delimeter) is not specified, globe icon will be loaded.
 social:
-  GitHub: https://github.com/StanleyWang-GitHub || github
+  GitHub: https://gitee.com/stanleywang || github
   E-Mail: mailto:stanley.wang.m@qq.com || envelope
   #Weibo: https://weibo.com/yourname || weibo
   #Google: https://plus.google.com/yourname || google
@@ -327,7 +327,7 @@ codeblock:
 reward:
   enable: true
   comment: 坚持原创技术分享，您的支持将鼓励我继续创作！
-  wechatpay: /images/wechatpay.2yuan.png
+  wechatpay: /images/wechat.png
   alipay: /images/alipay.2yuan.png
   #bitcoin: /images/bitcoin.jpg
 

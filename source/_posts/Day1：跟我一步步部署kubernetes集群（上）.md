@@ -1717,6 +1717,7 @@ done
   --cluster-cidr 172.7.0.0/16 \
   --hostname-override 10.4.7.21 \
   --proxy-mode=ipvs \
+  --ipvs-scheduler=nq \
   --kubeconfig ./conf/kube-proxy.kubeconfig
 ```
 **注意：**kube-proxy集群各主机的启动脚本略有不同，部署其他节点时注意修改。

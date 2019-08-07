@@ -5,9 +5,413 @@ date: 2019-6-18 21:12:56
 - - -
 {% cq %}欢迎加入王导的VIP学习qq群：==>[<font color="FF7F50">932194668</font>](http://shang.qq.com/wpa/qunwpa?idkey=78869fddc5a661acb0639315eb52997c108de6625df5f0ee2f0372f176a032a6)<=={% endcq %}
 - - -
+# K8S的核心资源管理方法
+## 陈述式资源管理方法
+任意K8S运算节点上：
+### 管理名称空间资源
+#### 查看名称空间
+```
+[root@hdss7-21 ~]# kubectl get namespaces
+NAME              STATUS   AGE
+default           Active   23h
+kube-node-lease   Active   23h
+kube-public       Active   23h
+kube-system       Active   23h
+```
+#### 查看名称空间内的资源
+```
+[root@hdss7-21 ~]# kubectl get all -n default
+NAME                 READY   STATUS    RESTARTS   AGE
+pod/nginx-ds-j78mb   1/1     Running   0          21h
+pod/nginx-ds-w5bht   1/1     Running   0          21h
 
-# 部署flannel
-## 集群规划
+
+NAME                 TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   192.168.0.1   <none>        443/TCP   23h
+
+NAME                      DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE
+daemonset.apps/nginx-ds   2         2         2       2            2           <none>          21h
+```
+
+#### 创建名称空间
+```
+[root@hdss7-21 ~]# kubectl create namespace app
+namespace/app created
+[root@hdss7-21 ~]# kubectl get namespaces
+NAME              STATUS   AGE
+app               Active   7s
+default           Active   23h
+kube-node-lease   Active   23h
+kube-public       Active   23h
+kube-system       Active   23h
+```
+
+#### 删除名称空间
+```
+[root@hdss7-21 ~]# kubectl delete namespace app
+namespace "app" deleted
+[root@hdss7-21 ~]# kubectl get namespaces
+NAME              STATUS   AGE
+default           Active   23h
+kube-node-lease   Active   23h
+kube-public       Active   23h
+kube-system       Active   23h
+```
+
+### 管理Deployment资源
+#### 创建deployment
+```
+[root@hdss7-21 ~]# kubectl create deployment nginx-dp --image=harbor.od.com/public/nginx:v1.7.9 -n kube-public
+deployment.apps/nginx-dp created
+```
+
+#### 查看deployment
+- 简单查看
+
+```
+[root@hdss7-21 ~]# kubectl get deployment
+No resources found.
+[root@hdss7-21 ~]# kubectl get deployment -n kube-public
+NAME       READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-dp   1/1     1            1           41s
+```
+
+- 扩展查看
+
+```
+[root@hdss7-21 ~]# kubectl get deployment -o wide -n kube-public
+NAME       READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                              SELECTOR
+nginx-dp   1/1     1            1           76s   nginx        harbor.od.com/public/nginx:v1.7.9   app=nginx-dp
+```
+
+- 详细查看
+
+```
+[root@hdss7-21 ~]# kubectl describe deployment nginx-dp -n kube-public
+Name:                   nginx-dp
+Namespace:              kube-public
+CreationTimestamp:      Wed, 07 Aug 2019 15:18:51 +0800
+Labels:                 app=nginx-dp
+Annotations:            deployment.kubernetes.io/revision: 1
+Selector:               app=nginx-dp
+Replicas:               1 desired | 1 updated | 1 total | 1 available | 0 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  25% max unavailable, 25% max surge
+Pod Template:
+  Labels:  app=nginx-dp
+  Containers:
+   nginx:
+    Image:        harbor.od.com/public/nginx:v1.7.9
+    Port:         <none>
+    Host Port:    <none>
+    Environment:  <none>
+    Mounts:       <none>
+  Volumes:        <none>
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Available      True    MinimumReplicasAvailable
+  Progressing    True    NewReplicaSetAvailable
+OldReplicaSets:  <none>
+NewReplicaSet:   nginx-dp-5dfc689474 (1/1 replicas created)
+Events:
+  Type    Reason             Age   From                   Message
+  ----    ------             ----  ----                   -------
+  Normal  ScalingReplicaSet  2m4s  deployment-controller  Scaled up replica set nginx-dp-5dfc689474 to 1
+```
+
+#### 查看pod资源
+```
+[root@hdss7-21 ~]# kubectl get pods -n kube-public
+NAME                        READY   STATUS    RESTARTS   AGE
+nginx-dp-5dfc689474-gtfvv   1/1     Running   0          2m50s
+```
+
+#### 进入pod资源
+```
+[root@hdss7-21 ~]# kubectl exec -ti nginx-dp-5dfc689474-gtfvv bash -n kube-public
+root@nginx-dp-5dfc689474-gtfvv:/# ip add
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+8: eth0@if9: <BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN> mtu 1500 qdisc noqueue state UP 
+    link/ether 02:42:ac:07:16:03 brd ff:ff:ff:ff:ff:ff
+    inet 172.7.22.3/24 brd 172.7.22.255 scope global eth0
+       valid_lft forever preferred_lft forever
+```
+> 当然你也可以通过docker exec进入容器
+
+#### 删除pod资源（重启）
+```
+[root@hdss7-21 ~]# kubectl delete pod nginx-dp-5dfc689474-gtfvv -n kube-public
+pod "nginx-dp-5dfc689474-gtfvv" deleted
+[root@hdss7-21 ~]# kubectl get pods -n kube-public
+NAME                        READY   STATUS    RESTARTS   AGE
+nginx-dp-5dfc689474-2wj2j   1/1     Running   0          15s
+```
+> 使用watch观察pod重建状态变化
+> 强制删除参数：-\-force -\-grace-period=0
+
+#### 删除deployment
+```
+[root@hdss7-21 ~]# kubectl delete deployment nginx-dp -n kube-public
+deployment.extensions "nginx-dp" deleted
+[root@hdss7-21 ~]# kubectl get deployment -n kube-public
+No resources found.
+[root@hdss7-21 ~]# kubectl get pods -n kube-public
+No resources found.
+```
+
+### 管理Service资源
+#### 创建servic
+```
+[root@hdss7-21 ~]# kubectl create deployment nginx-dp --image=harbor.od.com/public/nginx:v1.7.9 -n kube-public
+deployment.apps/nginx-dp created
+[root@hdss7-21 ~]# kubectl expose deployment nginx-dp --port=80 -n kube-public
+service/nginx-dp exposed
+[root@hdss7-21 ~]# kubectl get svc -n kube-public
+NAME       TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+nginx-dp   ClusterIP   192.168.23.113   <none>        80/TCP    17s
+```
+
+#### 查看service
+```
+[root@hdss7-21 ~]# kubectl describe svc nginx-dp -n kube-public
+Name:              nginx-dp
+Namespace:         kube-public
+Labels:            app=nginx-dp
+Annotations:       <none>
+Selector:          app=nginx-dp
+Type:              ClusterIP
+IP:                192.168.23.113
+Port:              <unset>  80/TCP
+TargetPort:        80/TCP
+Endpoints:         172.7.22.3:80
+Session Affinity:  None
+Events:            <none>
+```
+
+### kubectl用法总结
+```
+[root@hdss7-21 ~]# kubectl --help
+kubectl controls the Kubernetes cluster manager.
+
+ Find more information at: https://kubernetes.io/docs/reference/kubectl/overview/
+
+Basic Commands (Beginner):
+  create         Create a resource from a file or from stdin.
+  expose         Take a replication controller, service, deployment or pod and expose it as a new Kubernetes Service
+  run            Run a particular image on the cluster
+  set            Set specific features on objects
+
+Basic Commands (Intermediate):
+  explain        Documentation of resources
+  get            Display one or many resources
+  edit           Edit a resource on the server
+  delete         Delete resources by filenames, stdin, resources and names, or by resources and label selector
+
+Deploy Commands:
+  rollout        Manage the rollout of a resource
+  scale          Set a new size for a Deployment, ReplicaSet, Replication Controller, or Job
+  autoscale      Auto-scale a Deployment, ReplicaSet, or ReplicationController
+
+Cluster Management Commands:
+  certificate    Modify certificate resources.
+  cluster-info   Display cluster info
+  top            Display Resource (CPU/Memory/Storage) usage.
+  cordon         Mark node as unschedulable
+  uncordon       Mark node as schedulable
+  drain          Drain node in preparation for maintenance
+  taint          Update the taints on one or more nodes
+
+Troubleshooting and Debugging Commands:
+  describe       Show details of a specific resource or group of resources
+  logs           Print the logs for a container in a pod
+  attach         Attach to a running container
+  exec           Execute a command in a container
+  port-forward   Forward one or more local ports to a pod
+  proxy          Run a proxy to the Kubernetes API server
+  cp             Copy files and directories to and from containers.
+  auth           Inspect authorization
+
+Advanced Commands:
+  diff           Diff live version against would-be applied version
+  apply          Apply a configuration to a resource by filename or stdin
+  patch          Update field(s) of a resource using strategic merge patch
+  replace        Replace a resource by filename or stdin
+  wait           Experimental: Wait for a specific condition on one or many resources.
+  convert        Convert config files between different API versions
+  kustomize      Build a kustomization target from a directory or a remote url.
+
+Settings Commands:
+  label          Update the labels on a resource
+  annotate       Update the annotations on a resource
+  completion     Output shell completion code for the specified shell (bash or zsh)
+
+Other Commands:
+  api-resources  Print the supported API resources on the server
+  api-versions   Print the supported API versions on the server, in the form of "group/version"
+  config         Modify kubeconfig files
+  plugin         Provides utilities for interacting with plugins.
+  version        Print the client and server version information
+
+Usage:
+  kubectl [flags] [options]
+
+Use "kubectl <command> --help" for more information about a given command.
+Use "kubectl options" for a list of global command-line options (applies to all commands).
+```
+
+## 声明式资源管理方法
+### 陈述式资源管理方法的局限性
+```
+[root@hdss7-21 ~]# kubectl expose daemonset nginx-ds --port=80
+error: cannot expose a DaemonSet.extensions
+```
+### 查看资源配置清单
+```
+[root@hdss7-21 ~]# kubectl get svc nginx-dp -o yaml -n kube-public
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: "2019-08-07T07:46:32Z"
+  labels:
+    app: nginx-dp
+  name: nginx-dp
+  namespace: kube-public
+  resourceVersion: "55619"
+  selfLink: /api/v1/namespaces/kube-public/services/nginx-dp
+  uid: b7b6ddc9-808a-4c7d-b49c-fca1f847efe9
+spec:
+  clusterIP: 192.168.23.113
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: nginx-dp
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
+```
+
+### 解释资源配置清单
+```
+[root@hdss7-21 ~]# kubectl explain service
+KIND:     Service
+VERSION:  v1
+
+DESCRIPTION:
+     Service is a named abstraction of software service (for example, mysql)
+     consisting of local port (for example 3306) that the proxy listens on, and
+     the selector that determines which pods will answer requests sent through
+     the proxy.
+
+FIELDS:
+   apiVersion	<string>
+     APIVersion defines the versioned schema of this representation of an
+     object. Servers should convert recognized schemas to the latest internal
+     value, and may reject unrecognized values. More info:
+     https://git.k8s.io/community/contributors/devel/api-conventions.md#resources
+
+   kind	<string>
+     Kind is a string value representing the REST resource this object
+     represents. Servers may infer this from the endpoint the client submits
+     requests to. Cannot be updated. In CamelCase. More info:
+     https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds
+
+   metadata	<Object>
+     Standard object's metadata. More info:
+     https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
+
+   spec	<Object>
+     Spec defines the behavior of a service.
+     https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status
+
+   status	<Object>
+     Most recently observed status of the service. Populated by the system.
+     Read-only. More info:
+     https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status
+```
+
+### 创建资源配置清单
+```vi /root/nginx-ds-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: nginx-ds
+  name: nginx-ds
+  namespace: default
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: nginx-ds
+  sessionAffinity: None
+  type: ClusterIP
+```
+
+### 应用资源配置清单
+```
+[root@hdss7-21 ~]# kubectl apply -f nginx-ds-svc.yaml 
+service/nginx-ds created
+```
+
+### 修改资源配置清单并应用
+- 离线修改
+> 修改nginx-ds-svc.yaml文件，并用kubectl apply -f nginx-ds-svc.yaml文件使之生效。
+
+- 在线修改
+> 直接使用kubectl edit service nginx-ds 在线编辑资源配置清单并保存生效。
+
+### 查看并使用Servic资源
+```
+[root@hdss7-21 ~]# kubectl get svc -o wide
+NAME         TYPE        CLUSTER-IP        EXTERNAL-IP   PORT(S)   AGE   SELECTOR
+kubernetes   ClusterIP   192.168.0.1       <none>        443/TCP   24h   <none>
+nginx-ds     ClusterIP   192.168.240.194   <none>        80/TCP    28s   app=nginx-ds
+
+[root@hdss7-21 ~]# curl 192.168.240.194
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+    body {
+        width: 35em;
+        margin: 0 auto;
+        font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+
+[root@hdss7-21 ~]# curl 192.168.240.194
+curl: (7) Failed connect to 192.168.240.194:80; Connection timed out
+```
+> 这里注意把kube-proxy的ipvs轮询算法调整为rr，才能出效果
+
+# K8S的核心插件（addons）
+## K8S的CNI网络插件--Flannel
+### 集群规划
 主机名|角色|ip
 -|-|-
 HDSS7-21.host.com|flannel|10.4.7.21
@@ -15,7 +419,7 @@ HDSS7-22.host.com|flannel|10.4.7.22
 
 **注意：**这里部署文档以`HDSS7-21.host.com`主机为例，另外一台运算节点安装部署方法类似
 
-## 下载软件，解压，做软连接
+### 下载软件，解压，做软连接
 [flannel官方下载地址](https://github.com/coreos/flannel/releases)
 `HDSS7-21.host.com`上：
 ```pwd /opt/src
@@ -29,12 +433,12 @@ lrwxrwxrwx 1 root   root         31 Jan 17 18:49 flannel -> flannel-v0.10.0-linu
 drwxr-xr-x 4 root   root         50 Jan 17 18:47 flannel-v0.10.0-linux-amd64
 ```
 
-## 最终目录结构
+### 最终目录结构
 ```pwd /opt
 [root@hdss7-21 opt]# tree -L 2
 .
-|-- etcd -> etcd-v3.1.18-linux-amd64
-|-- etcd-v3.1.18-linux-amd64
+|-- etcd -> etcd-v3.1.20-linux-amd64
+|-- etcd-v3.1.20-linux-amd64
 |   |-- Documentation
 |   |-- README-etcdctl.md
 |   |-- README.md
@@ -49,8 +453,8 @@ drwxr-xr-x 4 root   root         50 Jan 17 18:47 flannel-v0.10.0-linux-amd64
 |   |-- cert
 |   |-- flanneld
 |   `-- mk-docker-opts.sh
-|-- kubernetes -> kubernetes-v1.13.2-linux-amd64/
-|-- kubernetes-v1.13.2-linux-amd64
+|-- kubernetes -> kubernetes-v1.15.2-linux-amd64/
+|-- kubernetes-v1.15.2-linux-amd64
 |   |-- LICENSES
 |   |-- addons
 |   `-- server
@@ -61,7 +465,7 @@ drwxr-xr-x 4 root   root         50 Jan 17 18:47 flannel-v0.10.0-linux-amd64
     `-- kubernetes
 ```
 
-## 拷贝证书
+### 拷贝证书
 各运算节点上：
 ```pwd /opt/flannel/cert
 [root@hdss7-21 cert]# scp hdss7-200:/opt/certs/ca.pem .
@@ -69,7 +473,7 @@ drwxr-xr-x 4 root   root         50 Jan 17 18:47 flannel-v0.10.0-linux-amd64
 [root@hdss7-21 cert]# scp hdss7-200:/opt/certs/client-key.pem .
 ```
 
-## 创建配置
+### 创建配置
 `HDSS7-21.host.com`上：
 ```vi /opt/flannel/subnet.env
 FLANNEL_NETWORK=172.7.0.0/16
@@ -79,7 +483,7 @@ FLANNEL_IPMASQ=false
 ```
 **注意：**flannel集群各主机的配置略有不同，部署其他节点时注意修改。
 
-## 创建启动脚本
+### 创建启动脚本
 `HDSS7-21.host.com`上：
 ```vi /opt/flannel/flanneld.sh
 #!/bin/sh
@@ -95,7 +499,7 @@ FLANNEL_IPMASQ=false
 ```
 **注意：**flannel集群各主机的启动脚本略有不同，部署其他节点时注意修改。
 
-## 检查配置，权限，创建日志目录
+### 检查配置，权限，创建日志目录
 `HDSS7-21.host.com`上：
 ```pwd /opt/flannel
 [root@hdss7-21 flannel]# chmod +x /opt/flannel/flanneld.sh 
@@ -103,7 +507,7 @@ FLANNEL_IPMASQ=false
 [root@hdss7-21 flannel]# mkdir -p /data/logs/flanneld
 ```
 
-## 创建supervisor配置
+### 创建supervisor配置
 `HDSS7-21.host.com`上：
 ```vi /etc/supervisord.d/flanneld.ini
 [program:flanneld-7-21]
@@ -131,14 +535,14 @@ stderr_capture_maxbytes=1MB                                  ; number of bytes i
 stderr_events_enabled=false                                  ; emit events on stderr writes (default false)
 ```
 
-## 操作etcd，增加host-gw
+### 操作etcd，增加host-gw
 `HDSS7-21.host.com`上：
 ```pwd /opt/etcd
 [root@hdss7-21 etcd]# ./etcdctl set /coreos.com/network/config '{"Network": "172.7.0.0/16", "Backend": {"Type": "host-gw"}}'
 {"Network": "172.7.0.0/16", "Backend": {"Type": "host-gw"}}
 ```
 
-## 启动服务并检查
+### 启动服务并检查
 `HDSS7-21.host.com`上：
 ```
 [root@hdss7-21 flanneld]# supervisorctl update
@@ -152,12 +556,12 @@ kube-kubelet                     RUNNING   pid 32640, uptime 17:16:36
 kube-proxy                       RUNNING   pid 15097, uptime 17:55:36
 kube-scheduler                   RUNNING   pid 37803, uptime 0:55:47
 ```
-## 安装部署启动检查所有集群规划主机上的flannel服务
+### 安装部署启动检查所有集群规划主机上的flannel服务
 略
 
-## 再次验证集群，POD之间网络互通
+### 再次验证集群，POD之间网络互通
 
-## 在各运算节点上优化iptables规则
+### 在各运算节点上优化iptables规则
 **注意：**iptables规则各主机的略有不同，其他运算节点上执行时注意修改。
 - 优化SNAT规则，各运算节点之间的各POD之间的网络通信不再出网
 
@@ -167,13 +571,17 @@ kube-scheduler                   RUNNING   pid 37803, uptime 0:55:47
 ```
 > 10.4.7.21主机上的，来源是172.7.21.0/24段的docker的ip，目标ip不是172.7.0.0/16段，网络发包不从docker0桥设备出站的，才进行SNAT转换
 
-## 各运算节点保存iptables规则
+### 各运算节点保存iptables规则
 ```
 [root@hdss7-21 ~]# iptables-save > /etc/sysconfig/iptables
 ```
 
-# 部署k8s资源配置清单的内网http服务
-## 在运维主机`HDSS7-200.host.com`上，配置一个nginx虚拟主机，用以提供k8s统一的资源配置清单访问入口
+## K8S的服务发现插件--CoreDNS
+### 部署K8S的内网资源配置清单http服务
+> 在运维主机`HDSS7-200.host.com`上，配置一个nginx虚拟主机，用以提供k8s统一的资源配置清单访问入口
+
+- 配置nginx
+
 ```vi /etc/nginx/conf.d/k8s-yaml.od.com.conf
 server {
     listen       80;
@@ -186,7 +594,8 @@ server {
     }
 }
 ```
-## 配置内网DNS解析
+- 配置内网DNS解析
+
 `HDSS7-11.host.com`上
 ```vi /var/named/od.com.zone
 k8s-yaml	60 IN A 10.4.7.200
@@ -196,10 +605,9 @@ k8s-yaml	60 IN A 10.4.7.200
 [root@hdss7-200 ~]# nginx -s reload
 ```
 
-
-# 部署kube-dns(coredns)
+### 部署coredns
 [coredns官方GitHub](https://github.com/coredns/coredns)
-## 准备coredns-v1.3.1镜像
+#### 准备coredns-v1.3.1镜像
 运维主机`HDSS7-200.host.com`上：
 ```
 [root@hdss7-200 ~]# docker pull coredns/coredns:1.3.1
@@ -217,7 +625,7 @@ fb61a074724d: Pushed
 v1.3.1: digest: sha256:e077b9680c32be06fc9652d57f64aa54770dd6554eb87e7a00b97cf8e9431fda size: 739
 ```
 
-## 准备资源配置清单
+#### 准备资源配置清单
 运维主机`HDSS7-200.host.com`上：
 ```
 [root@hdss7-200 ~]# mkdir -p /data/k8s-yaml/coredns && cd /data/k8s-yaml/coredns
@@ -378,7 +786,7 @@ spec:
 <!-- endtab -->
 {% endtabs %}
 
-## 依次执行创建
+#### 依次执行创建
 浏览器打开：http://k8s-yaml.od.com/coredns 检查资源配置清单文件是否正确创建
 在任意运算节点上应用资源配置清单
 ```
@@ -393,7 +801,8 @@ deployment.extensions/coredns created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/coredns/svc.yaml
 service/coredns created
 ```
-## 检查
+
+#### 检查
 ```
 [root@hdss7-21 ~]# kubectl get pods -n kube-system -o wide
 NAME                       READY   STATUS    RESTARTS   AGE
@@ -407,9 +816,10 @@ coredns   ClusterIP   192.168.0.2   <none>        53/UDP,53/TCP   29s
 192.168.0.3
 ```
 
-# 部署traefik（ingress）
+## K8S服务暴露组件--Traefik
+### 部署traefik（ingress控制器）
 [traefik官方GitHub](https://github.com/containous/traefik)
-## 准备traefik镜像
+#### 准备traefik镜像
 运维主机`HDSS7-200.host.com`上：
 ```
 [root@hdss7-200 ~]# docker pull traefik:v1.7-alpine
@@ -429,7 +839,7 @@ e89059911fc9: Pushed
 a464c54f93a9: Pushed
 v1.7.2: digest: sha256:8f92899f5feb08db600c89d3016145e838fa7ff0d316ee21ecd63d9623643410 size: 1157
 ```
-## 准备资源配置清单
+#### 准备资源配置清单
 运维主机`HDSS7-200.host.com`上：
 ```
 [root@hdss7-200 ~]# mkdir -p /data/k8s-yaml/traefik && cd /data/k8s-yaml/traefik
@@ -571,13 +981,7 @@ spec:
 <!-- endtab -->
 {% endtabs %}
 
-## 解析域名
-`HDSS7-11.host.com`上
-```vi /var/named/od.com.zone
-traefik	60 IN A 10.4.7.10
-```
-
-## 依次执行创建
+#### 依次执行创建
 浏览器打开：http://k8s-yaml.od.com/traefik 检查资源配置清单文件是否正确创建
 在任意运算节点应用资源配置清单
 ```
@@ -596,7 +1000,13 @@ service/traefik-ingress-service created
 ingress.extensions/traefik-web-ui created
 ```
 
-## 配置反代
+### 解析域名
+`HDSS7-11.host.com`上
+```vi /var/named/od.com.zone
+traefik	60 IN A 10.4.7.10
+```
+
+### 配置反代
 `HDSS7-11.host.com`和`HDSS7-12.host.com`两台主机上的nginx均需要配置，这里可以考虑使用saltstack或者ansible进行统一配置管理
 ```vi /etc/nginx/conf.d/od.com.conf
 upstream default_backend_traefik {
@@ -614,12 +1024,13 @@ server {
 } 
 ```
 
-## 浏览器访问
+### 浏览器访问
 http://traefik.od.com
 
-# 部署dashboard
+## K8S的GUI资源管理方法--仪表盘
+### 部署kubernetes-dashboard
 [dashboard官方GitHub](https://github.com/kubernetes/dashboard)
-## 准备dashboard镜像
+#### 准备dashboard镜像
 运维主机`HDSS7-200.host.com`上：
 ```
 [root@hdss7-200 ~]# docker pull k8scn/kubernetes-dashboard-amd64:v1.8.3
@@ -634,7 +1045,7 @@ The push refers to a repository [harbor.od.com/public/dashboard]
 23ddb8cbb75a: Pushed 
 v1.8.3: digest: sha256:e76c5fe6886c99873898e4c8c0945261709024c4bea773fc477629455631e472 size: 529
 ```
-## 准备资源配置清单
+#### 准备资源配置清单
 运维主机`HDSS7-200.host.com`上：
 ```
 [root@hdss7-200 ~]# mkdir -p /data/k8s-yaml/dashboard && cd /data/k8s-yaml/dashboard
@@ -772,13 +1183,7 @@ spec:
 
 {% endtabs %}
 
-## 解析域名
-`HDSS7-11.host.com`上
-```vi /var/named/od.com.zone
-dashboard	60 IN A 10.4.7.10
-```
-
-## 依次执行创建
+#### 依次执行创建
 浏览器打开：http://k8s-yaml.od.com/dashboard 检查资源配置清单文件是否正确创建
 在任意运算节点应用资源配置清单
 ```
@@ -797,10 +1202,16 @@ service/kubernetes-dashboard created
 ingress.extensions/kubernetes-dashboard created
 ```
 
-## 浏览器访问
+### 解析域名
+`HDSS7-11.host.com`上
+```vi /var/named/od.com.zone
+dashboard	60 IN A 10.4.7.10
+```
+
+### 浏览器访问
 http://dashboard.od.com
 
-## 配置认证
+### 配置认证
 - 下载新版dashboard
 
 ```
@@ -885,9 +1296,9 @@ token:      eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2V
 
 - 使用token登录dashboard
 
-## 部署heapster
+### 部署heapster
 [heapster官方github地址](https://github.com/kubernetes-retired/heapster)
-### 准备heapster镜像
+#### 准备heapster镜像
 运维主机`HDSS7-200.host.com`上
 ```
 [root@hdss7-200 ~]# docker pull quay.io/bitnami/heapster:1.5.4
@@ -907,7 +1318,7 @@ b76dba5a0109: Pushed
 v1.5.4: digest: sha256:1203b49f2b2b07e02e77263bce8bb30563a91e1d7ee7c6742e9d125abcb3abe6 size: 952
 ```
 
-### 准备资源配置清单
+#### 准备资源配置清单
 ```
 [root@hdss7-200 ~]# mkdir -p /data/k8s-yaml/dashboard/heapster && cd /data/k8s-yaml/dashboard/heapster
 ```
@@ -985,7 +1396,7 @@ spec:
 <!-- endtab -->
 {% endtabs %}
 
-### 应用资源配置清单
+#### 应用资源配置清单
 任意运算节点上：
 ```
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dashboard/heapster/rbac.yaml 
@@ -997,7 +1408,7 @@ deployment.extensions/heapster created
 service/heapster created
 ```
 
-### 重启dashboard
+#### 重启dashboard
 浏览器访问：http://dashboard.od.com
 ![加入heapster插件的dashboard](/images/heapster.png "加入heapster插件的dashboard")
 
