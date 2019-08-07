@@ -1027,7 +1027,7 @@ Successfully tagged nginx:v1.12.2_with_index
 绑hosts，打开浏览器http://demo.od.com
 ![dockerdemo](/images/dockerdemo.png "dockerdemo")
 
-# docker的网络模型
+# Docker的网络模型
 ## NAT（默认）
 ```
 [root@docker ~]# docker run -ti --rm myalpine /bin/sh

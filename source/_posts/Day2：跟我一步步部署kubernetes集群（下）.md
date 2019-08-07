@@ -424,13 +424,13 @@ HDSS7-22.host.com|flannel|10.4.7.22
 `HDSS7-21.host.com`上：
 ```pwd /opt/src
 [root@hdss7-21 src]# ls -l|grep flannel
--rw-r--r-- 1 root root 417761204 Jan 17 18:46 flannel-v0.10.0-linux-amd64.tar.gz
-[root@hdss7-21 src]# mkdir -p /opt/flannel-v0.10.0-linux-amd64/cert
-[root@hdss7-21 src]# tar xf flannel-v0.10.0-linux-amd64.tar.gz -C /opt/flannel-v0.10.0-linux-amd64
-[root@hdss7-21 src]# ln -s /opt/flannel-v0.10.0-linux-amd64 /opt/flannel
+-rw-r--r-- 1 root root 417761204 Jan 17 18:46 flannel-v0.11.0-linux-amd64.tar.gz
+[root@hdss7-21 src]# mkdir -p /opt/flannel-v0.11.0-linux-amd64/cert
+[root@hdss7-21 src]# tar xf flannel-v0.11.0-linux-amd64.tar.gz -C /opt/flannel-v0.11.0-linux-amd64
+[root@hdss7-21 src]# ln -s /opt/flannel-v0.11.0-linux-amd64 /opt/flannel
 [root@hdss7-21 src]# ls -l /opt|grep flannel
-lrwxrwxrwx 1 root   root         31 Jan 17 18:49 flannel -> flannel-v0.10.0-linux-amd64/
-drwxr-xr-x 4 root   root         50 Jan 17 18:47 flannel-v0.10.0-linux-amd64
+lrwxrwxrwx 1 root   root         31 Jan 17 18:49 flannel -> flannel-v0.11.0-linux-amd64/
+drwxr-xr-x 4 root   root         50 Jan 17 18:47 flannel-v0.11.0-linux-amd64
 ```
 
 ### 最终目录结构
@@ -447,8 +447,8 @@ drwxr-xr-x 4 root   root         50 Jan 17 18:47 flannel-v0.10.0-linux-amd64
 |   |-- etcd
 |   |-- etcd-server-startup.sh
 |   `-- etcdctl
-|-- flannel -> flannel-v0.10.0/
-|-- flannel-v0.10.0
+|-- flannel -> flannel-v0.11.0/
+|-- flannel-v0.11.0
 |   |-- README.md
 |   |-- cert
 |   |-- flanneld
@@ -516,19 +516,19 @@ numprocs=1                                                   ; number of process
 directory=/opt/flannel                                       ; directory to cwd to before exec (def no cwd)
 autostart=true                                               ; start at supervisord start (default: true)
 autorestart=true                                             ; retstart at unexpected quit (default: true)
-startsecs=22                   ; number of secs prog must stay running (def. 1)
-startretries=3     				     ; max # of serial start failures (default 3)
-exitcodes=0,2      				     ; 'expected' exit codes for process (default 0,2)
-stopsignal=QUIT    				     ; signal used to kill process (default TERM)
-stopwaitsecs=10    				     ; max num secs to wait b4 SIGKILL (default 10)
+startsecs=22                                                 ; number of secs prog must stay running (def. 1)
+startretries=3                                               ; max # of serial start failures (default 3)
+exitcodes=0,2                                                ; 'expected' exit codes for process (default 0,2)
+stopsignal=QUIT                                              ; signal used to kill process (default TERM)
+stopwaitsecs=10                                              ; max num secs to wait b4 SIGKILL (default 10)
 user=root                                                    ; setuid to this UNIX account to run the program
 redirect_stderr=false                                        ; redirect proc stderr to stdout (default false)
-stdout_logfile=/data/logs/flanneld/flanneld.stdout.log       ; stdout log path, NONE for none; default AUTO
+stdout_logfile=/data/logs/flanneld/flanneld.stderr.log       ; stderr log path, NONE for none; default AUTO
 stdout_logfile_maxbytes=64MB                                 ; max # logfile bytes b4 rotation (default 50MB)
 stdout_logfile_backups=4                                     ; # of stdout logfile backups (default 10)
 stdout_capture_maxbytes=1MB                                  ; number of bytes in 'capturemode' (default 0)
 stdout_events_enabled=false                                  ; emit events on stdout writes (default false)
-stderr_logfile=/data/logs/flanneld/flanneld.stderr.log       ; stderr log path, NONE for none; default AUTO
+stderr_logfile=/data/logs/flanneld/flanneld.stdout.log       ; stdout log path, NONE for none; default AUTO
 stderr_logfile_maxbytes=64MB                                 ; max # logfile bytes b4 rotation (default 50MB)
 stderr_logfile_backups=4                                     ; # of stderr logfile backups (default 10)
 stderr_capture_maxbytes=1MB                                  ; number of bytes in 'capturemode' (default 0)
@@ -540,6 +540,17 @@ stderr_events_enabled=false                                  ; emit events on st
 ```pwd /opt/etcd
 [root@hdss7-21 etcd]# ./etcdctl set /coreos.com/network/config '{"Network": "172.7.0.0/16", "Backend": {"Type": "host-gw"}}'
 {"Network": "172.7.0.0/16", "Backend": {"Type": "host-gw"}}
+```
+附：flannel的其他网络模型：
+
+> VxLAN模型
+>```
+'{"Network": "172.7.0.0/16", "Backend": {"Type": "VxLAN"}}'
+```
+
+> 直接路由模型
+>```
+'{"Network": "172.7.0.0/16", "Backend": {"Type": "VxLAN","Directrouting": true}}'
 ```
 
 ### 启动服务并检查
