@@ -370,6 +370,13 @@ service/nginx-ds created
 - 在线修改
 > 直接使用kubectl edit service nginx-ds 在线编辑资源配置清单并保存生效。
 
+### 删除资源配置清单
+- 陈述式删除
+> kubectl delete service nginx-ds -n kube-public
+
+- 声明式删除
+> kubectl delete -f nginx-ds-svc.yaml
+
 ### 查看并使用Servic资源
 ```
 [root@hdss7-21 ~]# kubectl get svc -o wide
@@ -609,7 +616,7 @@ server {
 
 `HDSS7-11.host.com`上
 ```vi /var/named/od.com.zone
-k8s-yaml	60 IN A 10.4.7.200
+k8s-yaml                   A    10.4.7.200
 ```
 以后所有的资源配置清单统一放置在运维主机的`/data/k8s-yaml`目录下即可
 ```
@@ -618,22 +625,23 @@ k8s-yaml	60 IN A 10.4.7.200
 
 ### 部署coredns
 [coredns官方GitHub](https://github.com/coredns/coredns)
-#### 准备coredns-v1.3.1镜像
+[coredns官方DockerHub](https://hub.docker.com/r/coredns/coredns)
+#### 准备coredns-v1.6.1镜像
 运维主机`HDSS7-200.host.com`上：
 ```
-[root@hdss7-200 ~]# docker pull coredns/coredns:1.3.1
-1.3.1: Pulling from coredns/coredns
+[root@hdss7-200 ~]# docker pull coredns/coredns:1.6.1
+1.6.1: Pulling from coredns/coredns
 e0daa8927b68: Pull complete 
 3928e47de029: Pull complete 
 Digest: sha256:02382353821b12c21b062c59184e227e001079bb13ebd01f9d3270ba0fcbf1e4
-Status: Downloaded newer image for coredns/coredns:1.3.1
-[root@hdss7-200 ~]# docker tag eb516548c180 harbor.od.com/public/coredns:v1.3.1
-[root@hdss7-200 ~]# docker push harbor.od.com/public/coredns:v1.3.1
-docker push harbor.od.com/public/coredns:v1.3.1
+Status: Downloaded newer image for coredns/coredns:1.6.1
+[root@hdss7-200 ~]# docker tag eb516548c180 harbor.od.com/public/coredns:v1.6.1
+[root@hdss7-200 ~]# docker push harbor.od.com/public/coredns:v1.6.1
+docker push harbor.od.com/public/coredns:v1.6.1
 The push refers to a repository [harbor.od.com/public/coredns]
 c6a5fc8a3f01: Pushed 
 fb61a074724d: Pushed 
-v1.3.1: digest: sha256:e077b9680c32be06fc9652d57f64aa54770dd6554eb87e7a00b97cf8e9431fda size: 739
+v1.6.1: digest: sha256:e077b9680c32be06fc9652d57f64aa54770dd6554eb87e7a00b97cf8e9431fda size: 739
 ```
 
 #### 准备资源配置清单
@@ -654,7 +662,7 @@ metadata:
   labels:
       kubernetes.io/cluster-service: "true"
       addonmanager.kubernetes.io/mode: Reconcile
-\--\-
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -673,7 +681,7 @@ rules:
   verbs:
   - list
   - watch
-\--\-
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -707,23 +715,26 @@ data:
         errors
         log
         health
+        ready
         kubernetes cluster.local 192.168.0.0/16
-        proxy . /etc/resolv.conf
+        forward . 10.4.7.11
         cache 30
+        loop
+        reload
+        loadbalance
        }
 {% endcode %}
 <!-- endtab -->
 <!-- tab Deployment-->
 vi /data/k8s-yaml/coredns/dp.yaml
 {% code %}
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: coredns
   namespace: kube-system
   labels:
     k8s-app: coredns
-    kubernetes.io/cluster-service: "true"
     kubernetes.io/name: "CoreDNS"
 spec:
   replicas: 1
@@ -735,10 +746,11 @@ spec:
       labels:
         k8s-app: coredns
     spec:
+      priorityClassName: system-cluster-critical
       serviceAccountName: coredns
       containers:
       - name: coredns
-        image: harbor.od.com/public/coredns:v1.3.1
+        image: harbor.od.com/public/coredns:v1.6.1
         args:
         - -conf
         - /etc/coredns/Corefile
@@ -751,6 +763,9 @@ spec:
           protocol: UDP
         - containerPort: 53
           name: dns-tcp
+          protocol: TCP
+        - containerPort: 9153
+          name: metrics
           protocol: TCP
         livenessProbe:
           httpGet:
@@ -793,6 +808,9 @@ spec:
     protocol: UDP
   - name: dns-tcp
     port: 53
+  - name: metrics
+    port: 9153
+    protocol: TCP
 {% endcode %}
 <!-- endtab -->
 {% endtabs %}
@@ -828,19 +846,62 @@ coredns   ClusterIP   192.168.0.2   <none>        53/UDP,53/TCP   29s
 ```
 
 ## K8S服务暴露组件--Traefik
+### 使用NodePort型Service暴露服务
+**注意：**使用这种方法暴露服务，要求kube-proxy的代理类型改为：iptables
+#### 修改nginx-ds的service资源配置清单
+```vi /root/nginx-ds-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: nginx-ds
+  name: nginx-ds
+  namespace: default
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    nodePort: 8000
+  selector:
+    app: nginx-ds
+  sessionAffinity: None
+  type: NodePort
+```
+
+#### 重建nginx-ds的service资源
+```
+[root@hdss7-21 ~]# kubectl delete -f nginx-ds-svc.yaml 
+service "nginx-ds" deleted
+[root@hdss7-21 ~]# kubectl apply -f nginx-ds-svc.yaml 
+service/nginx-ds created
+```
+
+#### 查看service
+```
+[root@hdss7-21 ~]# kubectl get svc -o wide
+NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)       AGE   SELECTOR
+kubernetes   ClusterIP   192.168.0.1      <none>        443/TCP       47h   <none>
+nginx-ds     NodePort    192.168.65.119   <none>        80:8000/TCP   9s    app=nginx-ds
+```
+
+#### 浏览器访问
+http://10.4.7.21:8000
+http://10.4.7.22:8000
+
 ### 部署traefik（ingress控制器）
 [traefik官方GitHub](https://github.com/containous/traefik)
+[traefik官方DockerHub](https://hub.docker.com/_/traefik)
 #### 准备traefik镜像
 运维主机`HDSS7-200.host.com`上：
 ```
-[root@hdss7-200 ~]# docker pull traefik:v1.7-alpine
-v1.7-alpine: Pulling from library/traefik
+[root@hdss7-200 ~]# docker pull traefik:v1.7.2-alpine
+v1.7.2-alpine: Pulling from library/traefik
 bdf0201b3a05: Pull complete 
 9dfd896cc066: Pull complete 
 de06b5685128: Pull complete 
 c4d82a21fa27: Pull complete 
 Digest: sha256:0531581bde9da0670fc2c7a4e419e1cc38abff74e7ba06410bf2b1b55c70ef15
-Status: Downloaded newer image for traefik:v1.7-alpine
+Status: Downloaded newer image for traefik:v1.7.2-alpine
 [root@hdss7-200 ~]# docker tag 1930b7508541 harbor.od.com/public/traefik:v1.7.2       
 [root@hdss7-200 ~]# docker push harbor.od.com/public/traefik:v1.7.2
 The push refers to a repository [harbor.od.com/public/traefik]
@@ -864,7 +925,7 @@ kind: ServiceAccount
 metadata:
   name: traefik-ingress-controller
   namespace: kube-system
-\--\-
+---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
 metadata:
@@ -888,7 +949,7 @@ rules:
       - get
       - list
       - watch
-\--\-
+---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
@@ -938,16 +999,16 @@ spec:
             add:
             - NET_BIND_SERVICE
         args:
-        - -\-api
-        - -\-kubernetes
-        - -\-logLevel=INFO
-        - -\-insecureskipverify=true
-        - -\-kubernetes.endpoint=https://10.4.7.10:7443
-        - -\-accesslog
-        - -\-accesslog.filepath=/var/log/traefik_access.log
-        - -\-traefiklog
-        - -\-traefiklog.filepath=/var/log/traefik.log
-        - -\-metrics.prometheus
+        - --api
+        - --kubernetes
+        - --logLevel=INFO
+        - --insecureskipverify=true
+        - --kubernetes.endpoint=https://10.4.7.10:7443
+        - --accesslog
+        - --accesslog.filepath=/var/log/traefik_access.log
+        - --traefiklog
+        - --traefiklog.filepath=/var/log/traefik.log
+        - --metrics.prometheus
 {% endcode %}
 <!-- endtab -->
 <!-- tab Service-->
@@ -1014,7 +1075,7 @@ ingress.extensions/traefik-web-ui created
 ### 解析域名
 `HDSS7-11.host.com`上
 ```vi /var/named/od.com.zone
-traefik	60 IN A 10.4.7.10
+traefik                    A    10.4.7.10
 ```
 
 ### 配置反代
@@ -1038,6 +1099,8 @@ server {
 ### 浏览器访问
 http://traefik.od.com
 
+![traefik](/images/traefik.png "traefik")
+
 ## K8S的GUI资源管理方法--仪表盘
 ### 部署kubernetes-dashboard
 [dashboard官方GitHub](https://github.com/kubernetes/dashboard)
@@ -1056,6 +1119,7 @@ The push refers to a repository [harbor.od.com/public/dashboard]
 23ddb8cbb75a: Pushed 
 v1.8.3: digest: sha256:e76c5fe6886c99873898e4c8c0945261709024c4bea773fc477629455631e472 size: 529
 ```
+
 #### 准备资源配置清单
 运维主机`HDSS7-200.host.com`上：
 ```
@@ -1073,7 +1137,7 @@ metadata:
     addonmanager.kubernetes.io/mode: Reconcile
   name: kubernetes-dashboard-admin
   namespace: kube-system
-\--\-
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -1131,7 +1195,7 @@ spec:
           protocol: TCP
         args:
           # PLATFORM-SPECIFIC ARGS HERE
-          - -\-auto-generate-certificates
+          - --auto-generate-certificates
         volumeMounts:
         - name: tmp-volume
           mountPath: /tmp
@@ -1216,7 +1280,7 @@ ingress.extensions/kubernetes-dashboard created
 ### 解析域名
 `HDSS7-11.host.com`上
 ```vi /var/named/od.com.zone
-dashboard	60 IN A 10.4.7.10
+dashboard                  A    10.4.7.10
 ```
 
 ### 浏览器访问
@@ -1342,7 +1406,7 @@ kind: ServiceAccount
 metadata:
   name: heapster
   namespace: kube-system
-\--\-
+---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
@@ -1376,11 +1440,11 @@ spec:
       serviceAccountName: heapster
       containers:
       - name: heapster
-        image: harbor.od.com/k8s/heapster:v1.5.4
+        image: harbor.od.com/public/heapster:v1.5.4
         imagePullPolicy: IfNotPresent
         command:
         - /opt/bitnami/heapster/bin/heapster
-        - \--source=kubernetes:https://kubernetes.default
+        - --source=kubernetes:https://kubernetes.default
 {% endcode %}
 <!-- endtab -->
 <!-- tab Service-->
