@@ -845,7 +845,7 @@ coredns   ClusterIP   192.168.0.2   <none>        53/UDP,53/TCP   29s
 192.168.0.3
 ```
 
-## K8S服务暴露组件--Traefik
+## K8S的服务暴露插件--Traefik
 ### 使用NodePort型Service暴露服务
 **注意：**使用这种方法暴露服务，要求kube-proxy的代理类型改为：iptables
 #### 修改nginx-ds的service资源配置清单
@@ -1101,7 +1101,7 @@ http://traefik.od.com
 
 ![traefik](/images/traefik.png "traefik")
 
-## K8S的GUI资源管理方法--仪表盘
+## K8S的GUI资源管理插件--仪表盘
 ### 部署kubernetes-dashboard
 [dashboard官方GitHub](https://github.com/kubernetes/dashboard)
 #### 准备dashboard镜像

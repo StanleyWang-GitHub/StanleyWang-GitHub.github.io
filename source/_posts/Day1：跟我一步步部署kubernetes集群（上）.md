@@ -488,7 +488,7 @@ HDSS7-22.host.com|etcd follow|10.4.7.22
 
 **注意：**这里部署文档以`HDSS7-12.host.com`主机为例，另外两台主机安装部署方法类似
 
-### 创建根证书的config配置文件
+### 创建基于根证书的config配置文件
 ```vi /opt/certs/ca-config.json
 {
     "signing": {
@@ -1698,7 +1698,7 @@ Switched to context "myk8s-context".
 - 加载ipvs模块
 
 ```vi /root/ipvs.sh
-!/bin/bash
+#!/bin/bash
 ipvs_mods_dir="/usr/lib/modules/$(uname -r)/kernel/net/netfilter/ipvs"
 for i in $(ls $ipvs_mods_dir|grep -o "^[^.]*")
 do
