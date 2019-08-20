@@ -30,7 +30,7 @@ HDSS7-200.host.com|k8s运维节点(docker仓库)|10.4.7.200
 > [harbor官方下载地址](https://github.com/goharbor/harbor/releases)
 - 证书签发工具CFSSL: R1.2
 > [cfssl下载地址](https://pkg.cfssl.org/R1.2/cfssl_linux-amd64)
-> [cfssl-json下载地址](https://pkg.cfssl.org/R1.2/cfssl-json_linux-amd64)
+> [cfssl-json下载地址](https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64)
 > [cfssl-certinfo下载地址](https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64)
 - 其他
 > 其他可能用到的软件，均使用操作系统自带的yum源和epel源进行安装
@@ -198,7 +198,7 @@ PS C:\Users\Administrator> ping hdss7-200.host.com
 ### 安装CFSSL
 - 证书签发工具CFSSL: R1.2
 > [cfssl下载地址](https://pkg.cfssl.org/R1.2/cfssl_linux-amd64)
-> [cfssl-json下载地址](https://pkg.cfssl.org/R1.2/cfssl-json_linux-amd64)
+> [cfssl-json下载地址](https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64)
 > [cfssl-certinfo下载地址](https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64)
 
 ```
