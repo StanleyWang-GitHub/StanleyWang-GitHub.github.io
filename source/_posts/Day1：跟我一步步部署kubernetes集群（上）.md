@@ -203,7 +203,7 @@ PS C:\Users\Administrator> ping hdss7-200.host.com
 
 ```
 [root@hdss7-200 ~]# wget  https://pkg.cfssl.org/R1.2/cfssl_linux-amd64 -O /usr/bin/cfssl
-[root@hdss7-200 ~]# wget  https://pkg.cfssl.org/R1.2/cfssl-json_linux-amd64 -O /usr/bin/cfssl-json
+[root@hdss7-200 ~]# wget  https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64 -O /usr/bin/cfssl-json
 [root@hdss7-200 ~]# wget  https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64 -O /usr/bin/cfssl-certinfo
 [root@hdss7-200 ~]# chmod +x /usr/bin/cfssl*
 ```
