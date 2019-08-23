@@ -602,7 +602,7 @@ CMD ["/entrypoint.sh"]
 <!-- tab config.yml -->
 vi config.yml
 {% code %}
-\--\-
+---
 rules:
   - pattern: '.*'
 {% endcode %}
