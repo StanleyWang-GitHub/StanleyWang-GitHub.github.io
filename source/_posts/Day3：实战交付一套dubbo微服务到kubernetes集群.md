@@ -803,6 +803,7 @@ dubbo.protocol.port=20880
 dubbo.jetty.port=8080
 dubbo.jetty.directory=/dubbo-monitor-simple/monitor
 dubbo.statistics.directory=/dubbo-monitor-simple/statistics
+dubbo.charts.directory=/dubbo-monitor-simple/charts
 dubbo.log4j.file=logs/dubbo-monitor.log
 ```
 
@@ -863,7 +864,7 @@ fddd8887b725: Pushed
 ### 解析域名
 在DNS主机`HDSS7-11.host.com`上：
 ```vi /var/named/od.com.zone
-dubbo-monitor      A    10.9.7.10
+dubbo-monitor      A    10.4.7.10
 ```
 
 ### 准备k8s资源配置清单
