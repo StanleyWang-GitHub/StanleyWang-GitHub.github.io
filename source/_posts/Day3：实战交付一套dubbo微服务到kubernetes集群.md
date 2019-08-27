@@ -509,7 +509,7 @@ http://jenkins.od.com
 10. Add Parameter -> Choice Parameter
 > Name : maven
 > Default Value : 
-> - 3.6.1-8u181
+> - 3.6.1-8u212
 > - 3.2.5-6u025
 > - 2.2.1-6u025
 > Description : different maven edition.
@@ -568,19 +568,19 @@ Note: DeployKey only supports pull/fetch operations
 [root@hdss7-22 src]# ls -l
 total 8852
 -rw-r--r-- 1 root root 9063587 Jan  17 19:57 apache-maven-3.6.1-bin.tar.gz
-[root@hdss7-200 src]# tar xf apache-maven-3.6.1-bin.tar.gz -C /data/nfs-volume/jenkins_home/maven-3.6.1-8u181
-[root@hdss7-200 src]# mv /data/nfs-volume/jenkins_home/apache-maven-3.6.1/ /data/nfs-volume/jenkins_home/maven-3.6.1-8u181
-[root@hdss7-200 src]# ls -ld /data/nfs-volume/jenkins_home/maven-3.6.1-8u181
-drwxr-xr-x 6 root root 99 Jan  17 19:58 /data/nfs-volume/jenkins_home/maven-3.6.1-8u181
+[root@hdss7-200 src]# tar xf apache-maven-3.6.1-bin.tar.gz -C /data/nfs-volume/jenkins_home/maven-3.6.1-8u212
+[root@hdss7-200 src]# mv /data/nfs-volume/jenkins_home/apache-maven-3.6.1/ /data/nfs-volume/jenkins_home/maven-3.6.1-8u212
+[root@hdss7-200 src]# ls -ld /data/nfs-volume/jenkins_home/maven-3.6.1-8u212
+drwxr-xr-x 6 root root 99 Jan  17 19:58 /data/nfs-volume/jenkins_home/maven-3.6.1-8u212
 ```
 设置国内镜像源
-```vi /data/nfs-volume/jenkins_home/maven-3.6.1-8u181/conf/setting.xml
-<mirror>
-  <id>alimaven</id>
-  <name>aliyun maven</name>
-  <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
-  <mirrorOf>central</mirrorOf>        
-</mirror>
+```vi /data/nfs-volume/jenkins_home/maven-3.6.1-8u212/conf/setting.xml
+    <mirror>
+      <id>nexus-aliyun</id>
+      <mirrorOf>*</mirrorOf>
+      <name>Nexus aliyun</name>
+      <url>http://maven.aliyun.com/nexus/content/groups/public</url>
+    </mirror>
 ```
 其他版本略
 
@@ -713,11 +713,11 @@ fddd8887b725: Pushed
 > base/jre8:8u112
 
 - maven
-> 3.6.1-8u181
+> 3.6.1-8u212
 
 点击`Build`进行构建，等待构建完成。
 
-test $? -eq 0 && {% label success@成功，进行下一步 %} || {% label danger@失败，排错直到成功 %}
+> test $? -eq 0 && {% label success@成功，进行下一步 %} || {% label danger@失败，排错直到成功 %}
 
 ### 检查harbor仓库内镜像
 ![harbor仓库内镜像](/images/harbor-firstci.png "harbor仓库内镜像")
@@ -863,7 +863,7 @@ fddd8887b725: Pushed
 ### 解析域名
 在DNS主机`HDSS7-11.host.com`上：
 ```vi /var/named/od.com.zone
-dubbo-monitor IN A 60 10.9.7.10
+dubbo-monitor      A    10.9.7.10
 ```
 
 ### 准备k8s资源配置清单
@@ -1004,11 +1004,11 @@ http://dubbo-monitor.od.com
 > base/jre8:8u112
 
 - maven
-> 3.6.1-8u181
+> 3.6.1-8u212
 
 点击`Build`进行构建，等待构建完成。
 
-test $? -eq 0 && {% label success@成功，进行下一步 %} || {% label danger@失败，排错直到成功 %}
+> test $? -eq 0 && {% label success@成功，进行下一步 %} || {% label danger@失败，排错直到成功 %}
 
 ### 检查harbor仓库内镜像
 ![harbor仓库内镜像](/images/harbor-secondci.png "harbor仓库内镜像")
@@ -1016,7 +1016,7 @@ test $? -eq 0 && {% label success@成功，进行下一步 %} || {% label danger
 ### 解析域名
 在DNS主机`HDSS7-11.host.com`上：
 ```vi /var/named/od.com.zone
-demo IN A 60 10.9.7.10
+demo      A    10.9.7.10
 ```
 
 ### 准备k8s资源配置清单
