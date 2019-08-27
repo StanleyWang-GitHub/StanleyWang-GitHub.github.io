@@ -284,7 +284,7 @@ secret/harbor created
 ```
 {% tabs jenkins-yaml%}
 <!-- tab Deployment -->
-vi deployment.yaml
+vi dp.yaml
 {% code %}
 kind: Deployment
 apiVersion: extensions/v1beta1
@@ -391,7 +391,7 @@ spec:
 任意一个k8s运算节点上
 ```
 [root@hdss7-21 ~]# kubectl create namespace infra
-[root@hdss7-21 ~]# kubectl apply -f  http://k8s-yaml.od.com/jenkins/deployment.yaml
+[root@hdss7-21 ~]# kubectl apply -f  http://k8s-yaml.od.com/jenkins/dp.yaml
 [root@hdss7-21 ~]# kubectl apply -f  http://k8s-yaml.od.com/jenkins/svc.yaml
 [root@hdss7-21 ~]# kubectl apply -f  http://k8s-yaml.od.com/jenkins/ingress.yaml
 
@@ -724,7 +724,7 @@ fddd8887b725: Pushed
 
 ### 准备k8s资源配置清单
 运维主机`HDSS7-200.host.com`上，准备资源配置清单：
-```vi /data/k8s-yaml/dubbo-demo-service/deployment.yaml
+```vi /data/k8s-yaml/dubbo-demo-service/dp.yaml
 kind: Deployment
 apiVersion: extensions/v1beta1
 metadata:
@@ -776,7 +776,7 @@ spec:
 namespace/app created
 [root@hdss7-21 ~]# kubectl create secret docker-registry harbor --docker-server=harbor.od.com --docker-username=admin --docker-password=Harbor12345 -n app
 secret/harbor created
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-demo-service/deployment.yaml
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-demo-service/dp.yaml
 deployment.extensions/dubbo-demo-service created
 ```
 
@@ -870,7 +870,7 @@ dubbo-monitor      A    10.9.7.10
 运维主机`HDSS7-200.host.com`上
 {% tabs dubbo-monitor%}
 <!-- tab Deployment -->
-vi /data/k8s-yaml/dubbo-monitor/deployment.yaml
+vi /data/k8s-yaml/dubbo-monitor/dp.yaml
 {% code %}
 kind: Deployment
 apiVersion: extensions/v1beta1
@@ -956,7 +956,7 @@ spec:
 ### 应用资源配置清单
 在任意一台k8s运算节点执行：
 ```
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-monitor/deployment.yaml
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-monitor/dp.yaml
 deployment.extensions/dubbo-monitor created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-monitor/svc.yaml
 service/dubbo-monitor created
@@ -1023,7 +1023,7 @@ demo      A    10.9.7.10
 运维主机`HDSS7-200.host.com`上，准备资源配置清单
 {% tabs dubbo-demo-consumer%}
 <!-- tab Deployment -->
-vi /data/k8s-yaml/dubbo-demo-consumer/deployment.yaml
+vi /data/k8s-yaml/dubbo-demo-consumer/dp.yaml
 {% code %}
 kind: Deployment
 apiVersion: extensions/v1beta1
@@ -1112,7 +1112,7 @@ spec:
 ### 应用资源配置清单
 在任意一台k8s运算节点执行：
 ```
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-demo-consumer/deployment.yaml
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-demo-consumer/dp.yaml
 deployment.extensions/dubbo-demo-consumer created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-demo-consumer/svc.yaml
 service/dubbo-demo-consumer created
