@@ -391,8 +391,8 @@ v1.4.0: digest: sha256:6a8e4fdda58de0dfba9985ebbf91c4d6f46f5274983d2efa8853b03f4
 ### 解析域名
 DNS主机`HDSS7-11.host.com`上：
 ```vi /var/named/od.com.zone
-mysql   60 IN A 10.4.7.11
-config	60 IN A 10.4.7.10
+mysql               A    10.4.7.10
+config              A    10.4.7.10
 ```
 
 ### 准备资源配置清单
@@ -934,7 +934,7 @@ v1.4.0: digest: sha256:1aa30aac8642cceb97c053b7d74632240af08f64c49b65d8729021fef
 ### 解析域名
 DNS主机`HDSS7-11.host.com`上：
 ```vi /var/named/od.com.zone
-portal	60 IN A 10.4.7.10
+portal               A    10.4.7.10
 ```
 ### 准备资源配置清单
 在运维主机`HDSS7-200.host.com`上
@@ -1389,21 +1389,21 @@ HDSS7-200.host.com|运维主机，harbor仓库|10.4.7.200
 
 环境|命名空间|应用
 -|-|-
-测试环境（TEST）|test|apollo-config，apollo-admin
-测试环境（TEST）|test|dubbo-demo-service，dubbo-demo-web
-生产环境（PROD）|prod|apollo-config，apollo-admin
-生产环境（PROD）|prod|dubbo-demo-service，dubbo-demo-web
-ops环境（infra）|infra|jenkins，dubbo-monitor，apollo-portal
+测试环境（FAT）|test|apollo-config，apollo-admin
+测试环境（FAT）|test|dubbo-demo-service，dubbo-demo-web
+生产环境（PRO）|prod|apollo-config，apollo-admin
+生产环境（PRO）|prod|dubbo-demo-service，dubbo-demo-web
+ops环境|infra|jenkins，dubbo-monitor，apollo-portal
 
 ## 修改/添加域名解析
 DNS主机`HDSS7-11.host.com`上：
 ```vi /var/named/od.com.zone
-zk-test 60 IN A 10.4.7.11
-zk-prod 60 IN A 10.4.7.12
-config-test	60 IN A 10.4.7.10
-config-prod	60 IN A 10.4.7.10
-demo-test 60 IN A 10.4.7.10
-demo-prod 60 IN A 10.4.7.10
+zk-test               A    10.4.7.11
+zk-prod               A    10.4.7.12
+config-test           A    10.4.7.10
+config-prod           A    10.4.7.10
+demo-test             A    10.4.7.10
+demo-prod             A    10.4.7.10
 ```
 
 ## Apollo的k8s应用配置
@@ -1451,12 +1451,13 @@ application-github.properties: |
 ```
 
 - 依次应用，分别发布在test和prod命名空间
+
 - 修改apollo-portal的configmap并重启portal
 
 ```
 apollo-env.properties: |
-    TEST.meta=http://config-test.od.com
-    PROD.meta=http://config-prod.od.com
+    FAT.meta=http://config-test.od.com
+    PRO.meta=http://config-prod.od.com
 ```
 
 ## Apollo的portal配置
@@ -1467,11 +1468,11 @@ apollo-env.properties: |
 > apollo.portal.envs
 
 - Value
-> TEST,PROD
+> fat,pro
 
 **查询**
 - Value
-> TEST,PROD
+> fat,pro
 
 **保存**
 
@@ -1483,10 +1484,3 @@ apollo-env.properties: |
 - 依次应用，分别发布至app-test和app-prod命名空间
 - 使用dubbo-monitor查验
 
-# 互联网公司技术部的日常
-- 产品经理整理需求，需求评审，出产品原型
-- 开发同学夜以继日的开发，提测
-- 测试同学使用Jenkins持续集成，并发布至测试环境
-- 验证功能，通过->待上线or打回->修改代码
-- 提交发版申请，运维同学将测试后的包发往生产环境
-- 无尽的BUG修复（笑cry）
