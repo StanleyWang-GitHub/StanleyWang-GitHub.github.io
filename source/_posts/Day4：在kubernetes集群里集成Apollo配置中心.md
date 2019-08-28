@@ -1456,8 +1456,8 @@ application-github.properties: |
 
 ```
 apollo-env.properties: |
-    FAT.meta=http://config-test.od.com
-    PRO.meta=http://config-prod.od.com
+    fat.meta=http://config-test.od.com
+    pro.meta=http://config-prod.od.com
 ```
 
 ## Apollo的portal配置
