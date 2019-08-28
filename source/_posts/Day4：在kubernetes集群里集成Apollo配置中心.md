@@ -1477,7 +1477,7 @@ apollo-env.properties: |
 **保存**
 
 ## 新建dubbo-demo-service和dubbo-demo-web项目
-在TEST/PROD环境分别增加配置项并发布
+在FAT/PRO环境分别增加配置项并发布
 
 ## 发布dubbo微服务
 - 准备dubbo-demo-service和dubbo-demo-web的资源配置清单（各2套）
