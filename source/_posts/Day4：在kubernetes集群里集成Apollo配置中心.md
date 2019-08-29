@@ -129,7 +129,7 @@ deployment.extensions/dubbo-monitor configured
 ```
 
 ## 重新发版，修改dubbo项目的配置文件
-### 修改项目源代码
+### 修改项目源代码(仅演示)
 - duboo-demo-service
 ```vi dubbo-server/src/main/java/config.properties
 dubbo.registry=zookeeper://zk1.od.com:2181
@@ -202,7 +202,7 @@ gpgcheck=1
 - 更新数据库版本
 
 ```
-[root@hdss7-11 ~]# yum update MariaDB-server -y
+[root@hdss7-11 ~]# yum install MariaDB-server -y
 ```
 
 - 配置my.cnf
