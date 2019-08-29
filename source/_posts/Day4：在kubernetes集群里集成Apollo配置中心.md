@@ -972,7 +972,7 @@ v1.4.0: digest: sha256:1aa30aac8642cceb97c053b7d74632240af08f64c49b65d8729021fef
 ### 解析域名
 DNS主机`HDSS7-11.host.com`上：
 ```vi /var/named/od.com.zone
-portal               A    10.4.7.10
+portal             A    10.4.7.10
 ```
 ### 准备资源配置清单
 在运维主机`HDSS7-200.host.com`上
@@ -1111,7 +1111,7 @@ http://portal.od.com
 ![apollo-portal](/images/portal-ready.png "apollo-portal")
 
 # 实战dubbo微服务接入Apollo配置中心
-## 改造dubbo-demo-service项目
+## 改造dubbo-demo-service项目（仅演示）
 ### 使用IDE拉取项目（这里使用git bash作为范例）
 ```
 $ git clone git@gitee.com/stanleywang/dubbo-demo-service.git
