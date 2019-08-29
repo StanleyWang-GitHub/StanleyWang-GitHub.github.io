@@ -363,6 +363,7 @@ ADD scripts/ /apollo-configservice/scripts
 
 CMD ["/apollo-configservice/scripts/startup.sh"]
 ```
+
 - 制作镜像并推送
 
 ```
@@ -562,12 +563,18 @@ http://config.od.com
 
 ### 制作Docker镜像
 在运维主机`HDSS7-200.host.com`上：
-- 配置数据库连接串
+- 查看数据库连接串（仅演示）
+
 ```pwd /data/dockerfile/apollo-adminservice
 [root@hdss7-200 apollo-adminservice]# cat config/application-github.properties
-
+# DataSource
+spring.datasource.url = jdbc:mysql://fill-in-the-correct-server:3306/ApolloConfigDB?characterEncoding=utf8
+spring.datasource.username = FillInCorrectUser
+spring.datasource.password = FillInCorrectPassword
 ```
+
 - 更新starup.sh
+
 ```vi /data/dockerfile/apollo-adminservice/scripts/startup.sh
 #!/bin/bash
 SERVICE_NAME=apollo-adminservice
@@ -636,6 +643,7 @@ tail -f /dev/null
 ```
 
 - 写Dockerfile
+
 ```vi /data/dockerfile/apollo-adminservice/Dockerfile
 FROM stanleyws/jre8:8u112
 
@@ -652,6 +660,7 @@ CMD ["/apollo-adminservice/scripts/startup.sh"]
 ```
 
 - 制作镜像并推送
+
 ```
 [root@hdss7-200 apollo-adminservice]# docker build . -t harbor.od.com/infra/apollo-adminservice:v1.4.0
 Sending build context to Docker daemon 58.31 MB
@@ -819,16 +828,24 @@ mysql> grant INSERT,DELETE,UPDATE,SELECT on ApolloPortalDB.* to "apolloportal"@"
 ```
 ### 制作Docker镜像
 在运维主机`HDSS7-200.host.com`上：
-- 配置数据库连接串
+- 查看数据库连接串（仅演示）
+
 ```pwd /data/dockerfile/apollo-portal
 [root@hdss7-200 apollo-portal]# cat config/application-github.properties
-
+# DataSource
+spring.datasource.url = jdbc:mysql://fill-in-the-correct-server:3306/ApolloPortalDB?characterEncoding=utf8
+spring.datasource.username = FillInCorrectUser
+spring.datasource.password = FillInCorrectPassword
 ```
+
 - 配置Portal的meta service
+
 ```vi /data/dockerfile/apollo-portal/config/apollo-env.properties
 dev.meta=http://config.od.com
 ```
+
 - 更新starup.sh
+
 ```vi /data/dockerfile/apollo-portal/scripts/startup.sh
 #!/bin/bash
 SERVICE_NAME=apollo-portal
