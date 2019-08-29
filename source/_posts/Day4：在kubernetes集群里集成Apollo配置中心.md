@@ -42,7 +42,7 @@ clientPort=2181
 在运维主机`HDSS7-200.host.com`上：
 {% tabs dubbo-monitor%}
 <!-- tab ConfigMap -->
-vi /data/k8s-yaml/dubbo-monitor/configmap.yaml
+vi /data/k8s-yaml/dubbo-monitor/cm.yaml
 {% code %}
 apiVersion: v1
 kind: ConfigMap
@@ -65,7 +65,7 @@ data:
 {% endcode %}
 <!-- endtab -->
 <!-- tab Deployment-->
-vi /data/k8s-yaml/dubbo-monitor/deployment.yaml
+vi /data/k8s-yaml/dubbo-monitor/dp.yaml
 {% code %}
 kind: Deployment
 apiVersion: extensions/v1beta1
@@ -122,9 +122,9 @@ spec:
 ## 应用资源配置清单
 在任意一台k8s运算节点执行：
 ```
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-monitor/configmap.yaml
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-monitor/cm.yaml
 configmap/dubbo-monitor-cm created
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-monitor/deployment.yaml
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-monitor/dp.yaml
 deployment.extensions/dubbo-monitor configured
 ```
 
@@ -180,7 +180,7 @@ Archive:  apollo-configservice-1.4.0-github.zip
   inflating: /data/dockerfile/apollo-configservice/apollo-configservice-1.4.0.jar  
   inflating: /data/dockerfile/apollo-configservice/apollo-configservice.conf
 ```
-### 执行数据库脚本
+### 安装部署MySQL数据库
 在数据库主机`HDSS7-11.host.com`上：
 **注意：**MySQL版本应为5.6或以上！
 - 更新yum源
@@ -216,13 +216,31 @@ collation_server = utf8mb4_general_ci
 init_connect = "SET NAMES 'utf8mb4'"
 ```
 
+- 启动数据库
+
+```
+[root@hdss7-11 ~]# systemctl start mariadb
+[root@hdss7-11 ~]# netstat -luntp|grep 3306
+tcp6       0      0 :::3306                 :::*                    LISTEN      43437/mysqld
+[root@hdss7-11 ~]# systemctl enable mariadb
+```
+
+- 修改数据库管理员密码
+
+```
+[root@hdss7-11 ~]# mysqladmin -u root password
+New password: (123456)
+Confirm new password: (123456) 
+```
+
+### 执行数据库脚本
+
 [数据库脚本地址](https://raw.githubusercontent.com/ctripcorp/apollo/master/scripts/db/migration/configdb/V1.0.0__initialization.sql)
 ```
 [root@hdss7-11 ~]# mysql -uroot -p
 mysql> create database ApolloConfigDB;
 mysql> source ./apolloconfig.sql
 ```
-
 
 ### 数据库用户授权
 ```
@@ -391,8 +409,8 @@ v1.4.0: digest: sha256:6a8e4fdda58de0dfba9985ebbf91c4d6f46f5274983d2efa8853b03f4
 ### 解析域名
 DNS主机`HDSS7-11.host.com`上：
 ```vi /var/named/od.com.zone
-mysql               A    10.4.7.10
-config              A    10.4.7.10
+mysql              A    10.4.7.10
+config             A    10.4.7.10
 ```
 
 ### 准备资源配置清单
@@ -402,7 +420,7 @@ config              A    10.4.7.10
 ```
 {% tabs apollo-configservice-yaml%}
 <!-- tab Deployment -->
-vi deployment.yaml
+vi dp.yaml
 {% code %}
 kind: Deployment
 apiVersion: extensions/v1beta1
@@ -491,7 +509,7 @@ spec:
 {% endcode %}
 <!-- endtab -->
 <!-- tab ConfigMap -->
-vi configmap.yaml
+vi cm.yaml
 {% code %}
 apiVersion: v1
 kind: ConfigMap
@@ -514,9 +532,9 @@ data:
 ### 应用资源配置清单
 在任意一台k8s运算节点执行：
 ```
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/apollo-configservice/configmap.yaml
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/apollo-configservice/cm.yaml
 configmap/apollo-configservice-cm created
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/apollo-configservice/deployment.yaml
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/apollo-configservice/dp.yaml
 deployment.extensions/apollo-configservice created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/apollo-configservice/svc.yaml
 service/apollo-configservice created
@@ -677,7 +695,7 @@ v1.4.0: digest: sha256:75367caab9bad3d0d281eb3324451a0734e84b6aa3ee860e38ad758d7
 ```
 {% tabs apollo-adminservice-yaml%}
 <!-- tab Deployment -->
-vi deployment.yaml
+vi dp.yaml
 {% code %}
 kind: Deployment
 apiVersion: extensions/v1beta1
@@ -730,7 +748,7 @@ spec:
 {% endcode %}
 <!-- endtab -->
 <!-- tab ConfigMap -->
-vi configmap.yaml
+vi cm.yaml
 {% code %}
 apiVersion: v1
 kind: ConfigMap
@@ -753,9 +771,9 @@ data:
 ### 应用资源配置清单
 在任意一台k8s运算节点执行：
 ```
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/apollo-adminservice/configmap.yaml
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/apollo-adminservice/cm.yaml
 configmap/apollo-adminservice-cm created
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/apollo-adminservice/deployment.yaml
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/apollo-adminservice/dp.yaml
 deployment.extensions/apollo-adminservice created
 ```
 ### 浏览器访问
@@ -943,7 +961,7 @@ portal               A    10.4.7.10
 ```
 {% tabs apollo-portal-yaml%}
 <!-- tab Deployment -->
-vi deployment.yaml
+vi dp.yaml
 {% code %}
 kind: Deployment
 apiVersion: extensions/v1beta1
@@ -1032,7 +1050,7 @@ spec:
 {% endcode %}
 <!-- endtab -->
 <!-- tab ConfigMap -->
-vi configmap.yaml
+vi cm.yaml
 {% code %}
 apiVersion: v1
 kind: ConfigMap
@@ -1056,9 +1074,9 @@ data:
 ### 应用资源配置清单
 在任意一台k8s运算节点执行：
 ```
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/apollo-portal/configmap.yaml
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/apollo-portal/cm.yaml
 configmap/apollo-portal-cm created
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/apollo-portal/deployment.yaml
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/apollo-portal/dp.yaml
 deployment.extensions/apollo-portal created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/apollo-portal/svc.yaml
 service/apollo-portal created
@@ -1200,7 +1218,7 @@ $ git push origin apollo
 ## 上线新构建的项目
 ### 准备资源配置清单
 运维主机`HDSS7-200.host.com`上：
-```vi /data/k8s-yaml/dubbo-demo-service/deployment.yaml
+```vi /data/k8s-yaml/dubbo-demo-service/dp.yaml
 kind: Deployment
 apiVersion: extensions/v1beta1
 metadata:
@@ -1253,7 +1271,7 @@ spec:
 ### 应用资源配置清单
 在任意一台k8s运算节点上执行：
 ```
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-demo-service/deployment.yaml
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-demo-service/dp.yaml
 deployment.extensions/dubbo-demo-service configured
 ```
 ### 观察项目运行情况
@@ -1303,7 +1321,7 @@ http://dubbo-monitor.od.com
 ## 上线新构建的项目
 ### 准备资源配置清单
 运维主机`HDSS7-200.host.com`上：
-```vi /data/k8s-yaml/dubbo-demo-consumer/deployment.yaml
+```vi /data/k8s-yaml/dubbo-demo-consumer/dp.yaml
 kind: Deployment
 apiVersion: extensions/v1beta1
 metadata:
@@ -1358,7 +1376,7 @@ spec:
 ### 应用资源配置清单
 在任意一台k8s运算节点上执行：
 ```
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-demo-web/deployment.yaml
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dubbo-demo-web/dp.yaml
 deployment.extensions/dubbo-demo-consumer configured
 ```
 
