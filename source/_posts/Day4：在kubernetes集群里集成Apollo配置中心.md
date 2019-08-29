@@ -269,11 +269,14 @@ DataChange_LastModifiedBy:
 
 ### 制作Docker镜像
 在运维主机`HDSS7-200.host.com`上：
-- 配置数据库连接串
+- 查看数据库连接串（仅演示）
 
 ```pwd /data/dockerfile/apollo-configservice
 [root@hdss7-200 apollo-configservice]# cat config/application-github.properties
-
+# DataSource
+spring.datasource.url = jdbc:mysql://fill-in-the-correct-server:3306/ApolloConfigDB?characterEncoding=utf8
+spring.datasource.username = FillInCorrectUser
+spring.datasource.password = FillInCorrectPassword
 ```
 
 - 更新startup.sh
