@@ -1436,12 +1436,12 @@ ops环境|infra|jenkins，dubbo-monitor，apollo-portal
 ## 修改/添加域名解析
 DNS主机`HDSS7-11.host.com`上：
 ```vi /var/named/od.com.zone
-zk-test               A    10.4.7.11
-zk-prod               A    10.4.7.12
-config-test           A    10.4.7.10
-config-prod           A    10.4.7.10
-demo-test             A    10.4.7.10
-demo-prod             A    10.4.7.10
+zk-test            A    10.4.7.11
+zk-prod            A    10.4.7.12
+config-test        A    10.4.7.10
+config-prod        A    10.4.7.10
+demo-test          A    10.4.7.10
+demo-prod          A    10.4.7.10
 ```
 
 ## Apollo的k8s应用配置
@@ -1519,6 +1519,12 @@ apollo-env.properties: |
 
 ## 发布dubbo微服务
 - 准备dubbo-demo-service和dubbo-demo-web的资源配置清单（各2套）
-- 依次应用，分别发布至app-test和app-prod命名空间
+- 依次应用，分别发布至test和prod命名空间
 - 使用dubbo-monitor查验
+- 浏览器依次打开http://demo-test.od.com 和 http://demo-prod.od.com
 
+# 项目迭代流程（仅演示）
+## 开发提测（提交代码到apollo分支）
+## 打包发版至测试环境进行测试（http://demo-test.od.com）
+## 直接将通过测试的docker镜像，应用到生产环境（不再进行打包操作）
+## 项目投产完成
