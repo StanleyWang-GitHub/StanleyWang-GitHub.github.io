@@ -578,8 +578,8 @@ http://blackbox.od.com
 [prometheus官方dockerhub地址](https://hub.docker.com/r/prom/prometheus)
 [prometheus官方github地址](https://github.com/prometheus/prometheus)
 ```
-[root@hdss7-200 ~]# docker pull prom/prometheus:v2.9.1
-v2.9.1: Pulling from prom/prometheus
+[root@hdss7-200 ~]# docker pull prom/prometheus:v2.12.0
+v2.12.0: Pulling from prom/prometheus
 697743189b6d: Pull complete 
 f1989cfd335b: Pull complete 
 b60c2f039ea7: Pull complete 
@@ -590,9 +590,9 @@ bd6be4aea906: Pull complete
 564568254ec8: Pull complete 
 9bd07902fc4b: Pull complete 
 Digest: sha256:e02bb3dec47631b4d31cede2d35ff901d892b57f33144406ee7994e8c94fb2d7
-Status: Downloaded newer image for prom/prometheus:v2.9.1
-[root@hdss7-200 ~]# docker tag 4737a2d79d1a harbor.od.com/infra/prometheus:v2.9.1
-[root@hdss7-200 ~]# docker push harbor.od.com/infra/prometheus:v2.9.1
+Status: Downloaded newer image for prom/prometheus:v2.12.0
+[root@hdss7-200 ~]# docker tag 4737a2d79d1a harbor.od.com/infra/prometheus:v2.12.0
+[root@hdss7-200 ~]# docker push harbor.od.com/infra/prometheus:v2.12.0
 The push refers to a repository [harbor.od.com/infra/prometheus]
 a67e5326fa35: Pushed 
 02c0c0b3065f: Pushed 
@@ -603,7 +603,7 @@ a06c616e78e9: Pushed
 05c0d5c2ae72: Pushed 
 986894c42222: Pushed 
 adab5d09ba79: Pushed 
-v2.9.1: digest: sha256:2357e59541f5596dd90d9f4218deddecd9b4880c1e417a42592b00b30b47b0a9 size: 2198
+v2.12.0: digest: sha256:2357e59541f5596dd90d9f4218deddecd9b4880c1e417a42592b00b30b47b0a9 size: 2198
 ```
 
 ## 准备资源配置清单
@@ -702,7 +702,7 @@ spec:
         app: prometheus
     spec:
       containers:
-      - image: harbor.od.com/infra/prometheus:v2.9.1
+      - image: harbor.od.com/infra/prometheus:v2.12.0
         args:
         - -\-config.file=/data/etc/prometheus.yml
         - -\-storage.tsdb.path=/data/prom-db
@@ -1172,8 +1172,8 @@ app名称空间->deployment->dubbo-demo-consumer->spec->template->metadata下，
 [grafana官方github地址](https://github.com/grafana/grafana)
 [grafana官网](https://grafana.com/)
 ```
-[root@hdss7-200 ~]# docker pull grafana/grafana:6.1.4
-6.1.4: Pulling from grafana/grafana
+[root@hdss7-200 ~]# docker pull grafana/grafana:6.3.4
+6.3.4: Pulling from grafana/grafana
 27833a3ba0a5: Pull complete 
 9412d126b236: Pull complete 
 1b7d6aaa6217: Pull complete 
@@ -1181,10 +1181,10 @@ app名称空间->deployment->dubbo-demo-consumer->spec->template->metadata下，
 fdcf73917f64: Pull complete 
 f5009e3ea28a: Pull complete 
 Digest: sha256:c2100550937e7aa0f3e33c2fc46a8c9668c3b5f2f71a8885e304d35de9fea009
-Status: Downloaded newer image for grafana/grafana:6.1.4
-[root@hdss7-200 ~]# docker tag d9bdb6044027 harbor.od.com/infra/grafana:v6.1.4
-[root@hdss7-200 ~]# docker push harbor.od.com/infra/grafana:v6.1.4
-docker push harbor.od.com/infra/grafana:v6.1.4
+Status: Downloaded newer image for grafana/grafana:6.3.4
+[root@hdss7-200 ~]# docker tag d9bdb6044027 harbor.od.com/infra/grafana:v6.3.4
+[root@hdss7-200 ~]# docker push harbor.od.com/infra/grafana:v6.3.4
+docker push harbor.od.com/infra/grafana:v6.3.4
 The push refers to a repository [harbor.od.com/infra/grafana]
 b57e9e94fc2d: Pushed 
 3d4e16e25cba: Pushed 
@@ -1192,7 +1192,7 @@ b57e9e94fc2d: Pushed
 af52591a894f: Pushed 
 0a8c2d04bf65: Pushed 
 5dacd731af1b: Pushed 
-v6.1.4: digest: sha256:db87ab263f90bdae66be744ac7935f6980c4bbd30c9756308e7382e00d4eeae8 size: 1576
+v6.3.4: digest: sha256:db87ab263f90bdae66be744ac7935f6980c4bbd30c9756308e7382e00d4eeae8 size: 1576
 ```
 
 ## 准备资源配置清单
@@ -1265,7 +1265,7 @@ spec:
         name: grafana
     spec:
       containers:
-      - image: harbor.od.com/infra/grafana:v6.1.4
+      - image: harbor.od.com/infra/grafana:v6.3.4
         imagePullPolicy: IfNotPresent
         name: grafana
         ports:
