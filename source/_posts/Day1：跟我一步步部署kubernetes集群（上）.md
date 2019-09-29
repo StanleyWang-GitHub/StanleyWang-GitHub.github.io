@@ -26,7 +26,7 @@ HDSS7-200.host.com|k8s运维节点(docker仓库)|10.4.7.200
 > [etcd官方下载地址](https://github.com/etcd-io/etcd/releases)
 - bind9: v9.9.4
 > [bind9官方下载地址](https://www.isc.org/downloads/#)
-- harbor: v1.7.5
+- harbor: v1.8.3
 > [harbor官方下载地址](https://github.com/goharbor/harbor/releases)
 - 证书签发工具CFSSL: R1.2
 > [cfssl下载地址](https://pkg.cfssl.org/R1.2/cfssl_linux-amd64)
@@ -344,25 +344,31 @@ WARNING: Adding a user to the "docker" group will grant the ability to run
 **`HDSS7-200.host.com`上：**
 ### 下载软件二进制包并解压
 [harbor官方github地址](https://github.com/goharbor/harbor)
-[harbor下载地址](https://storage.googleapis.com/harbor-releases/release-1.7.0/harbor-offline-installer-v1.7.5.tgz)
+[harbor下载地址](https://storage.googleapis.com/harbor-releases/release-1.7.0/harbor-offline-installer-v1.8.3.tgz)
 ```pwd /opt/src/harbor
-[root@hdss7-200 harbor]# tar xf harbor-offline-installer-v1.7.5.tgz -C /opt
+[root@hdss7-200 harbor]# tar xfv harbor-offline-installer-v1.8.3.tgz -C /opt
+harbor/harbor.v1.8.3.tar.gz
+harbor/prepare
+harbor/LICENSE
+harbor/install.sh
+harbor/harbor.yml
 
-[root@hdss7-200 harbor]# ll
-total 583848
-drwxr-xr-x 3 root root       242 Jan 23 15:28 harbor
--rw-r--r-- 1 root root 597857483 Jan 17 14:58 harbor-offline-installer-v1.7.5.tgz
+[root@hdss7-200 harbor]# mv /opt/harbor /opt/harbor-v1.8.3
+[root@hdss7-200 harbor]# ln -s /opt/harbor-v1.8.3 /opt/harbor
 ```
 
 ### 配置
-```vi /opt/harbor/harbor.cfg
+```vi /opt/harbor/harbor.yml
 hostname = harbor.od.com
-```
-```vi /opt/harbor/docker-compose.yml
-ports:
-  - 180:80
-  - 1443:443
-  - 4443:4443
+http:
+  port: 180
+harbor_admin_password: Harbor12345
+data_volume: /data/harbor
+log:
+  level: info
+  rotate_count: 50
+  rotate_size: 200M
+  location: /data/harbor/logs
 ```
 
 ### 安装docker-compose
