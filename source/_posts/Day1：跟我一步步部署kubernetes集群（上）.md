@@ -1510,7 +1510,7 @@ latest: digest: sha256:b31bfb4d0213f254d361e0079deaaebefa4f82ba7aa76ef82e90b4935
   --client-ca-file ./cert/ca.pem \
   --tls-cert-file ./cert/kubelet.pem \
   --tls-private-key-file ./cert/kubelet-key.pem \
-  --hostname-override 10.4.7.21 \
+  --hostname-override hdss7-21.host.com \
   --image-gc-high-threshold 20 \
   --image-gc-low-threshold 10 \
   --kubeconfig ./conf/kubelet.kubeconfig \
@@ -1721,7 +1721,7 @@ done
 #!/bin/sh
 ./kube-proxy \
   --cluster-cidr 172.7.0.0/16 \
-  --hostname-override 10.4.7.21 \
+  --hostname-override hdss7-21.host.com \
   --proxy-mode=ipvs \
   --ipvs-scheduler=nq \
   --kubeconfig ./conf/kube-proxy.kubeconfig

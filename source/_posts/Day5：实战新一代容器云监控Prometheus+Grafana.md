@@ -38,7 +38,7 @@ metadata:
     kubernetes.io/cluster-service: "true"
   name: kube-state-metrics
   namespace: kube-system
-\-\--
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -62,6 +62,13 @@ rules:
   - persistentvolumes
   - namespaces
   - endpoints
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - policy
+  resources:
+  - poddisruptionbudgets
   verbs:
   - list
   - watch
@@ -96,7 +103,7 @@ rules:
   verbs:
   - list
   - watch
--\--
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -115,7 +122,7 @@ subjects:
 {% endcode %}
 <!-- endtab -->
 <!-- tab Deployment-->
-vi /data/k8s-yaml/kube-state-metrics/deployment.yaml
+vi /data/k8s-yaml/kube-state-metrics/dp.yaml
 {% code %}
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -139,14 +146,14 @@ spec:
     type: RollingUpdate
   template:
     metadata:
-      creationTimestamp: null
       labels:
         grafanak8sapp: "true"
         app: kube-state-metrics
     spec:
       containers:
-      - image: harbor.od.com/public/kube-state-metrics:v1.5.0
-        name: kube-state-metrics
+      - name: kube-state-metrics
+        image: harbor.od.com/public/kube-state-metrics:v1.5.0
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
           name: http-metrics
@@ -161,11 +168,6 @@ spec:
           periodSeconds: 10
           successThreshold: 1
           timeoutSeconds: 5
-        imagePullPolicy: IfNotPresent
-      imagePullSecrets:
-      - name: harbor
-      restartPolicy: Always
-      serviceAccount: kube-state-metrics
       serviceAccountName: kube-state-metrics
 {% endcode %}
 <!-- endtab -->
@@ -178,7 +180,7 @@ spec:
 serviceaccount/kube-state-metrics created
 clusterrole.rbac.authorization.k8s.io/kube-state-metrics created
 clusterrolebinding.rbac.authorization.k8s.io/kube-state-metrics created
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/kube-state-metrics/deployment.yaml 
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/kube-state-metrics/dp.yaml 
 deployment.extensions/kube-state-metrics created
 ```
 
@@ -212,7 +214,7 @@ v0.15.0: digest: sha256:4e13dd75f00a6114675ea3e62e61dbd79dcb2205e8f3bbe1f8f8ef2f
 ```
 
 ## 准备资源配置清单
-```vi /data/k8s-yaml/node-exporter/node-exporter-ds.yaml
+```vi /data/k8s-yaml/node-exporter/ds.yaml
 kind: DaemonSet
 apiVersion: extensions/v1beta1
 metadata:
@@ -245,6 +247,7 @@ spec:
       containers:
       - name: node-exporter
         image: harbor.od.com/public/node-exporter:v0.15.0
+        imagePullPolicy: IfNotPresent
         args:
         - --path.procfs=/host_proc
         - --path.sysfs=/host_sys
@@ -260,16 +263,13 @@ spec:
         - name: proc
           readOnly: true
           mountPath: /host_proc
-      imagePullSecrets:
-      - name: harbor
-      restartPolicy: Always
       hostNetwork: true
 ```
 
 ## 应用资源配置清单
 任意运算节点上：
 ```
-[root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/node-exporter/node-exporter-ds.yaml
+[root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/node-exporter/ds.yaml
 daemonset.extensions/node-exporter created
 ```
 
@@ -299,7 +299,7 @@ v0.28.3: digest: sha256:319812db86e7677767bf6a51ea63b5bdb17dc18ffa576eb6c8a667e8
 ## 准备资源配置清单
 {% tabs cadvisor%}
 <!-- tab DaemonSet -->
-vi /data/k8s-yaml/cadvisor/daemonset.yaml
+vi /data/k8s-yaml/cadvisor/ds.yaml
 {% code %}
 apiVersion: apps/v1
 kind: DaemonSet
@@ -320,9 +320,6 @@ spec:
       hostNetwork: true
       tolerations:
       - key: node-role.kubernetes.io/master
-        effect: NoSchedule
-        key: enabledDiskSchedule
-        value: "true"
         effect: NoSchedule
       containers:
       - name: cadvisor
@@ -350,10 +347,8 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 10
         args:
-          - -\-housekeeping_interval=10s
-          - -\-port=4194
-      imagePullSecrets:
-      - name: harbor
+          - --housekeeping_interval=10s
+          - --port=4194
       terminationGracePeriodSeconds: 30
       volumes:
       - name: rootfs
@@ -389,7 +384,7 @@ drwxr-xr-x 7 root root  0 Jan 28 22:41 cpuset
 ## 应用资源配置清单
 任意运算节点上：
 ```
-[root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/cadvisor/deamon.yaml
+[root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/cadvisor/ds.yaml
 daemonset.apps/cadvisor created
 [root@hdss7-21 ~]# netstat -luntp|grep 4194
 tcp6       0      0 :::4194                 :::*                    LISTEN      49153/cadvisor
@@ -401,29 +396,29 @@ tcp6       0      0 :::4194                 :::*                    LISTEN      
 [blackbox-exporter官方dockerhub地址](https://hub.docker.com/r/prom/blackbox-exporter)
 [blackbox-exporter官方github地址](https://github.com/prometheus/blackbox_exporter)
 ```
-[root@hdss7-200 ~]# docker pull prom/blackbox-exporter:v0.14.0
-v0.14.0: Pulling from prom/blackbox-exporter
+[root@hdss7-200 ~]# docker pull prom/blackbox-exporter:v0.15.1
+v0.15.1: Pulling from prom/blackbox-exporter
 697743189b6d: Pull complete 
 f1989cfd335b: Pull complete 
 8918f7b8f34f: Pull complete 
 a128dce6256a: Pull complete 
 Digest: sha256:c20445e0cc628fa4b227fe2f694c22a314beb43fd8297095b6ee6cbc67161336
-Status: Downloaded newer image for prom/blackbox-exporter:v0.14.0
-[root@hdss7-200 ~]# docker tag d3a00aea3a01 harbor.od.com/public/blackbox-exporter:v0.14.0
-[root@hdss7-200 ~]# docker push harbor.od.com/public/blackbox-exporter:v0.14.0
-docker push harbor.od.com/public/blackbox-exporter:v0.14.0
+Status: Downloaded newer image for prom/blackbox-exporter:v0.15.1
+[root@hdss7-200 ~]# docker tag d3a00aea3a01 harbor.od.com/public/blackbox-exporter:v0.15.1
+[root@hdss7-200 ~]# docker push harbor.od.com/public/blackbox-exporter:v0.15.1
+docker push harbor.od.com/public/blackbox-exporter:v0.15.1
 The push refers to a repository [harbor.od.com/public/blackbox-exporter]
 256c4aa8ebe5: Pushed 
 4b6cc55de649: Pushed 
 986894c42222: Mounted from infra/prometheus 
 adab5d09ba79: Mounted from infra/prometheus 
-v0.14.0: digest: sha256:b127897cf0f67c47496d5cbb7ecb86c001312bddd04192f6319d09292e880a5f size: 1155
+v0.15.1: digest: sha256:b127897cf0f67c47496d5cbb7ecb86c001312bddd04192f6319d09292e880a5f size: 1155
 ```
 
 ## 准备资源配置清单
 {% tabs blackbox-exporter%}
 <!-- tab ConfigMap -->
-vi /data/k8s-yaml/blackbox-exporter/configmap.yaml
+vi /data/k8s-yaml/blackbox-exporter/cm.yaml
 {% code %}
 apiVersion: v1
 kind: ConfigMap
@@ -449,7 +444,7 @@ data:
 {% endcode %}
 <!-- endtab -->
 <!-- tab Deployment -->
-vi /data/k8s-yaml/blackbox-exporter/deployment.yaml
+vi /data/k8s-yaml/blackbox-exporter/dp.yaml
 {% code %}
 kind: Deployment
 apiVersion: extensions/v1beta1
@@ -477,11 +472,12 @@ spec:
           defaultMode: 420
       containers:
       - name: blackbox-exporter
-        image: harbor.od.com/public/blackbox-exporter:v0.14.0
+        image: harbor.od.com/public/blackbox-exporter:v0.15.1
+        imagePullPolicy: IfNotPresent
         args:
-        - -\-config.file=/etc/blackbox_exporter/blackbox.yml
-        - -\-log.level=debug
-        - -\-web.listen-address=:9115
+        - --config.file=/etc/blackbox_exporter/blackbox.yml
+        - --log.level=info
+        - --web.listen-address=:9115
         ports:
         - name: blackbox-port
           containerPort: 9115
@@ -504,14 +500,10 @@ spec:
           periodSeconds: 10
           successThreshold: 1
           failureThreshold: 3
-        imagePullPolicy: IfNotPresent
-      imagePullSecrets:
-      - name: harbor
-      restartPolicy: Always
 {% endcode %}
 <!-- endtab -->
 <!-- tab Service-->
-vi /data/k8s-yaml/blackbox-exporter/service.yaml
+vi /data/k8s-yaml/blackbox-exporter/svc.yaml
 {% code %}
 kind: Service
 apiVersion: v1
@@ -522,9 +514,10 @@ spec:
   selector:
     app: blackbox-exporter
   ports:
-    - protocol: TCP
+    - name: blackbox-port
+      protocol: TCP
       port: 9115
-      name: http
+
 {% endcode %}
 <!-- endtab -->
 <!-- tab Ingress-->
@@ -540,9 +533,10 @@ spec:
   - host: blackbox.od.com
     http:
       paths:
-      - backend:
+      - path: /
+        backend:
           serviceName: blackbox-exporter
-          servicePort: 9115
+          servicePort: blackbox-port
 {% endcode %}
 <!-- endtab -->
 {% endtabs %}
@@ -550,17 +544,17 @@ spec:
 ## 解析域名
 `HDSS7-11.host.com`上
 ```vi /var/named/od.com.zone
-blackbox	60 IN A 10.4.7.10
+blackbox           A    10.4.7.10
 ```
 
 ## 应用资源配置清单
 任意运算节点上：
 ```
-[root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/blackbox-exporter/configmap.yaml
+[root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/blackbox-exporter/cm.yaml
 configmap/blackbox-exporter created
-[root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/blackbox-exporter/deployment.yaml
+[root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/blackbox-exporter/dp.yaml
 deployment.extensions/blackbox-exporter created
-[root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/blackbox-exporter/service.yaml
+[root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/blackbox-exporter/svc.yaml
 service/blackbox-exporter created
 [root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/blackbox-exporter/ingress.yaml
 ingress.extensions/blackbox-exporter created
@@ -609,7 +603,7 @@ v2.12.0: digest: sha256:2357e59541f5596dd90d9f4218deddecd9b4880c1e417a42592b00b3
 ## 准备资源配置清单
 运维主机`HDSS7-200.host.com`上：
 ```pwd /data/k8s-yaml
-[root@hdss7-200 k8s-yaml]# mkdir /data/k8s-yaml/prometheus && mkdir -p /data/nfs-volume/prometheus/etc && cd /data/k8s-yaml/prometheus 
+[root@hdss7-200 k8s-yaml]# mkdir /data/k8s-yaml/prometheus && cd /data/k8s-yaml/prometheus 
 ```
 {% tabs prometheus%}
 <!-- tab RBAC-->
@@ -623,7 +617,7 @@ metadata:
     kubernetes.io/cluster-service: "true"
   name: prometheus
   namespace: infra
--\--
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -654,7 +648,7 @@ rules:
   - /metrics
   verbs:
   - get
--\--
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -673,7 +667,7 @@ subjects:
 {% endcode %}
 <!-- endtab -->
 <!-- tab Deployment -->
-vi /data/k8s-yaml/prometheus/deployment.yaml
+vi /data/k8s-yaml/prometheus/dp.yaml
 {% code %}
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -702,28 +696,25 @@ spec:
         app: prometheus
     spec:
       containers:
-      - image: harbor.od.com/infra/prometheus:v2.12.0
-        args:
-        - -\-config.file=/data/etc/prometheus.yml
-        - -\-storage.tsdb.path=/data/prom-db
-        - -\-storage.tsdb.retention=72h
+      - name: prometheus
+        image: harbor.od.com/infra/prometheus:v2.12.0
+        imagePullPolicy: IfNotPresent
         command:
         - /bin/prometheus
-        name: prometheus
+        args:
+        - --config.file=/data/etc/prometheus.yml
+        - --storage.tsdb.path=/data/prom-db
+        - --storage.tsdb.retention=72h
         ports:
         - containerPort: 9090
           protocol: TCP
         volumeMounts:
         - mountPath: /data
           name: data
-        imagePullPolicy: IfNotPresent
       imagePullSecrets:
       - name: harbor
       securityContext:
         runAsUser: 0
-      dnsPolicy: ClusterFirst
-      restartPolicy: Always
-      serviceAccount: prometheus
       serviceAccountName: prometheus
       volumes:
       - name: data
@@ -734,7 +725,7 @@ spec:
 {% endcode %}
 <!-- endtab -->
 <!-- tab Service-->
-vi /data/k8s-yaml/prometheus/service.yaml
+vi /data/k8s-yaml/prometheus/svc.yaml
 {% code %}
 apiVersion: v1
 kind: Service
@@ -745,10 +736,9 @@ spec:
   ports:
   - port: 9090
     protocol: TCP
-    name: prometheus
+    targetPort: 9090
   selector:
     app: prometheus
-  type: ClusterIP
 {% endcode %}
 <!-- endtab -->
 <!-- tab Ingress-->
@@ -766,7 +756,8 @@ spec:
   - host: prometheus.od.com
     http:
       paths:
-      - backend:
+      - path: /
+        backend:
           serviceName: prometheus
           servicePort: 9090
 {% endcode %}
@@ -774,17 +765,17 @@ spec:
 {% endtabs %}
 
 ## 准备prometheus的配置文件
-运算节点`HDSS7-21.host.com`上：
+运维主机`HDSS7-200.host.com`上：
 - 拷贝证书
 
 ```
-[root@hdss7-21 ~]# mkdir -pv /data/nfs-volume/prometheus/{etc,prom-db}
+[root@hdss7-200 ~]# mkdir -pv /data/nfs-volume/prometheus/{etc,prom-db}
 mkdir: created directory ‘/data/nfs-volume/prometheus/etc’
 mkdir: created directory ‘/data/nfs-volume/prometheus/prom-db’
-[root@hdss7-21 ~]# cd /data/nfs-volume/prometheus/etc
-[root@hdss7-21 ~]# scp root@10.4.7.200:/opt/certs/ca.pem .
-[root@hdss7-21 ~]# scp root@10.4.7.200:/opt/certs/client.pem .
-[root@hdss7-21 ~]# scp root@10.4.7.200:/opt/certs/client-key.pem .
+[root@hdss7-200 ~]# cd /data/nfs-volume/prometheus/etc
+[root@hdss7-200 etc]# cp /opt/certs/ca.pem .
+[root@hdss7-200 etc]# cp /opt/certs/client.pem .
+[root@hdss7-200 etc]# cp /opt/certs/client-key.pem .
 ```
 - 准备配置
 
@@ -967,9 +958,9 @@ scrape_configs:
 serviceaccount/prometheus created
 clusterrole.rbac.authorization.k8s.io/prometheus created
 clusterrolebinding.rbac.authorization.k8s.io/prometheus created
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/prometheus/deployment.yaml
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/prometheus/dp.yaml
 deployment.extensions/prometheus created
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/prometheus/service.yaml
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/prometheus/svc.yaml
 service/prometheus created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/prometheus/ingress.yaml
 ingress.extensions/prometheus created
@@ -977,7 +968,7 @@ ingress.extensions/prometheus created
 ## 解析域名
 `HDSS7-11.host.com`上
 ```vi /var/named/od.com.zone
-prometheus	60 IN A 10.4.7.10
+prometheus         A    10.4.7.10
 ```
 
 ## 浏览器访问
@@ -1172,8 +1163,8 @@ app名称空间->deployment->dubbo-demo-consumer->spec->template->metadata下，
 [grafana官方github地址](https://github.com/grafana/grafana)
 [grafana官网](https://grafana.com/)
 ```
-[root@hdss7-200 ~]# docker pull grafana/grafana:6.3.4
-6.3.4: Pulling from grafana/grafana
+[root@hdss7-200 ~]# docker pull grafana/grafana:6.3.6
+6.3.6: Pulling from grafana/grafana
 27833a3ba0a5: Pull complete 
 9412d126b236: Pull complete 
 1b7d6aaa6217: Pull complete 
@@ -1181,10 +1172,10 @@ app名称空间->deployment->dubbo-demo-consumer->spec->template->metadata下，
 fdcf73917f64: Pull complete 
 f5009e3ea28a: Pull complete 
 Digest: sha256:c2100550937e7aa0f3e33c2fc46a8c9668c3b5f2f71a8885e304d35de9fea009
-Status: Downloaded newer image for grafana/grafana:6.3.4
-[root@hdss7-200 ~]# docker tag d9bdb6044027 harbor.od.com/infra/grafana:v6.3.4
-[root@hdss7-200 ~]# docker push harbor.od.com/infra/grafana:v6.3.4
-docker push harbor.od.com/infra/grafana:v6.3.4
+Status: Downloaded newer image for grafana/grafana:6.3.6
+[root@hdss7-200 ~]# docker tag d9bdb6044027 harbor.od.com/infra/grafana:v6.3.6
+[root@hdss7-200 ~]# docker push harbor.od.com/infra/grafana:v6.3.6
+docker push harbor.od.com/infra/grafana:v6.3.6
 The push refers to a repository [harbor.od.com/infra/grafana]
 b57e9e94fc2d: Pushed 
 3d4e16e25cba: Pushed 
@@ -1192,7 +1183,9 @@ b57e9e94fc2d: Pushed
 af52591a894f: Pushed 
 0a8c2d04bf65: Pushed 
 5dacd731af1b: Pushed 
-v6.3.4: digest: sha256:db87ab263f90bdae66be744ac7935f6980c4bbd30c9756308e7382e00d4eeae8 size: 1576
+v6.3.6: digest: sha256:db87ab263f90bdae66be744ac7935f6980c4bbd30c9756308e7382e00d4eeae8 size: 1576
+
+[root@hdss7-200 ~]# mkdir /data/nfs-volume/grafana
 ```
 
 ## 准备资源配置清单
@@ -1218,7 +1211,7 @@ rules:
   - get
   - list
   - watch
--\--
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -1236,7 +1229,7 @@ subjects:
 {% endcode %}
 <!-- endtab -->
 <!-- tab Deployment -->
-vi /data/k8s-yaml/grafana/deployment.yaml
+vi /data/k8s-yaml/grafana/dp.yaml
 {% code %}
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -1265,9 +1258,9 @@ spec:
         name: grafana
     spec:
       containers:
-      - image: harbor.od.com/infra/grafana:v6.3.4
+      - name: grafana
+        image: harbor.od.com/infra/grafana:v6.3.6
         imagePullPolicy: IfNotPresent
-        name: grafana
         ports:
         - containerPort: 3000
           protocol: TCP
@@ -1276,7 +1269,6 @@ spec:
           name: data
       imagePullSecrets:
       - name: harbor
-      restartPolicy: Always
       securityContext:
         runAsUser: 0
       volumes:
@@ -1287,7 +1279,7 @@ spec:
 {% endcode %}
 <!-- endtab -->
 <!-- tab Service-->
-vi /data/k8s-yaml/grafana/service.yaml
+vi /data/k8s-yaml/grafana/svc.yaml
 {% code %}
 apiVersion: v1
 kind: Service
@@ -1298,9 +1290,9 @@ spec:
   ports:
   - port: 3000
     protocol: TCP
+    targetPort: 3000
   selector:
     app: grafana
-  type: ClusterIP
 {% endcode %}
 <!-- endtab -->
 <!-- tab Ingress-->
@@ -1327,9 +1319,9 @@ spec:
 ## 应用资源配置清单
 任意运算节点上：
 ```
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/grafana/deployment.yaml 
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/grafana/dp.yaml 
 deployment.extensions/grafana created
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/grafana/service.yaml 
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/grafana/svc.yaml 
 service/grafana created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/grafana/ingress.yaml 
 ingress.extensions/grafana created
@@ -1338,7 +1330,7 @@ ingress.extensions/grafana created
 ## 解析域名
 `HDSS7-11.host.com`上
 ```vi /var/named/od.com.zone
-grafana	60 IN A 10.4.7.10
+grafana            A    10.4.7.10
 ```
 
 ## 浏览器访问
