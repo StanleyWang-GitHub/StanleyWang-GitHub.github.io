@@ -1,58 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_Prometheus",
-      "label": "Prometheus",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "prometheus",
-      "pluginName": "Prometheus"
-    }
-  ],
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "6.1.4"
-    },
-    {
-      "type": "panel",
-      "id": "grafana-piechart-panel",
-      "name": "Pie Chart",
-      "version": "1.3.3"
-    },
-    {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph",
-      "version": "5.0.0"
-    },
-    {
-      "type": "datasource",
-      "id": "prometheus",
-      "name": "Prometheus",
-      "version": "5.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "singlestat",
-      "name": "Singlestat",
-      "version": "5.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "table",
-      "name": "Table",
-      "version": "5.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "text",
-      "name": "Text",
-      "version": "5.0.0"
-    }
-  ],
   "annotations": {
     "list": [
       {
@@ -70,8 +16,8 @@
   "editable": true,
   "gnetId": 8919,
   "graphTooltip": 0,
-  "id": null,
-  "iteration": 1556505955668,
+  "id": 5,
+  "iteration": 1570344559624,
   "links": [],
   "panels": [
     {
@@ -86,10 +32,18 @@
       },
       "id": 11,
       "links": [],
-      "minSpan": 4,
+      "maxPerRow": 6,
       "mode": "html",
+      "options": {},
       "repeat": "node",
       "repeatDirection": "h",
+      "scopedVars": {
+        "node": {
+          "selected": true,
+          "text": "10.4.7.22:9100",
+          "value": "10.4.7.22:9100"
+        }
+      },
       "style": {},
       "title": "$node",
       "type": "text"
@@ -103,7 +57,7 @@
         "rgba(237, 129, 40, 0.89)",
         "rgba(50, 172, 45, 0.97)"
       ],
-      "datasource": "${DS_Prometheus}",
+      "datasource": "Prometheus",
       "decimals": 1,
       "description": "",
       "format": "s",
@@ -138,6 +92,7 @@
       "maxDataPoints": 100,
       "nullPointMode": "null",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -158,7 +113,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "time() - node_boot_time_seconds{instance=~\"$node\"}",
+          "expr": "time() - node_boot_time{instance=~\"$node\"}",
           "format": "time_series",
           "hide": false,
           "instant": true,
@@ -169,7 +124,6 @@
       ],
       "thresholds": "",
       "title": "系统运行时间",
-      "transparent": false,
       "type": "singlestat",
       "valueFontSize": "100%",
       "valueMaps": [
@@ -190,7 +144,7 @@
         "rgba(237, 129, 40, 0.89)",
         "rgba(50, 172, 45, 0.97)"
       ],
-      "datasource": "${DS_Prometheus}",
+      "datasource": "Prometheus",
       "description": "",
       "format": "short",
       "gauge": {
@@ -221,9 +175,10 @@
         }
       ],
       "maxDataPoints": 100,
-      "minSpan": 4,
+      "maxPerRow": 6,
       "nullPointMode": "null",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -244,7 +199,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "count(count(node_cpu_seconds_total{instance=~\"$node\", mode='system'}) by (cpu))",
+          "expr": "count(count(node_cpu{instance=~\"$node\", mode='system'}) by (cpu))",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -275,7 +230,7 @@
         "rgba(237, 129, 40, 0.89)",
         "rgba(245, 54, 54, 0.9)"
       ],
-      "datasource": "${DS_Prometheus}",
+      "datasource": "Prometheus",
       "decimals": 2,
       "description": "",
       "format": "percent",
@@ -307,9 +262,10 @@
         }
       ],
       "maxDataPoints": 100,
-      "minSpan": 2,
+      "maxPerRow": 12,
       "nullPointMode": "null",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -330,7 +286,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "100 - (avg(irate(node_cpu_seconds_total{instance=~\"$node\",mode=\"idle\"}[5m])) * 100)",
+          "expr": "100 - (avg(irate(node_cpu{instance=~\"$node\",mode=\"idle\"}[5m])) * 100)",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -362,7 +318,7 @@
         "rgba(237, 129, 40, 0.89)",
         "rgba(245, 54, 54, 0.9)"
       ],
-      "datasource": "${DS_Prometheus}",
+      "datasource": "Prometheus",
       "decimals": 2,
       "description": "",
       "format": "percent",
@@ -394,9 +350,10 @@
         }
       ],
       "maxDataPoints": 100,
-      "minSpan": 2,
+      "maxPerRow": 12,
       "nullPointMode": "null",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -417,7 +374,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "avg(irate(node_cpu_seconds_total{instance=~\"$node\",mode=\"iowait\"}[5m])) * 100",
+          "expr": "avg(irate(node_cpu{instance=~\"$node\",mode=\"iowait\"}[5m])) * 100",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -449,7 +406,7 @@
         "rgba(237, 129, 40, 0.89)",
         "rgba(245, 54, 54, 0.9)"
       ],
-      "datasource": "${DS_Prometheus}",
+      "datasource": "Prometheus",
       "decimals": 0,
       "description": "",
       "format": "percent",
@@ -482,9 +439,10 @@
         }
       ],
       "maxDataPoints": 100,
-      "minSpan": 4,
+      "maxPerRow": 6,
       "nullPointMode": "null",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -505,7 +463,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "((node_memory_MemTotal_bytes{instance=~\"$node\"} - node_memory_MemFree_bytes{instance=~\"$node\"} - node_memory_Buffers_bytes{instance=~\"$node\"} - node_memory_Cached_bytes{instance=~\"$node\"}) / (node_memory_MemTotal_bytes{instance=~\"$node\"} )) * 100",
+          "expr": "((node_memory_MemTotal{instance=~\"$node\"} - node_memory_MemFree{instance=~\"$node\"} - node_memory_Buffers{instance=~\"$node\"} - node_memory_Cached{instance=~\"$node\"}) / (node_memory_MemTotal{instance=~\"$node\"} )) * 100",
           "format": "time_series",
           "hide": false,
           "interval": "10s",
@@ -532,7 +490,7 @@
         "rgba(237, 129, 40, 0.89)",
         "rgba(245, 54, 54, 0.9)"
       ],
-      "datasource": "${DS_Prometheus}",
+      "datasource": "Prometheus",
       "decimals": 2,
       "description": "",
       "format": "short",
@@ -565,9 +523,10 @@
         }
       ],
       "maxDataPoints": 100,
-      "minSpan": 4,
+      "maxPerRow": 6,
       "nullPointMode": "null",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -597,7 +556,6 @@
       ],
       "thresholds": "7000,9000",
       "title": "当前打开的文件描述符",
-      "transparent": false,
       "type": "singlestat",
       "valueFontSize": "70%",
       "valueMaps": [],
@@ -612,7 +570,7 @@
         "rgba(237, 129, 40, 0.89)",
         "rgba(245, 54, 54, 0.9)"
       ],
-      "datasource": "${DS_Prometheus}",
+      "datasource": "Prometheus",
       "decimals": null,
       "description": "",
       "format": "percent",
@@ -625,7 +583,7 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 4,
+        "w": 8,
         "x": 16,
         "y": 1
       },
@@ -644,9 +602,10 @@
         }
       ],
       "maxDataPoints": 100,
-      "minSpan": 4,
+      "maxPerRow": 6,
       "nullPointMode": "null",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -668,7 +627,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "100 - ((node_filesystem_avail_bytes{instance=~\"$node\",mountpoint=\"/\",fstype=~\"ext4|xfs\"} * 100) / node_filesystem_size_bytes {instance=~\"$node\",mountpoint=\"/\",fstype=~\"ext4|xfs\"})",
+          "expr": "100 - ((node_filesystem_avail{instance=~\"$node\",mountpoint=\"/\",fstype=~\"rootfs\"} * 100) / node_filesystem_size{instance=~\"$node\",mountpoint=\"/\",fstype=~\"rootfs\"})",
           "format": "time_series",
           "interval": "10s",
           "intervalFactor": 1,
@@ -692,100 +651,13 @@
     {
       "cacheTimeout": null,
       "colorBackground": false,
-      "colorValue": true,
-      "colors": [
-        "rgba(50, 172, 45, 0.97)",
-        "rgba(237, 129, 40, 0.89)",
-        "rgba(245, 54, 54, 0.9)"
-      ],
-      "datasource": "${DS_Prometheus}",
-      "decimals": null,
-      "description": "通过变量maxmount获取最大的分区。",
-      "format": "percent",
-      "gauge": {
-        "maxValue": 100,
-        "minValue": 0,
-        "show": true,
-        "thresholdLabels": false,
-        "thresholdMarkers": true
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 20,
-        "y": 1
-      },
-      "id": 154,
-      "interval": null,
-      "links": [],
-      "mappingType": 1,
-      "mappingTypes": [
-        {
-          "name": "value to text",
-          "value": 1
-        },
-        {
-          "name": "range to text",
-          "value": 2
-        }
-      ],
-      "maxDataPoints": 100,
-      "minSpan": 4,
-      "nullPointMode": "null",
-      "nullText": null,
-      "postfix": "",
-      "postfixFontSize": "50%",
-      "prefix": "",
-      "prefixFontSize": "50%",
-      "rangeMaps": [
-        {
-          "from": "null",
-          "text": "N/A",
-          "to": "null"
-        }
-      ],
-      "repeat": null,
-      "repeatDirection": "h",
-      "sparkline": {
-        "fillColor": "rgba(31, 118, 189, 0.18)",
-        "full": false,
-        "lineColor": "rgb(31, 120, 193)",
-        "show": true
-      },
-      "tableColumn": "",
-      "targets": [
-        {
-          "expr": "100 - ((node_filesystem_avail_bytes{instance=~\"$node\",mountpoint=\"$maxmount\",fstype=~\"ext4|xfs\"} * 100) / node_filesystem_size_bytes {instance=~\"$node\",mountpoint=\"$maxmount\",fstype=~\"ext4|xfs\"})",
-          "format": "time_series",
-          "interval": "10s",
-          "intervalFactor": 1,
-          "refId": "A",
-          "step": 20
-        }
-      ],
-      "thresholds": "70,90",
-      "title": "最大分区($maxmount)使用率",
-      "type": "singlestat",
-      "valueFontSize": "80%",
-      "valueMaps": [
-        {
-          "op": "=",
-          "text": "N/A",
-          "value": "null"
-        }
-      ],
-      "valueName": "current"
-    },
-    {
-      "cacheTimeout": null,
-      "colorBackground": false,
       "colorValue": false,
       "colors": [
         "rgba(245, 54, 54, 0.9)",
         "rgba(237, 129, 40, 0.89)",
         "rgba(50, 172, 45, 0.97)"
       ],
-      "datasource": "${DS_Prometheus}",
+      "datasource": "Prometheus",
       "decimals": null,
       "description": "",
       "format": "bytes",
@@ -817,9 +689,10 @@
         }
       ],
       "maxDataPoints": 100,
-      "minSpan": 4,
+      "maxPerRow": 6,
       "nullPointMode": "null",
       "nullText": null,
+      "options": {},
       "postfix": "",
       "postfixFontSize": "70%",
       "prefix": "",
@@ -840,11 +713,11 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "node_memory_MemTotal_bytes{instance=~\"$node\"}",
+          "expr": "node_memory_MemTotal{instance=~\"$node\"}",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
-          "legendFormat": "{{instance}}",
+          "legendFormat": "",
           "refId": "A",
           "step": 20
         }
@@ -871,10 +744,11 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_Prometheus}",
+      "datasource": "Prometheus",
       "editable": true,
       "error": false,
       "fill": 1,
+      "fillGradient": 0,
       "grid": {},
       "gridPos": {
         "h": 6,
@@ -898,8 +772,11 @@
       "lines": true,
       "linewidth": 2,
       "links": [],
-      "minSpan": 4,
+      "maxPerRow": 6,
       "nullPointMode": "null as zero",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -945,6 +822,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "系统平均负载",
       "tooltip": {
@@ -994,7 +872,7 @@
         "label": "Others",
         "threshold": ""
       },
-      "datasource": "${DS_Prometheus}",
+      "datasource": "Prometheus",
       "decimals": 1,
       "fontSize": "50%",
       "format": "bytes",
@@ -1019,16 +897,17 @@
       "links": [],
       "maxDataPoints": 3,
       "nullPointMode": "connected",
+      "options": {},
       "pieType": "pie",
       "strokeWidth": "2",
       "targets": [
         {
-          "expr": "node_filesystem_size_bytes {instance=~\"$node\",fstype=~\"ext4|xfs\"}",
+          "expr": "node_filesystem_size{instance=~\"$node\",fstype=~\"rootfs|tmpfs|overlay\"}",
           "format": "time_series",
           "instant": true,
           "interval": "10s",
           "intervalFactor": 1,
-          "legendFormat": "{{mountpoint}}",
+          "legendFormat": "",
           "refId": "A"
         }
       ],
@@ -1037,17 +916,313 @@
       "valueName": "current"
     },
     {
-      "columns": [],
-      "datasource": "${DS_Prometheus}",
-      "fontSize": "120%",
+      "aliasColors": {
+        "内存_Avaliable": "#6ED0E0",
+        "内存_Cached": "#EF843C",
+        "内存_Free": "#629E51",
+        "内存_Total": "#6d1f62",
+        "内存_Used": "#eab839"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "decimals": 2,
+      "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 6,
         "w": 8,
         "x": 16,
         "y": 6
       },
+      "height": "300",
+      "id": 156,
+      "legend": {
+        "alignAsTable": false,
+        "avg": false,
+        "current": true,
+        "max": false,
+        "min": false,
+        "rightSide": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 2,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "node_memory_MemTotal{instance=~\"$node\"}",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 2,
+          "legendFormat": "总内存",
+          "refId": "A",
+          "step": 4
+        },
+        {
+          "expr": "node_memory_MemTotal{instance=~\"$node\"} - (node_memory_Cached{instance=~\"$node\"} + node_memory_Buffers{instance=~\"$node\"} + node_memory_MemFree{instance=~\"$node\"})",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 2,
+          "legendFormat": "已用",
+          "refId": "B",
+          "step": 4
+        },
+        {
+          "expr": "node_memory_MemFree{instance=~\"$node\"}",
+          "format": "time_series",
+          "hide": true,
+          "intervalFactor": 2,
+          "legendFormat": "内存_Free",
+          "refId": "C",
+          "step": 4
+        },
+        {
+          "expr": "node_memory_Buffers{instance=~\"$node\"}",
+          "format": "time_series",
+          "hide": true,
+          "intervalFactor": 2,
+          "legendFormat": "内存_Buffers",
+          "refId": "D",
+          "step": 4
+        },
+        {
+          "expr": "node_memory_Cachedinstance=~\"$node\"}",
+          "format": "time_series",
+          "hide": true,
+          "intervalFactor": 2,
+          "legendFormat": "内存_Cached",
+          "refId": "E",
+          "step": 4
+        },
+        {
+          "expr": "node_memory_MemAvailable{instance=~\"$node\"}",
+          "format": "time_series",
+          "hide": false,
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "可用",
+          "refId": "F",
+          "step": 4
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "内存信息",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "decbytes",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "Idle - Waiting for something to happen": "#052B51",
+        "guest": "#9AC48A",
+        "idle": "#052B51",
+        "iowait": "#EAB839",
+        "irq": "#BF1B00",
+        "nice": "#C15C17",
+        "sdb_每秒I/O操作%": "#d683ce",
+        "softirq": "#E24D42",
+        "steal": "#FCE2DE",
+        "system": "#508642",
+        "user": "#5195CE",
+        "磁盘花费在I/O操作占比": "#ba43a9"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "decimals": 2,
+      "description": "node_disk_io_time_seconds_total：\n磁盘花费在输入/输出操作上的毫秒数。该值为累加值。（Milliseconds Spent Doing I/Os）\n\nirate(node_disk_io_time_seconds_total[1m])：\n计算每秒的速率：(last值-last前一个值)/时间戳差值，即：1秒钟内磁盘花费在I/O操作的时间占比。",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 5,
+        "w": 16,
+        "x": 0,
+        "y": 12
+      },
+      "id": 7,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "hideEmpty": true,
+        "hideZero": true,
+        "max": true,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sideWidth": null,
+        "sort": null,
+        "sortDesc": null,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "maxPerRow": 6,
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "repeat": null,
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "avg(irate(node_cpu{instance=~\"$node\",mode=\"system\"}[1m]))",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "System",
+          "refId": "A",
+          "step": 20
+        },
+        {
+          "expr": "avg(irate(node_cpu{instance=~\"$node\",mode=\"user\"}[1m]))",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "User",
+          "refId": "B",
+          "step": 240
+        },
+        {
+          "expr": "avg(irate(node_cpu{instance=~\"$node\",mode=\"idle\"}[1m]))",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 2,
+          "legendFormat": "Idle",
+          "refId": "F",
+          "step": 240
+        },
+        {
+          "expr": "avg(irate(node_cpu{instance=~\"$node\",mode=\"iowait\"}[1m]))",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "Iowait",
+          "refId": "D",
+          "step": 240
+        },
+        {
+          "expr": "irate(node_disk_io_time{instance=~\"$node\"}[1m])",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "_每秒I/O操作%",
+          "refId": "C"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "CPU使用率、磁盘每秒的I/O操作耗费时间（%）",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": null,
+          "format": "percentunit",
+          "label": "",
+          "logBase": 1,
+          "max": "1",
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "columns": [],
+      "datasource": "Prometheus",
+      "fontSize": "120%",
+      "gridPos": {
+        "h": 5,
+        "w": 8,
+        "x": 16,
+        "y": 12
+      },
       "id": 164,
       "links": [],
+      "options": {},
       "pageSize": null,
       "scroll": true,
       "showHeader": true,
@@ -1127,11 +1302,13 @@
             "rgba(50, 172, 45, 0.97)"
           ],
           "dateFormat": "YYYY-MM-DD HH:mm:ss",
-          "decimals": 1,
+          "decimals": 2,
           "link": false,
           "mappingType": 1,
           "pattern": "Value #C",
-          "thresholds": [],
+          "thresholds": [
+            ""
+          ],
           "type": "number",
           "unit": "bytes"
         },
@@ -1171,16 +1348,7 @@
       ],
       "targets": [
         {
-          "expr": "node_filesystem_size_bytes{instance=~'$node',fstype=~\"ext4|xfs\"}",
-          "format": "table",
-          "hide": true,
-          "instant": true,
-          "intervalFactor": 1,
-          "legendFormat": "",
-          "refId": "C"
-        },
-        {
-          "expr": "node_filesystem_avail_bytes {instance=~'$node',fstype=~\"ext4|xfs\"}",
+          "expr": "node_filesystem_avail{instance=~'$node',fstype=~\"rootfs\"}",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -1190,7 +1358,7 @@
           "refId": "A"
         },
         {
-          "expr": "1-(node_filesystem_free_bytes{instance=~'$node',fstype=~\"ext4|xfs\"} / node_filesystem_size_bytes{instance=~'$node',fstype=~\"ext4|xfs\"})",
+          "expr": "1-(node_filesystem_free{instance=~'$node',fstype=~\"rootfs\"} / node_filesystem_size{instance=~'$node',fstype=~\"rootfs\"})",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -1199,304 +1367,18 @@
           "refId": "B"
         },
         {
-          "expr": "",
+          "expr": "node_filesystem_size{instance=~'$node',fstype=~\"rootfs\"}",
           "format": "table",
-          "interval": "10s",
+          "hide": true,
+          "instant": true,
           "intervalFactor": 1,
           "legendFormat": "",
-          "refId": "D"
-        }
-      ],
-      "title": "各分区可用空间",
-      "transform": "table",
-      "transparent": false,
-      "type": "table"
-    },
-    {
-      "aliasColors": {
-        "Idle - Waiting for something to happen": "#052B51",
-        "guest": "#9AC48A",
-        "idle": "#052B51",
-        "iowait": "#EAB839",
-        "irq": "#BF1B00",
-        "nice": "#C15C17",
-        "sdb_每秒I/O操作%": "#d683ce",
-        "softirq": "#E24D42",
-        "steal": "#FCE2DE",
-        "system": "#508642",
-        "user": "#5195CE",
-        "磁盘花费在I/O操作占比": "#ba43a9"
-      },
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "${DS_Prometheus}",
-      "decimals": 2,
-      "description": "node_disk_io_time_seconds_total：\n磁盘花费在输入/输出操作上的毫秒数。该值为累加值。（Milliseconds Spent Doing I/Os）\n\nirate(node_disk_io_time_seconds_total[1m])：\n计算每秒的速率：(last值-last前一个值)/时间戳差值，即：1秒钟内磁盘花费在I/O操作的时间占比。",
-      "fill": 1,
-      "gridPos": {
-        "h": 7,
-        "w": 16,
-        "x": 0,
-        "y": 12
-      },
-      "id": 7,
-      "legend": {
-        "alignAsTable": true,
-        "avg": true,
-        "current": true,
-        "hideEmpty": true,
-        "hideZero": true,
-        "max": true,
-        "min": false,
-        "rightSide": true,
-        "show": true,
-        "sideWidth": null,
-        "sort": null,
-        "sortDesc": null,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "minSpan": 4,
-      "nullPointMode": "null",
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "repeat": null,
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "expr": "avg(irate(node_cpu_seconds_total{instance=~\"$node\",mode=\"system\"}[1m]))",
-          "format": "time_series",
-          "interval": "",
-          "intervalFactor": 2,
-          "legendFormat": "System",
-          "refId": "A",
-          "step": 20
-        },
-        {
-          "expr": "avg(irate(node_cpu_seconds_total{instance=~\"$node\",mode=\"user\"}[1m]))",
-          "format": "time_series",
-          "intervalFactor": 2,
-          "legendFormat": "User",
-          "refId": "B",
-          "step": 240
-        },
-        {
-          "expr": "avg(irate(node_cpu_seconds_total{instance=~\"$node\",mode=\"idle\"}[1m]))",
-          "format": "time_series",
-          "hide": false,
-          "intervalFactor": 2,
-          "legendFormat": "Idle",
-          "refId": "F",
-          "step": 240
-        },
-        {
-          "expr": "avg(irate(node_cpu_seconds_total{instance=~\"$node\",mode=\"iowait\"}[1m]))",
-          "format": "time_series",
-          "intervalFactor": 2,
-          "legendFormat": "Iowait",
-          "refId": "D",
-          "step": 240
-        },
-        {
-          "expr": "irate(node_disk_io_time_seconds_total{instance=~\"$node\"}[1m])",
-          "format": "time_series",
-          "intervalFactor": 1,
-          "legendFormat": "{{device}}_每秒I/O操作%",
           "refId": "C"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "CPU使用率、磁盘每秒的I/O操作耗费时间（%）",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "transparent": false,
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "decimals": null,
-          "format": "percentunit",
-          "label": "",
-          "logBase": 1,
-          "max": "1",
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": false
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {
-        "内存_Avaliable": "#6ED0E0",
-        "内存_Cached": "#EF843C",
-        "内存_Free": "#629E51",
-        "内存_Total": "#6d1f62",
-        "内存_Used": "#eab839"
-      },
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "${DS_Prometheus}",
-      "decimals": 2,
-      "fill": 1,
-      "gridPos": {
-        "h": 7,
-        "w": 8,
-        "x": 16,
-        "y": 12
-      },
-      "height": "300",
-      "id": 156,
-      "legend": {
-        "alignAsTable": false,
-        "avg": false,
-        "current": true,
-        "max": false,
-        "min": false,
-        "rightSide": false,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 2,
-      "links": [],
-      "nullPointMode": "null",
-      "percentage": false,
-      "pointradius": 5,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "expr": "node_memory_MemTotal_bytes{instance=~\"$node\"}",
-          "format": "time_series",
-          "hide": false,
-          "intervalFactor": 2,
-          "legendFormat": "总内存",
-          "refId": "A",
-          "step": 4
-        },
-        {
-          "expr": "node_memory_MemTotal_bytes{instance=~\"$node\"} - (node_memory_Cached_bytes{instance=~\"$node\"} + node_memory_Buffers_bytes{instance=~\"$node\"} + node_memory_MemFree_bytes{instance=~\"$node\"})",
-          "format": "time_series",
-          "hide": false,
-          "intervalFactor": 2,
-          "legendFormat": "已用",
-          "refId": "B",
-          "step": 4
-        },
-        {
-          "expr": "node_memory_MemFree_bytes{instance=~\"$node\"}",
-          "format": "time_series",
-          "hide": true,
-          "intervalFactor": 2,
-          "legendFormat": "内存_Free",
-          "refId": "C",
-          "step": 4
-        },
-        {
-          "expr": "node_memory_Buffers_bytes{instance=~\"$node\"}",
-          "format": "time_series",
-          "hide": true,
-          "intervalFactor": 2,
-          "legendFormat": "内存_Buffers",
-          "refId": "D",
-          "step": 4
-        },
-        {
-          "expr": "node_memory_Cached_bytes{instance=~\"$node\"}",
-          "format": "time_series",
-          "hide": true,
-          "intervalFactor": 2,
-          "legendFormat": "内存_Cached",
-          "refId": "E",
-          "step": 4
-        },
-        {
-          "expr": "node_memory_MemAvailable_bytes{instance=~\"$node\"}",
-          "format": "time_series",
-          "hide": false,
-          "interval": "",
-          "intervalFactor": 2,
-          "legendFormat": "可用",
-          "refId": "F",
-          "step": 4
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "内存信息",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "decbytes",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": "0",
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "title": "根分区可用空间",
+      "transform": "table",
+      "type": "table"
     },
     {
       "aliasColors": {
@@ -1505,14 +1387,15 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_Prometheus}",
+      "datasource": "Prometheus",
       "description": "Reads completed: 每个磁盘分区每秒读完成次数\n\nWrites completed: 每个磁盘分区每秒写完成次数\n\nIO now 每个磁盘分区每秒正在处理的输入/输出请求数",
       "fill": 2,
+      "fillGradient": 0,
       "gridPos": {
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 19
+        "y": 17
       },
       "height": "300",
       "id": 161,
@@ -1532,6 +1415,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -1547,36 +1433,37 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "irate(node_disk_reads_completed_total{instance=~\"$node\"}[1m])",
+          "expr": "irate(node_disk_reads_completed{instance=~\"$node\"}[1m])",
           "format": "time_series",
           "hide": false,
           "interval": "",
           "intervalFactor": 2,
-          "legendFormat": "{{device}}_读取",
+          "legendFormat": "_读取",
           "refId": "A",
           "step": 10
         },
         {
-          "expr": "irate(node_disk_writes_completed_total{instance=~\"$node\"}[1m])",
+          "expr": "irate(node_disk_writes_completed{instance=~\"$node\"}[1m])",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
-          "legendFormat": "{{device}}_写入",
+          "legendFormat": "_写入",
           "refId": "B",
           "step": 10
         },
         {
-          "expr": "node_disk_io_now{instance=~\"$node\"}",
+          "expr": "node_disk_io{instance=~\"$node\"}",
           "format": "time_series",
           "hide": true,
           "interval": "",
           "intervalFactor": 1,
-          "legendFormat": "{{device}}",
+          "legendFormat": "",
           "refId": "C"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "磁盘读写速率（IOPS）",
       "tooltip": {
@@ -1623,14 +1510,15 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_Prometheus}",
+      "datasource": "Prometheus",
       "description": "Read bytes 每个磁盘分区每秒读取的比特数\nWritten bytes 每个磁盘分区每秒写入的比特数",
       "fill": 2,
+      "fillGradient": 0,
       "gridPos": {
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 19
+        "y": 17
       },
       "height": "300",
       "id": 168,
@@ -1650,6 +1538,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -1665,26 +1556,27 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "irate(node_disk_read_bytes_total{instance=~\"$node\"}[1m])",
+          "expr": "irate(node_disk_bytes_read{instance=~\"$node\"}[1m])",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 2,
-          "legendFormat": "{{device}}_读取",
+          "legendFormat": "_读取",
           "refId": "A",
           "step": 10
         },
         {
-          "expr": "irate(node_disk_written_bytes_total{instance=~\"$node\"}[1m])",
+          "expr": "irate(node_disk_bytes_written{instance=~\"$node\"}[1m])",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 2,
-          "legendFormat": "{{device}}_写入",
+          "legendFormat": "_写入",
           "refId": "B",
           "step": 10
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "磁盘读写容量大小",
       "tooltip": {
@@ -1731,14 +1623,15 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_Prometheus}",
+      "datasource": "Prometheus",
       "description": "Read time ms 每个磁盘分区读操作花费的秒数\n\nWrite time ms 每个磁盘分区写操作花费的秒数\n\nIO time ms 每个磁盘分区输入/输出操作花费的秒数\n\nIO time weighted 每个磁盘分区输入/输出操作花费的加权秒数",
       "fill": 3,
+      "fillGradient": 0,
       "gridPos": {
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 19
+        "y": 17
       },
       "height": "300",
       "id": 160,
@@ -1758,6 +1651,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -1773,43 +1669,44 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "irate(node_disk_io_time_seconds_total{instance=~\"$node\"}[1m])",
+          "expr": "irate(node_disk_io_time_ms{instance=~\"$node\"}[1m])",
           "format": "time_series",
           "hide": true,
           "interval": "",
           "intervalFactor": 2,
-          "legendFormat": "{{device}}",
+          "legendFormat": "",
           "refId": "A",
           "step": 10
         },
         {
-          "expr": "irate(node_disk_io_time_weighted_seconds_total{instance=~\"$node\"}[1m])",
+          "expr": "irate(node_disk_io_time_weighted{instance=~\"$node\"}[1m])",
           "format": "time_series",
           "hide": true,
           "intervalFactor": 1,
-          "legendFormat": "{{device}}_加权",
+          "legendFormat": "_加权",
           "refId": "D"
         },
         {
-          "expr": "irate(node_disk_read_time_seconds_total{instance=~\"$node\"}[1m])",
+          "expr": "irate(node_disk_read_time_ms{instance=~\"$node\"}[1m])",
           "format": "time_series",
           "hide": false,
           "interval": "",
           "intervalFactor": 1,
-          "legendFormat": "{{device}}_读取",
+          "legendFormat": "_读取",
           "refId": "B"
         },
         {
-          "expr": "irate(node_disk_write_time_seconds_total{instance=~\"$node\"}[1m])",
+          "expr": "irate(node_disk_write_time_ms{instance=~\"$node\"}[1m])",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
-          "legendFormat": "{{device}}_写入",
+          "legendFormat": "_写入",
           "refId": "C"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "磁盘IO读写时间",
       "tooltip": {
@@ -1853,13 +1750,14 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_Prometheus}",
+      "datasource": "Prometheus",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 27
+        "y": 25
       },
       "height": "300",
       "id": 157,
@@ -1879,6 +1777,9 @@
       "linewidth": 2,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -1894,24 +1795,25 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "irate(node_network_receive_bytes_total{instance=~'$node',device!~'tap.*'}[5m])*8",
+          "expr": "irate(node_network_receive_bytes{instance=~'$node',device!~'tap.*'}[5m])*8",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "{{device}}_in下载",
+          "legendFormat": "_in下载",
           "refId": "A",
           "step": 4
         },
         {
-          "expr": "irate(node_network_transmit_bytes_total{instance=~'$node',device!~'tap.*'}[5m])*8",
+          "expr": "irate(node_network_transmit_bytes{instance=~'$node',device!~'tap.*'}[5m])*8",
           "format": "time_series",
           "intervalFactor": 2,
-          "legendFormat": "{{device}}_out上传",
+          "legendFormat": "_out上传",
           "refId": "B",
           "step": 4
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "网络流量",
       "tooltip": {
@@ -1957,14 +1859,15 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_Prometheus}",
+      "datasource": "Prometheus",
       "description": "CurrEstab - 当前状态为 ESTABLISHED 或 CLOSE-WAIT 的 TCP 连接数\n\nActiveOpens - 已从 CLOSED 状态直接转换到 SYN-SENT 状态的 TCP 平均连接数(1分钟内)\n\nPassiveOpens - 已从 LISTEN 状态直接转换到 SYN-RCVD 状态的 TCP 平均连接数(1分钟内)\n\nTCP_alloc - 已分配（已建立、已申请到sk_buff）的TCP套接字数量\n\nTCP_inuse - 正在使用（正在侦听）的TCP套接字数量\n\nTCP_tw - 等待关闭的TCP连接数",
       "fill": 0,
+      "fillGradient": 0,
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 27
+        "y": 25
       },
       "height": "300",
       "id": 158,
@@ -1983,6 +1886,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 5,
       "points": false,
@@ -2041,6 +1947,7 @@
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "TCP 连接情况",
       "tooltip": {
@@ -2048,7 +1955,6 @@
         "sort": 0,
         "value_type": "individual"
       },
-      "transparent": false,
       "type": "graph",
       "xaxis": {
         "buckets": null,
@@ -2085,13 +1991,14 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_Prometheus}",
+      "datasource": "Prometheus",
       "fill": 0,
+      "fillGradient": 0,
       "gridPos": {
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 35
+        "y": 33
       },
       "id": 169,
       "legend": {
@@ -2111,6 +2018,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null as zero",
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 0.5,
       "points": false,
@@ -2124,12 +2034,13 @@
           "expr": "node_hwmon_temp_celsius{instance=\"$node\"}",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{chip}} {{sensor}}",
+          "legendFormat": " ",
           "refId": "A"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
+      "timeRegions": [],
       "timeShift": null,
       "title": "硬件温度",
       "tooltip": {
@@ -2170,7 +2081,7 @@
     }
   ],
   "refresh": false,
-  "schemaVersion": 16,
+  "schemaVersion": 19,
   "style": "dark",
   "tags": [
     "StarsL",
@@ -2254,8 +2165,13 @@
       {
         "allFormat": "glob",
         "allValue": null,
-        "current": {},
-        "datasource": "${DS_Prometheus}",
+        "current": {
+          "isNone": true,
+          "text": "None",
+          "value": ""
+        },
+        "datasource": "Prometheus",
+        "definition": "",
         "hide": 0,
         "includeAll": false,
         "label": "环境",
@@ -2277,8 +2193,13 @@
       {
         "allFormat": "glob",
         "allValue": null,
-        "current": {},
-        "datasource": "${DS_Prometheus}",
+        "current": {
+          "isNone": true,
+          "text": "None",
+          "value": ""
+        },
+        "datasource": "Prometheus",
+        "definition": "",
         "hide": 0,
         "includeAll": false,
         "label": "主机名",
@@ -2300,8 +2221,13 @@
       {
         "allFormat": "glob",
         "allValue": null,
-        "current": {},
-        "datasource": "${DS_Prometheus}",
+        "current": {
+          "tags": [],
+          "text": "10.4.7.22:9100",
+          "value": "10.4.7.22:9100"
+        },
+        "datasource": "Prometheus",
+        "definition": "",
         "hide": 0,
         "includeAll": false,
         "label": "节点",
@@ -2322,8 +2248,13 @@
       },
       {
         "allValue": null,
-        "current": {},
-        "datasource": "${DS_Prometheus}",
+        "current": {
+          "isNone": true,
+          "text": "None",
+          "value": ""
+        },
+        "datasource": "Prometheus",
+        "definition": "",
         "hide": 2,
         "includeAll": false,
         "label": "",
@@ -2340,6 +2271,15 @@
         "tagsQuery": "",
         "type": "query",
         "useTags": false
+      },
+      {
+        "datasource": "Prometheus",
+        "filters": [],
+        "hide": 0,
+        "label": "",
+        "name": "Filters",
+        "skipUrlSync": false,
+        "type": "adhoc"
       }
     ]
   },

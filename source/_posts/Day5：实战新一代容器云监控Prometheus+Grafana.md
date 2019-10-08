@@ -1163,8 +1163,8 @@ app名称空间->deployment->dubbo-demo-consumer->spec->template->metadata下，
 [grafana官方github地址](https://github.com/grafana/grafana)
 [grafana官网](https://grafana.com/)
 ```
-[root@hdss7-200 ~]# docker pull grafana/grafana:6.3.6
-6.3.6: Pulling from grafana/grafana
+[root@hdss7-200 ~]# docker pull grafana/grafana:5.4.2
+5.4.2: Pulling from grafana/grafana
 27833a3ba0a5: Pull complete 
 9412d126b236: Pull complete 
 1b7d6aaa6217: Pull complete 
@@ -1172,10 +1172,10 @@ app名称空间->deployment->dubbo-demo-consumer->spec->template->metadata下，
 fdcf73917f64: Pull complete 
 f5009e3ea28a: Pull complete 
 Digest: sha256:c2100550937e7aa0f3e33c2fc46a8c9668c3b5f2f71a8885e304d35de9fea009
-Status: Downloaded newer image for grafana/grafana:6.3.6
-[root@hdss7-200 ~]# docker tag d9bdb6044027 harbor.od.com/infra/grafana:v6.3.6
-[root@hdss7-200 ~]# docker push harbor.od.com/infra/grafana:v6.3.6
-docker push harbor.od.com/infra/grafana:v6.3.6
+Status: Downloaded newer image for grafana/grafana:5.4.2
+[root@hdss7-200 ~]# docker tag d9bdb6044027 harbor.od.com/infra/grafana:v5.4.2
+[root@hdss7-200 ~]# docker push harbor.od.com/infra/grafana:v5.4.2
+docker push harbor.od.com/infra/grafana:v5.4.2
 The push refers to a repository [harbor.od.com/infra/grafana]
 b57e9e94fc2d: Pushed 
 3d4e16e25cba: Pushed 
@@ -1183,7 +1183,7 @@ b57e9e94fc2d: Pushed
 af52591a894f: Pushed 
 0a8c2d04bf65: Pushed 
 5dacd731af1b: Pushed 
-v6.3.6: digest: sha256:db87ab263f90bdae66be744ac7935f6980c4bbd30c9756308e7382e00d4eeae8 size: 1576
+v5.4.2: digest: sha256:db87ab263f90bdae66be744ac7935f6980c4bbd30c9756308e7382e00d4eeae8 size: 1576
 
 [root@hdss7-200 ~]# mkdir /data/nfs-volume/grafana
 ```
@@ -1259,7 +1259,7 @@ spec:
     spec:
       containers:
       - name: grafana
-        image: harbor.od.com/infra/grafana:v6.3.6
+        image: harbor.od.com/infra/grafana:v5.4.2
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 3000
