@@ -720,24 +720,24 @@ spec:
       containers:
       - name: dubbo-demo-consumer
         image: harbor.od.com/app/dubbo-demo-web:tomcat
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
           protocol: TCP
         env:
         - name: C_OPTS
           value: -Denv=fat -Dapollo.meta=http://config.od.com
-        imagePullPolicy: IfNotPresent
         volumeMounts:
         - mountPath: /opt/tomcat/logs
           name: logm
       - name: filebeat
         image: harbor.od.com/infra/filebeat:v7.4.0
+        imagePullPolicy: IfNotPresent
         env:
         - name: ENV
           value: test
         - name: PROJ_NAME
           value: dubbo-demo-web
-        imagePullPolicy: IfNotPresent
         volumeMounts:
         - mountPath: /logm
           name: logm
