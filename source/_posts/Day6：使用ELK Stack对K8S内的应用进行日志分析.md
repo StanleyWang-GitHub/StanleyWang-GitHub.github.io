@@ -10,37 +10,37 @@ date: 2019-6-18 17:12:56
 ## 准备Tomcat的镜像底包
 ### 准备tomcat二进制包
 运维主机`HDSS7-200.host.com`上：
-[Tomcat8下载链接](http://mirrors.tuna.tsinghua.edu.cn/apache/tomcat/tomcat-8/v8.5.43/bin/apache-tomcat-8.5.43.tar.gz)
+[Tomcat8下载链接](http://mirrors.tuna.tsinghua.edu.cn/apache/tomcat/tomcat-8/v8.5.46/bin/apache-tomcat-8.5.46.tar.gz)
 ```pwd /opt/src
 [root@hdss7-200 src]# ls -l|grep tomcat
--rw-r--r-- 1 root root   9690027 Apr 10 22:57 apache-tomcat-8.5.43.tar.gz
-[root@hdss7-200 src]# mkdir -p /data/dockerfile/tomcat8 && tar xf apache-tomcat-8.5.43.tar.gz -C /data/dockerfile/tomcat
-[root@hdss7-200 src]# cd /data/dockerfile/tomcat && rm -fr apache-tomcat-8.5.43/webapps/*
+-rw-r--r-- 1 root root   9690027 Apr 10 22:57 apache-tomcat-8.5.46.tar.gz
+[root@hdss7-200 src]# mkdir -p /data/dockerfile/tomcat && tar xf apache-tomcat-8.5.46.tar.gz -C /data/dockerfile/tomcat
+[root@hdss7-200 src]# cd /data/dockerfile/tomcat && rm -fr apache-tomcat-8.5.46/webapps/*
 ```
 
 ### 简单配置tomcat
 1. 关闭AJP端口
 
-```vi /data/dockerfile/tomcat/apache-tomcat-8.5.43/conf/server.xml
+```vi /data/dockerfile/tomcat/apache-tomcat-8.5.46/conf/server.xml
 <!-- <Connector port="8009" protocol="AJP/1.3" redirectPort="8443" /> -->
 ```
 2. 配置日志
 
 - 删除3manager，4host-manager的handlers
 
-```vi /data/dockerfile/tomcat/apache-tomcat-8.5.43/conf/logging.properties
+```vi /data/dockerfile/tomcat/apache-tomcat-8.5.46/conf/logging.properties
 handlers = 1catalina.org.apache.juli.AsyncFileHandler, 2localhost.org.apache.juli.AsyncFileHandler,java.util.logging.ConsoleHandler
 ```
 - 日志级别改为INFO
 
-```vi /data/dockerfile/tomcat/apache-tomcat-8.5.43/conf/logging.properties
+```vi /data/dockerfile/tomcat/apache-tomcat-8.5.46/conf/logging.properties
 1catalina.org.apache.juli.AsyncFileHandler.level = INFO
 2localhost.org.apache.juli.AsyncFileHandler.level = INFO
 java.util.logging.ConsoleHandler.level = INFO
 ```
 - 注释掉所有关于3manager，4host-manager日志的配置
 
-```vi /data/dockerfile/tomcat/apache-tomcat-8.5.43/conf/logging.properties
+```vi /data/dockerfile/tomcat/apache-tomcat-8.5.46/conf/logging.properties
 #3manager.org.apache.juli.AsyncFileHandler.level = FINE
 #3manager.org.apache.juli.AsyncFileHandler.directory = ${catalina.base}/logs
 #3manager.org.apache.juli.AsyncFileHandler.prefix = manager.
@@ -59,7 +59,7 @@ RUN /bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime &&\
     echo 'Asia/Shanghai' >/etc/timezone
 ENV CATALINA_HOME /opt/tomcat
 ENV LANG zh_CN.UTF-8
-ADD apache-tomcat-8.5.43/ /opt/tomcat
+ADD apache-tomcat-8.5.46/ /opt/tomcat
 ADD config.yml /opt/prom/config.yml
 ADD jmx_javaagent-0.3.1.jar /opt/prom/jmx_javaagent-0.3.1.jar
 WORKDIR /opt/tomcat
@@ -102,7 +102,7 @@ cd /opt/tomcat && /opt/tomcat/bin/catalina.sh run 2>&1 >> /opt/tomcat/logs/stdou
 
 ### 制作镜像并推送
 ```
-[root@hdss7-200 tomcat]# docker build . -t harbor.od.com/base/tomcat:v8.5.43
+[root@hdss7-200 tomcat]# docker build . -t harbor.od.com/base/tomcat:v8.5.46
 Sending build context to Docker daemon 9.502 MB
 Step 1 : FROM stanleyws/jre8:8u112
  ---> fa3a085d6ef1
@@ -117,7 +117,7 @@ Step 4 : ENV LANG zh_CN.UTF-8
  ---> Running in 50516133f65b
  ---> 421d67c4c188
 Removing intermediate container 50516133f65b
-Step 5 : ADD apache-tomcat-8.5.43/ /opt/tomcat
+Step 5 : ADD apache-tomcat-8.5.46/ /opt/tomcat
  ---> 460a5d0ef93b
 Removing intermediate container 0be2b4897d23
 Step 6 : ADD config.yml /opt/prom/config.yml
@@ -139,7 +139,7 @@ Step 10 : CMD /entrypoint.sh
 Removing intermediate container c2df6e511c00
 Successfully built 8d735515bb42
 
-[root@hdss7-200 tomcat8]# docker push harbor.od.com/base/tomcat:v8.5.43
+[root@hdss7-200 tomcat8]# docker push harbor.od.com/base/tomcat:v8.5.46
 The push refers to a repository [harbor.od.com/base/tomcat]
 498eaadf86a8: Pushed 
 fab679acf269: Pushed 
@@ -151,7 +151,7 @@ c843b2cf4e12: Mounted from app/dubbo-demo-web
 fddd8887b725: Mounted from base/jre8 
 42052a19230c: Mounted from base/jre8 
 8d4d1ab5ff74: Mounted from base/jre8 
-v8.5.43: digest: sha256:407c6abd7c4fa5119376efa71090b49637d7a52ef2fc202f4019ab4c91f6dc50 size: 2409
+v8.5.46: digest: sha256:407c6abd7c4fa5119376efa71090b49637d7a52ef2fc202f4019ab4c91f6dc50 size: 2409
 ```
 ## 改造dubbo-demo-web项目
 略，直接使用tomcat分支
@@ -214,14 +214,14 @@ v8.5.43: digest: sha256:407c6abd7c4fa5119376efa71090b49637d7a52ef2fc202f4019ab4c
 > Name : base_image
 > Default Value : 
 > - base/tomcat:v7.0.94
-> - base/tomcat:v8.5.43
+> - base/tomcat:v8.5.46
 > - base/tomcat:v9.0.17
 > Description : project base image list in harbor.od.com.
 
 10. Add Parameter -> Choice Parameter
 > Name : maven
 > Default Value : 
-> - 3.6.0-8u181
+> - 3.6.1-8u212
 > - 3.2.5-6u025
 > - 2.2.1-6u025
 > Description : different maven edition.
@@ -297,14 +297,14 @@ total 16
 # 部署ElasticSearch
 [官网](https://www.elastic.co/)
 [官方github地址](https://github.com/elastic/elasticsearch)
-[下载地址](https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.8.1.tar.gz)
+[下载地址](https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.8.3.tar.gz)
 `HDSS7-12.host.com`上：
 ## 安装
 ```pwd /opt/src
-[root@hdss7-12 src]# ls -l|grep elasticsearch-6.8.1.tar.gz
--rw-r--r-- 1 root root  72262257 Jan 30 15:18 elasticsearch-6.8.1.tar.gz
-[root@hdss7-12 src]# tar xf elasticsearch-6.8.1.tar.gz -C /opt
-[root@hdss7-12 src]# ln -s /opt/elasticsearch-6.8.1/ /opt/elasticsearch
+[root@hdss7-12 src]# ls -l|grep elasticsearch-6.8.3.tar.gz
+-rw-r--r-- 1 root root  72262257 Jan 30 15:18 elasticsearch-6.8.3.tar.gz
+[root@hdss7-12 src]# tar xf elasticsearch-6.8.3.tar.gz -C /opt
+[root@hdss7-12 src]# ln -s /opt/elasticsearch-6.8.3/ /opt/elasticsearch
 ```
 ## 配置
 ### elasticsearch.yml
@@ -329,7 +329,7 @@ http.port: 9200
 ### 创建普通用户
 ```
 [root@hdss7-12 elasticsearch]# useradd -s /bin/bash -M es
-[root@hdss7-12 elasticsearch]# chown -R es.es /opt/elasticsearch-6.8.1
+[root@hdss7-12 elasticsearch]# chown -R es.es /opt/elasticsearch-6.8.3
 [root@hdss7-12 elasticsearch]# chown -R es.es /data/elasticsearch
 ```
 
@@ -373,14 +373,14 @@ es        8714     1 58 10:29 pts/0    00:00:19 /usr/java/jdk/bin/java -Xms512m 
 # 部署kafka
 [官网](http://kafka.apache.org/)
 [官方github地址](https://github.com/apache/kafka)
-[下载地址](http://mirrors.tuna.tsinghua.edu.cn/apache/kafka/2.1.1/kafka_2.12-2.1.1.tgz)
+[下载地址](http://mirrors.tuna.tsinghua.edu.cn/apache/kafka/2.2.0/kafka_2.12-2.2.0.tgz)
 `HDSS7-11.host.com`上：
 ## 安装
 ```pwd /opt/src
 [root@hdss7-11 src]# ls -l|grep kafka
 -rw-r--r-- 1 root root  57028557 Mar 23 08:57 kafka_2.12-2.2.0.tgz
-[root@hdss7-11 src]# tar xf kafka_2.12-2.1.1.tgz -C /opt
-[root@hdss7-11 src]# ln -s /opt/kafka_2.12-2.1.1/ /opt/kafka
+[root@hdss7-11 src]# tar xf kafka_2.12-2.2.0.tgz -C /opt
+[root@hdss7-11 src]# ln -s /opt/kafka_2.12-2.2.0/ /opt/kafka
 ```
 ## 配置
 ```vi /opt/kafka/config/server.properties
@@ -457,7 +457,7 @@ stable: digest: sha256:57fd46a3751284818f1bc6c0fdf097250bc0feed03e77135fb8b0a93a
 ## 准备资源配置清单
 {% tabs kafka-manager%}
 <!-- tab Deployment -->
-vi /data/k8s-yaml/kafka-manager/deployment.yaml
+vi /data/k8s-yaml/kafka-manager/dp.yaml
 {% code %}
 kind: Deployment
 apiVersion: extensions/v1beta1
@@ -470,16 +470,23 @@ spec:
   replicas: 1
   selector:
     matchLabels: 
-      name: kafka-manager
+      app: kafka-manager
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: 
+      maxUnavailable: 1
+      maxSurge: 1
+  revisionHistoryLimit: 7
+  progressDeadlineSeconds: 600
   template:
     metadata:
       labels: 
         app: kafka-manager
-        name: kafka-manager
     spec:
       containers:
       - name: kafka-manager
-        image: harbor.od.com/infra/kafka-manager:stable
+        image: harbor.od.com/infra/kafka-manager:v2.0.0.2
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9000
           protocol: TCP
@@ -488,21 +495,11 @@ spec:
           value: zk1.od.com:2181
         - name: APPLICATION_SECRET
           value: letmein
-        imagePullPolicy: IfNotPresent
       imagePullSecrets:
       - name: harbor
-      restartPolicy: Always
       terminationGracePeriodSeconds: 30
       securityContext: 
         runAsUser: 0
-      schedulerName: default-scheduler
-  strategy:
-    type: RollingUpdate
-    rollingUpdate: 
-      maxUnavailable: 1
-      maxSurge: 1
-  revisionHistoryLimit: 7
-  progressDeadlineSeconds: 600
 {% endcode %}
 <!-- endtab -->
 <!-- tab Service-->
@@ -520,9 +517,6 @@ spec:
     targetPort: 9000
   selector: 
     app: kafka-manager
-  clusterIP: None
-  type: ClusterIP
-  sessionAffinity: None
 {% endcode %}
 <!-- endtab -->
 <!-- tab Ingress -->
@@ -548,7 +542,7 @@ spec:
 ## 应用资源配置清单
 任意一台运算节点上：
 ```
-[root@hdss7-21 kafka-manager]# kubectl apply -f http://k8s-yaml.od.com/kafka-manager/deployment.yaml 
+[root@hdss7-21 kafka-manager]# kubectl apply -f http://k8s-yaml.od.com/kafka-manager/dp.yaml 
 deployment.extensions/kafka-manager created
 [root@hdss7-21 kafka-manager]# kubectl apply -f http://k8s-yaml.od.com/kafka-manager/svc.yaml 
 service/kafka-manager created
@@ -558,7 +552,7 @@ ingress.extensions/kafka-manager created
 ## 解析域名
 `HDSS7-11.host.com`上
 ```vi /var/named/od.com.zone
-km	60 IN A 10.4.7.10
+km                 A    10.4.7.10
 ```
 
 ## 浏览器访问
@@ -577,8 +571,8 @@ vi /data/dockerfile/filebeat/Dockerfile
 {% code %}
 FROM debian:jessie
 
-ENV FILEBEAT_VERSION=7.2.0 \
-    FILEBEAT_SHA1=fdddfa32a7d9db5ac4504b34499e6259e09b86205bac842f78fddd45e8ee00c3cb76419af2313659fd23db4fcbcc29f7568a3663c5d3c52ac0fc9e641d0ae8b1
+ENV FILEBEAT_VERSION=7.4.0 \
+    FILEBEAT_SHA1=c63bb1e16f7f85f71568041c78f11b57de58d497ba733e398fa4b2d071270a86dbab19d5cb35da5d3579f35cb5b5f3c46e6e08cdf840afb7c347777aae5c4e11
 
 RUN set -x && \
   apt-get update && \
@@ -587,13 +581,13 @@ RUN set -x && \
   cd /opt && \
   echo "${FILEBEAT_SHA1}  filebeat.tar.gz" | sha512sum -c - && \
   tar xzvf filebeat.tar.gz && \
-  cd filebeat-\* && \
+  cd filebeat-* && \
   cp filebeat /bin && \
   cd /opt && \
-  rm -rf filebeat\* && \
+  rm -rf filebeat* && \
   apt-get purge -y wget && \
   apt-get autoremove -y && \
-  apt-get clean && rm -rf /var/lib/apt/lists/\* /tmp/\* /var/tmp/\*
+  apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 COPY docker-entrypoint.sh /
 ENTRYPOINT ["/docker-entrypoint.sh"]
@@ -662,7 +656,7 @@ fi
 
 ### 制作镜像
 ```pwd /data/dockerfile/filebeat
-[root@hdss7-200 filebeat]# docker build . -t harbor.od.com/infra/filebeat:v7.2.0
+[root@hdss7-200 filebeat]# docker build . -t harbor.od.com/infra/filebeat:v7.4.0
 ...
 + apt-get autoremove -y
 Reading package lists...
@@ -693,18 +687,18 @@ Step 5 : ENTRYPOINT /docker-entrypoint.sh
  ---> 23c8fbdc088a
 Removing intermediate container d367b6e3bb5a
 Successfully built 23c8fbdc088a
-[root@hdss7-200 filebeat]# docker tag 23c8fbdc088a harbor.od.com/infra/filebeat:v7.2.0
+[root@hdss7-200 filebeat]# docker tag 23c8fbdc088a harbor.od.com/infra/filebeat:v7.4.0
 [root@hdss7-200 filebeat]# docker push !$
-docker push harbor.od.com/infra/filebeat:v7.2.0
+docker push harbor.od.com/infra/filebeat:v7.4.0
 The push refers to a repository [harbor.od.com/infra/filebeat]
 6a765e653161: Pushed 
 8e89ae5c6fc2: Pushed 
 9abb3997a540: Pushed 
-v7.2.0: digest: sha256:c35d7cdba29d8555388ad41ac2fc1b063ed9ec488082e33b5d0e91864b3bb35c size: 948
+v7.4.0: digest: sha256:c35d7cdba29d8555388ad41ac2fc1b063ed9ec488082e33b5d0e91864b3bb35c size: 948
 ```
 ## 修改资源配置清单
 **使用dubbo-demo-consumer的Tomcat版镜像**
-```vi /data/k8s-yaml/dubbo-demo-consumer/deployment.yaml
+```vi /data/k8s-yaml/dubbo-demo-consumer/dp.yaml
 kind: Deployment
 apiVersion: extensions/v1beta1
 metadata:
@@ -737,7 +731,7 @@ spec:
         - mountPath: /opt/tomcat/logs
           name: logm
       - name: filebeat
-        image: harbor.od.com/infra/filebeat:v7.2.0
+        image: harbor.od.com/infra/filebeat:v7.4.0
         env:
         - name: ENV
           value: test
@@ -914,8 +908,8 @@ green  open   k8s-test-2019.04 H3MY9d8WSbqQ6uL0DFhenQ   5   0         55        
 ## 准备docker镜像
 [kibana官方镜像下载地址](https://hub.docker.com/_/kibana?tab=tags)
 ```
-[root@hdss7-200 ~]# docker pull kibana:6.8.1
-6.8.1: Pulling from library/kibana
+[root@hdss7-200 ~]# docker pull kibana:6.8.3
+6.8.3: Pulling from library/kibana
 
 8014725ed6f5: Pull complete 
 19b590251e94: Pull complete 
@@ -925,10 +919,10 @@ d18bafa420f4: Pull complete
 8cee55751899: Pull complete 
 c395be470eb2: Pull complete 
 Digest: sha256:71f776596244877597fd679b2fa6fb0f1fa9c5b11388199997781d1ce77b73b1
-Status: Downloaded newer image for kibana:6.8.1
-[root@hdss7-200 ~]# docker tag 62079cf74c23 harbor.od.com/infra/kibana:v6.8.1
-[root@hdss7-200 ~]# docker push harbor.od.com/infra/kibana:v6.8.1
-docker push harbor.od.com/infra/kibana:v6.8.1
+Status: Downloaded newer image for kibana:6.8.3
+[root@hdss7-200 ~]# docker tag 62079cf74c23 harbor.od.com/infra/kibana:v6.8.3
+[root@hdss7-200 ~]# docker push harbor.od.com/infra/kibana:v6.8.3
+docker push harbor.od.com/infra/kibana:v6.8.3
 The push refers to a repository [harbor.od.com/infra/kibana]
 be94745c5390: Pushed 
 652dcbd52cdd: Pushed 
@@ -938,17 +932,17 @@ dbce28d91bf0: Pushed
 dcddc432ebdf: Pushed 
 3e466685bf43: Pushed 
 d69483a6face: Mounted from infra/logstash 
-v6.8.1: digest: sha256:17dd243d6cc4e572f74f3de83eafc981e54c1710f8fe2d0bf74357b28bddaf08 size: 1991
+v6.8.3: digest: sha256:17dd243d6cc4e572f74f3de83eafc981e54c1710f8fe2d0bf74357b28bddaf08 size: 1991
 ```
 ## 解析域名
 `HDSS7-11.host.com`上
 ```vi /var/named/od.com.zone
-kibana	60 IN A 10.4.7.10
+kibana             A    10.4.7.10
 ```
 ## 准备资源配置清单
 {% tabs kibana %}
 <!-- tab Deployment -->
-vi /data/k8s-yaml/kibana/deployment.yaml
+vi /data/k8s-yaml/kibana/dp.yaml
 {% code %}
 kind: Deployment
 apiVersion: extensions/v1beta1
@@ -970,7 +964,7 @@ spec:
     spec:
       containers:
       - name: kibana
-        image: harbor.od.com/infra/kibana:v6.8.1
+        image: harbor.od.com/infra/kibana:v6.8.3
         ports:
         - containerPort: 5601
           protocol: TCP
@@ -1037,7 +1031,7 @@ spec:
 ## 应用资源配置清单
 任意运算节点上：
 ```
-[root@hdss7-21 ~]# kubectl apply -f deployment.yaml 
+[root@hdss7-21 ~]# kubectl apply -f dp.yaml 
 deployment.extensions/kibana created
 [root@hdss7-21 ~]# kubectl apply -f svc.yaml 
 service/kibana created
