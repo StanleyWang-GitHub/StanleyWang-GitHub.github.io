@@ -5,7 +5,7 @@ date: 2019-6-18 16:12:56
 - - -
 {% cq %}欢迎加入王导的VIP学习qq群：==>[<font color="FF7F50">932194668</font>](http://shang.qq.com/wpa/qunwpa?idkey=78869fddc5a661acb0639315eb52997c108de6625df5f0ee2f0372f176a032a6)<=={% endcq %}
 - - -
-# 部署对象式存储minio
+# 部署对象式存储组件——minio
 运维主机`HDSS7-200.host.com`上：
 ## 准备docker镜像
 [镜像下载地址](https://hub.docker.com/r/minio/minio)
@@ -31,7 +31,7 @@ latest: digest: sha256:a676c2f71ad261d10cba2527094810e8a37f98d79086694ec162cb7fe
 ## 准备资源配置清单
 {% tabs armory-minio %}
 <!-- tab Deployment -->
-vi /data/k8s-yaml/armory/minio/deployment.yaml
+vi /data/k8s-yaml/armory/minio/dp.yaml
 {% code %}
 kind: Deployment
 apiVersion: extensions/v1beta1
@@ -48,11 +48,6 @@ spec:
   selector:
     matchLabels:
       name: minio
-  strategy:
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 1
-    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -60,20 +55,20 @@ spec:
         name: minio
     spec:
       containers:
-      - args:
+      - name: minio
+        image: harbor.od.com/armory/minio:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9000
+          protocol: TCP
+        args:
         - server
         - /data
         env:
         - name: MINIO_ACCESS_KEY
           value: admin
         - name: MINIO_SECRET_KEY
-          value: poiuytrewq
-        image: harbor.od.com/armory/minio:latest
-        imagePullPolicy: IfNotPresent
-        name: minio
-        ports:
-        - containerPort: 9000
-          protocol: TCP
+          value: admin123
         readinessProbe:
           failureThreshold: 3
           httpGet:
@@ -84,16 +79,11 @@ spec:
           periodSeconds: 10
           successThreshold: 1
           timeoutSeconds: 5
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
         volumeMounts:
         - mountPath: /data
           name: data
       imagePullSecrets:
       - name: harbor
-      restartPolicy: Always
-      schedulerName: default-scheduler
-      terminationGracePeriodSeconds: 30
       volumes:
       - nfs:
           server: hdss7-200
@@ -116,7 +106,6 @@ spec:
     targetPort: 9000
   selector:
     app: minio
-  type: ClusterIP
 {% endcode %}
 <!-- endtab -->
 <!-- tab Ingress -->
@@ -143,12 +132,12 @@ spec:
 ## 解析域名
 `HDSS7-11.host.com`上
 ```vi /var/named/od.com.zone
-minio 	60 IN A 10.4.7.10
+minio              A    10.4.7.10
 ```
 ## 应用资源配置清单
 任意运算节点上：
 ```
-[root@hdss7-21 ~]# kubectl apply -f https://k8s-yaml.od.com/armory/minio/deployment.yaml 
+[root@hdss7-21 ~]# kubectl apply -f https://k8s-yaml.od.com/armory/minio/dp.yaml 
 deployment.extensions/minio created
 [root@hdss7-21 ~]# kubectl apply -f https://k8s-yaml.od.com/armory/minio/svc.yaml 
 service/minio created
@@ -158,7 +147,7 @@ ingress.extensions/minio created
 ## 浏览器访问
 http://minio.od.com
 
-# 部署Redis
+# 部署缓存组件——Redis
 ## 准备docker镜像
 运维主机`HDSS7-200.host.com`上：
 [镜像下载地址](https://hub.docker.com/_/redis)
@@ -188,7 +177,7 @@ v4.0.14: digest: sha256:b1aaa4a4e2c0ae115c1bae57ce0f957dd9440f52fae42af9e1c2e165
 ## 准备资源配置清单
 {% tabs armory-redis %}
 <!-- tab Deployment -->
-vi /data/k8s-yaml/armory/redis/deployment.yaml
+vi /data/k8s-yaml/armory/redis/dp.yaml
 {% code %}
 kind: Deployment
 apiVersion: extensions/v1beta1
@@ -204,11 +193,6 @@ spec:
   selector:
     matchLabels:
       name: redis
-  strategy:
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 1
-    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -222,13 +206,8 @@ spec:
         ports:
         - containerPort: 6379
           protocol: TCP
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
       imagePullSecrets:
       - name: harbor
-      restartPolicy: Always
-      schedulerName: default-scheduler
-      terminationGracePeriodSeconds: 30
 {% endcode %}
 <!-- endtab -->
 <!-- tab Service -->
@@ -246,7 +225,6 @@ spec:
     targetPort: 6379
   selector:
     app: redis
-  type: ClusterIP
 {% endcode %}
 <!-- endtab -->
 {% endtabs %}
@@ -254,13 +232,13 @@ spec:
 ## 应用资源配置清单
 任意运算节点上：
 ```
-[root@hdss7-21 ~]# kubectl apply -f https://k8s-yaml.od.com/armory/redis/deployment.yaml 
+[root@hdss7-21 ~]# kubectl apply -f https://k8s-yaml.od.com/armory/redis/dp.yaml 
 deployment.extensions/redis created
 [root@hdss7-21 ~]# kubectl apply -f https://k8s-yaml.od.com/armory/redis/svc.yaml 
 service/redis created
 ```
 
-# 部署CloudDriver
+# 部署K8S云驱动组件——CloudDriver
 运维主机`HDSS7-200.host.com`上：
 ## 准备docker镜像
 [镜像下载地址](https://hub.docker.io/armory/spinnaker-clouddriver-slim)
@@ -295,7 +273,7 @@ v1.8.x: digest: sha256:e8fdea9e6838d2c2b5fe07beac46a0450148f9ef37167971fb18e3b4e
 ```vi /data/k8s-yaml/armory/clouddriver/credentials
 [default]
 aws_access_key_id=admin
-aws_secret_access_key=poiuytrewq
+aws_secret_access_key=admin123
 ```
 - 创建secret
 
@@ -2083,7 +2061,7 @@ data:
 {% endcode %}
 <!-- endtab -->
 <!-- tab Deployment -->
-vi /data/k8s-yaml/armory/clouddriver/deployment.yaml
+vi /data/k8s-yaml/armory/clouddriver/dp.yaml
 {% code %}
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -2098,11 +2076,6 @@ spec:
   selector:
     matchLabels:
       app: armory-clouddriver
-  strategy:
-    rollingUpdate:
-      maxSurge: 100%
-      maxUnavailable: 0
-    type: RollingUpdate
   template:
     metadata:
       annotations:
@@ -2111,25 +2084,28 @@ spec:
         artifact.spinnaker.io/type: '"kubernetes/deployment"'
         moniker.spinnaker.io/application: '"armory"'
         moniker.spinnaker.io/cluster: '"clouddriver"'
-      creationTimestamp: null
       labels:
         app: armory-clouddriver
     spec:
       containers:
-      - args:
-        - bash /opt/spinnaker/config/default/fetch.sh && cd /home/spinnaker/config
-          && /opt/clouddriver/bin/clouddriver
+      - name: armory-clouddriver
+        image: harbor.od.com/armory/clouddriver:v1.8.x
+        imagePullPolicy: IfNotPresent
         command:
         - bash
         - -c
+        args:
+        - bash /opt/spinnaker/config/default/fetch.sh && cd /home/spinnaker/config
+          && /opt/clouddriver/bin/clouddriver
+        ports:
+        - containerPort: 7002
+          protocol: TCP
         env:
         - name: JAVA_OPTS
           value: -Xmx2000M
         envFrom:
         - configMapRef:
             name: init-env
-        image: harbor.od.com/armory/clouddriver:v1.8.x
-        imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 5
           httpGet:
@@ -2140,10 +2116,6 @@ spec:
           periodSeconds: 3
           successThreshold: 1
           timeoutSeconds: 1
-        name: armory-clouddriver
-        ports:
-        - containerPort: 7002
-          protocol: TCP
         readinessProbe:
           failureThreshold: 5
           httpGet:
@@ -2215,7 +2187,6 @@ spec:
     targetPort: 7002
   selector:
     app: armory-clouddriver
-  type: ClusterIP
 {% endcode %}
 <!-- endtab -->
 {% endtabs %}
@@ -2229,13 +2200,13 @@ configmap/init-env created
 configmap/default-config created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/clouddriver/custom-config.yaml
 configmap/custom-config created
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/clouddriver/deployment.yaml 
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/clouddriver/dp.yaml 
 deployment.extensions/armory-clouddriver created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/clouddriver/svc.yaml 
 service/armory-clouddriver created
 ```
 
-# 部署Front50
+# 部署对象存储管理组件——Front50
 运维主机`HDSS7-200.host.com`上：
 ## 准备docker镜像
 [镜像下载地址](https://hub.docker.io/armory/spinnaker-front50-slim)
@@ -2265,7 +2236,7 @@ v1.8.x: digest: sha256:c8b66fbe74f5e2ca09ecea5232826790bc4715dd0147144de2bdc4b96
 ## 准备资源配置清单
 {% tabs armory-front50 %}
 <!-- tab Deployment -->
-vi /data/k8s-yaml/armory/front50/deployment.yaml
+vi /data/k8s-yaml/armory/front50/dp.yaml
 {% code %}
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -2280,11 +2251,6 @@ spec:
   selector:
     matchLabels:
       app: armory-front50
-  strategy:
-    rollingUpdate:
-      maxSurge: 100%
-      maxUnavailable: 0
-    type: RollingUpdate
   template:
     metadata:
       annotations:
@@ -2297,20 +2263,24 @@ spec:
         app: armory-front50
     spec:
       containers:
-      - args:
-        - bash /opt/spinnaker/config/default/fetch.sh && cd /home/spinnaker/config
-          && /opt/front50/bin/front50
+      - name: armory-front50
+        image: harbor.od.com/armory/front50:v1.8.x
+        imagePullPolicy: IfNotPresent
         command:
         - bash
         - -c
+        args:
+        - bash /opt/spinnaker/config/default/fetch.sh && cd /home/spinnaker/config
+          && /opt/front50/bin/front50
+        ports:
+        - containerPort: 8080
+          protocol: TCP
         env:
         - name: JAVA_OPTS
           value: -javaagent:/opt/front50/lib/jamm-0.2.5.jar -Xmx1000M
         envFrom:
         - configMapRef:
             name: init-env
-        image: harbor.od.com/armory/front50:v1.8.x
-        imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3
           httpGet:
@@ -2321,10 +2291,6 @@ spec:
           periodSeconds: 3
           successThreshold: 1
           timeoutSeconds: 1
-        name: armory-front50
-        ports:
-        - containerPort: 8080
-          protocol: TCP
         readinessProbe:
           failureThreshold: 3
           httpGet:
@@ -2346,9 +2312,6 @@ spec:
           name: custom-config
       imagePullSecrets:
       - name: harbor
-      dnsPolicy: ClusterFirst
-      restartPolicy: Always
-      terminationGracePeriodSeconds: 30
       volumes:
       - configMap:
           defaultMode: 420
@@ -2391,7 +2354,6 @@ spec:
     targetPort: 8080
   selector:
     app: armory-front50
-  type: ClusterIP
 {% endcode %}
 <!-- endtab -->
 {% endtabs %}
@@ -2399,7 +2361,7 @@ spec:
 ## 应用资源配置清单
 任意一台运算节点上：
 ```
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/front50/deployment.yaml 
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/front50/dp.yaml 
 deployment.extensions/armory-front50 created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/front50/svc.yaml 
 service/armory-front50 created
@@ -2409,7 +2371,7 @@ service/armory-front50 created
 http://minio.od.com
 登录并观察存储是否创建
 
-# 部署Orca
+# 部署资源编排组件——Orca
 运维主机`HDSS7-200.host.com`上：
 ## 准备docker镜像
 [镜像下载地址](https://hub.docker.io/armory/spinnaker-orca-slim:release-1.8.x-de4ab55)
@@ -2439,7 +2401,7 @@ v1.8.x: digest: sha256:337900b721558115c748255ffb2ecf471805cfe7bc5cfe93c52ac9048
 ## 准备资源配置清单
 {% tabs armory-orca %}
 <!-- tab Deployment -->
-vi /data/k8s-yaml/armory/orca/deployment.yaml
+vi /data/k8s-yaml/armory/orca/dp.yaml
 {% code %}
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -2454,11 +2416,6 @@ spec:
   selector:
     matchLabels:
       app: armory-orca
-  strategy:
-    rollingUpdate:
-      maxSurge: 100%
-      maxUnavailable: 0
-    type: RollingUpdate
   template:
     metadata:
       annotations:
@@ -2471,20 +2428,24 @@ spec:
         app: armory-orca
     spec:
       containers:
-      - args:
-        - bash /opt/spinnaker/config/default/fetch.sh && cd /home/spinnaker/config
-          && /opt/orca/bin/orca
+      - name: armory-orca
+        image: harbor.od.com/armory/orca:v1.8.x
+        imagePullPolicy: IfNotPresent
         command:
         - bash
         - -c
+        args:
+        - bash /opt/spinnaker/config/default/fetch.sh && cd /home/spinnaker/config
+          && /opt/orca/bin/orca
+        ports:
+        - containerPort: 8083
+          protocol: TCP
         env:
         - name: JAVA_OPTS
           value: -Xmx1000M
         envFrom:
         - configMapRef:
             name: init-env
-        image: harbor.od.com/armory/orca:v1.8.x
-        imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 5
           httpGet:
@@ -2495,10 +2456,6 @@ spec:
           periodSeconds: 5
           successThreshold: 1
           timeoutSeconds: 1
-        name: armory-orca
-        ports:
-        - containerPort: 8083
-          protocol: TCP
         readinessProbe:
           failureThreshold: 3
           httpGet:
@@ -2518,7 +2475,6 @@ spec:
           name: custom-config
       imagePullSecrets:
       - name: harbor
-      restartPolicy: Always
       volumes:
       - configMap:
           defaultMode: 420
@@ -2557,7 +2513,6 @@ spec:
     targetPort: 8083
   selector:
     app: armory-orca
-  type: ClusterIP
 {% endcode %}
 <!-- endtab -->
 {% endtabs %}
@@ -2565,12 +2520,12 @@ spec:
 ## 应用资源配置清单
 任意一台运算节点上：
 ```
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/orca/deployment.yaml 
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/orca/dp.yaml 
 deployment.extensions/armory-orca created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/orca/svc.yaml 
 service/armory-orca created
 ```
-# 部署Echo
+# 部署消息调度组件——Echo
 运维主机`HDSS7-200.host.com`上：
 ## 准备docker镜像
 [镜像下载地址](https://hub.docker.io/armory/echo-armory)
@@ -2600,7 +2555,7 @@ v1.8.x: digest: sha256:3972fe52095a8f68f4f872ee56ff120b22c660a3cd3a8d9e7a824e3ef
 ## 准备资源配置清单
 {% tabs armory-echo %}
 <!-- tab Deployment -->
-vi /data/k8s-yaml/armory/echo/deployment.yaml
+vi /data/k8s-yaml/armory/echo/dp.yaml
 {% code %}
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -2615,11 +2570,6 @@ spec:
   selector:
     matchLabels:
       app: armory-echo
-  strategy:
-    rollingUpdate:
-      maxSurge: 3
-      maxUnavailable: 0
-    type: RollingUpdate
   template:
     metadata:
       annotations:
@@ -2632,20 +2582,24 @@ spec:
         app: armory-echo
     spec:
       containers:
-      - args:
-        - bash /opt/spinnaker/config/default/fetch.sh && cd /home/spinnaker/config
-          && /opt/echo/bin/echo
+      - name: armory-echo
+        image: harbor.od.com/armory/echo:v1.8.x
+        imagePullPolicy: IfNotPresent
         command:
         - bash
         - -c
+        args:
+        - bash /opt/spinnaker/config/default/fetch.sh && cd /home/spinnaker/config
+          && /opt/echo/bin/echo
+        ports:
+        - containerPort: 8089
+          protocol: TCP
         env:
         - name: JAVA_OPTS
           value: -javaagent:/opt/echo/lib/jamm-0.2.5.jar -Xmx1000M
         envFrom:
         - configMapRef:
             name: init-env
-        image: harbor.od.com/armory/echo:v1.8.x
-        imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3
           httpGet:
@@ -2656,10 +2610,6 @@ spec:
           periodSeconds: 3
           successThreshold: 1
           timeoutSeconds: 1
-        name: armory-echo
-        ports:
-        - containerPort: 8089
-          protocol: TCP
         readinessProbe:
           failureThreshold: 3
           httpGet:
@@ -2679,7 +2629,6 @@ spec:
           name: custom-config
       imagePullSecrets:
       - name: harbor
-      restartPolicy: Always
       volumes:
       - configMap:
           defaultMode: 420
@@ -2718,7 +2667,6 @@ spec:
     targetPort: 8089
   selector:
     app: armory-echo
-  type: ClusterIP
 {% endcode %}
 <!-- endtab -->
 {% endtabs %}
@@ -2726,13 +2674,13 @@ spec:
 ## 应用资源配置清单
 任意一台运算节点上：
 ```
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/echo/deployment.yaml 
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/echo/dp.yaml 
 deployment.extensions/armory-echo created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/echo/svc.yaml 
 service/armory-echo created
 ```
 
-# 部署Igor
+# 部署流水线交互组件——Igor
 运维主机`HDSS7-200.host.com`上：
 ## 准备docker镜像
 [镜像下载地址](https://hub.docker.io/armory/spinnaker-igor-slim)
@@ -2762,7 +2710,7 @@ v1.8.x: digest: sha256:a12945b48ff428a2f1b5e58c9e1aba25ee1c4199f42f3f43910b9e009
 ## 准备资源配置清单
 {% tabs armory-igor %}
 <!-- tab Deployment -->
-vi /data/k8s-yaml/armory/igor/deployment.yaml
+vi /data/k8s-yaml/armory/igor/dp.yaml
 {% code %}
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -2777,11 +2725,6 @@ spec:
   selector:
     matchLabels:
       app: armory-igor
-  strategy:
-    rollingUpdate:
-      maxSurge: 3
-      maxUnavailable: 0
-    type: RollingUpdate
   template:
     metadata:
       annotations:
@@ -2794,12 +2737,18 @@ spec:
         app: armory-igor
     spec:
       containers:
-      - args:
-        - bash /opt/spinnaker/config/default/fetch.sh && cd /home/spinnaker/config
-          && /opt/igor/bin/igor
+      - name: armory-igor
+        image: harbor.od.com/armory/igor:v1.8.x
+        imagePullPolicy: IfNotPresent
         command:
         - bash
         - -c
+        args:
+        - bash /opt/spinnaker/config/default/fetch.sh && cd /home/spinnaker/config
+          && /opt/igor/bin/igor
+        ports:
+        - containerPort: 8088
+          protocol: TCP
         env:
         - name: IGOR_PORT_MAPPING
           value: -8088:8088
@@ -2808,8 +2757,6 @@ spec:
         envFrom:
         - configMapRef:
             name: init-env
-        image: harbor.od.com/armory/igor:v1.8.x
-        imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3
           httpGet:
@@ -2820,10 +2767,6 @@ spec:
           periodSeconds: 3
           successThreshold: 1
           timeoutSeconds: 1
-        name: armory-igor
-        ports:
-        - containerPort: 8088
-          protocol: TCP
         readinessProbe:
           failureThreshold: 3
           httpGet:
@@ -2843,7 +2786,6 @@ spec:
           name: custom-config
       imagePullSecrets:
       - name: harbor
-      restartPolicy: Always
       securityContext:
         runAsUser: 0
       volumes:
@@ -2884,7 +2826,6 @@ spec:
     targetPort: 8088
   selector:
     app: armory-igor
-  type: ClusterIP
 {% endcode %}
 <!-- endtab -->
 {% endtabs %}
@@ -2892,13 +2833,13 @@ spec:
 ## 应用资源配置清单
 任意一台运算节点上：
 ```
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/igor/deployment.yaml 
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/igor/dp.yaml 
 deployment.extensions/armory-igor created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/igor/svc.yaml 
 service/armory-igor created
 ```
 
-# 部署Gate
+# 部署API组件——Gate
 运维主机`HDSS7-200.host.com`上：
 ## 准备docker镜像
 [镜像下载地址](https://hub.docker.io/armory/gate-armory)
@@ -2928,7 +2869,7 @@ v1.8.x: digest: sha256:efbe278ea128806b6fe620e7b4e4d7441ca7dd94a7fa98760ffa08662
 ## 准备资源配置清单
 {% tabs armory-gate %}
 <!-- tab Deployment -->
-vi /data/k8s-yaml/armory/gate/deployment.yaml
+vi /data/k8s-yaml/armory/gate/dp.yaml
 {% code %}
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -2943,11 +2884,6 @@ spec:
   selector:
     matchLabels:
       app: armory-gate
-  strategy:
-    rollingUpdate:
-      maxSurge: 100%
-      maxUnavailable: 0
-    type: RollingUpdate
   template:
     metadata:
       annotations:
@@ -2960,12 +2896,22 @@ spec:
         app: armory-gate
     spec:
       containers:
-      - args:
-        - bash /opt/spinnaker/config/default/fetch.sh gate && cd /home/spinnaker/config
-          && /opt/gate/bin/gate
+      - name: armory-gate
+        image: harbor.od.com/armory/gate:v1.8.x
+        imagePullPolicy: IfNotPresent
         command:
         - bash
         - -c
+        args:
+        - bash /opt/spinnaker/config/default/fetch.sh gate && cd /home/spinnaker/config
+          && /opt/gate/bin/gate
+        ports:
+        - containerPort: 8084
+          name: gate-port
+          protocol: TCP
+        - containerPort: 8085
+          name: gate-api-port
+          protocol: TCP
         env:
         - name: GATE_PORT_MAPPING
           value: -8084:8084
@@ -2976,8 +2922,6 @@ spec:
         envFrom:
         - configMapRef:
             name: init-env
-        image: harbor.od.com/armory/gate:v1.8.x
-        imagePullPolicy: IfNotPresent
         livenessProbe:
           exec:
             command:
@@ -2989,14 +2933,6 @@ spec:
           periodSeconds: 5
           successThreshold: 1
           timeoutSeconds: 1
-        name: armory-gate
-        ports:
-        - containerPort: 8084
-          name: gate-port
-          protocol: TCP
-        - containerPort: 8085
-          name: gate-api-port
-          protocol: TCP
         readinessProbe:
           exec:
             command:
@@ -3016,7 +2952,6 @@ spec:
           name: default-config
         - mountPath: /opt/spinnaker/config/custom
           name: custom-config
-      restartPolicy: Always
       imagePullSecrets:
       - name: harbor
       securityContext:
@@ -3064,7 +2999,6 @@ spec:
     targetPort: 8085
   selector:
     app: armory-gate
-  type: ClusterIP
 {% endcode %}
 <!-- endtab -->
 {% endtabs %}
@@ -3072,13 +3006,13 @@ spec:
 ## 应用资源配置清单
 任意一台运算节点上：
 ```
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/gate/deployment.yaml 
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/gate/dp.yaml 
 deployment.extensions/armory-gate created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/gate/svc.yaml 
 service/armory-gate created
 ```
 
-#  部署Deck
+#  部署前端网站项目——Deck
 运维主机`HDSS7-200.host.com`上：
 ## 准备docker镜像
 [镜像下载地址](https://hub.docker.io/armory/deck-armory)
@@ -3120,7 +3054,7 @@ v1.8.x: digest: sha256:299b6a10fbca18beda4c7d71472be3daf390b2d45447f43682879178f
 ## 准备资源配置清单
 {% tabs armory-deck %}
 <!-- tab Deployment -->
-vi /data/k8s-yaml/armory/deck/deployment.yaml
+vi /data/k8s-yaml/armory/deck/dp.yaml
 {% code %}
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -3135,11 +3069,6 @@ spec:
   selector:
     matchLabels:
       app: armory-deck
-  strategy:
-    rollingUpdate:
-      maxSurge: 100%
-      maxUnavailable: 0
-    type: RollingUpdate
   template:
     metadata:
       annotations:
@@ -3152,16 +3081,20 @@ spec:
         app: armory-deck
     spec:
       containers:
-      - args:
-        - bash /opt/spinnaker/config/default/fetch.sh && /entrypoint.sh
+      - name: armory-deck
+        image: harbor.od.com/armory/deck:v1.8.x
+        imagePullPolicy: IfNotPresent
         command:
         - bash
         - -c
+        args:
+        - bash /opt/spinnaker/config/default/fetch.sh && /entrypoint.sh
+        ports:
+        - containerPort: 9000
+          protocol: TCP
         envFrom:
         - configMapRef:
             name: init-env
-        image: harbor.od.com/armory/deck:v1.8.x
-        imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3
           httpGet:
@@ -3172,10 +3105,6 @@ spec:
           periodSeconds: 3
           successThreshold: 1
           timeoutSeconds: 1
-        name: armory-deck
-        ports:
-        - containerPort: 9000
-          protocol: TCP
         readinessProbe:
           failureThreshold: 5
           httpGet:
@@ -3193,7 +3122,6 @@ spec:
           name: default-config
         - mountPath: /opt/spinnaker/config/custom
           name: custom-config
-      restartPolicy: Always
       imagePullSecrets:
       - name: harbor
       volumes:
@@ -3234,7 +3162,6 @@ spec:
     targetPort: 9000
   selector:
     app: armory-deck
-  type: ClusterIP
 {% endcode %}
 <!-- endtab -->
 {% endtabs %}
@@ -3242,13 +3169,13 @@ spec:
 ## 应用资源配置清单
 任意一台运算节点上：
 ```
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/deck/deployment.yaml 
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/deck/dp.yaml 
 deployment.extensions/armory-deck created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/deck/svc.yaml 
 service/armory-deck created
 ```
 
-#  部署Nginx
+#  部署前端代理——Nginx
 运维主机`HDSS7-200.host.com`上：
 ## 准备docker镜像
 [镜像下载地址](https://hub.docker.io/library/nginx)
@@ -3273,7 +3200,7 @@ v1.12.2: digest: sha256:671d8dbb5fc0e03626167acaa95cf21439d34761d110e081a0be98aa
 ## 准备资源配置清单
 {% tabs armory-nginx %}
 <!-- tab Deployment -->
-vi /data/k8s-yaml/armory/nginx/deployment.yaml
+vi /data/k8s-yaml/armory/nginx/dp.yaml
 {% code %}
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -3288,11 +3215,6 @@ spec:
   selector:
     matchLabels:
       app: armory-nginx
-  strategy:
-    rollingUpdate:
-      maxSurge: 100%
-      maxUnavailable: 0
-    type: RollingUpdate
   template:
     metadata:
       annotations:
@@ -3305,24 +3227,14 @@ spec:
         app: armory-nginx
     spec:
       containers:
-      - args:
-        - bash /opt/spinnaker/config/default/fetch.sh nginx && nginx -g 'daemon off;'
+      - name: armory-nginx
+        image: harbor.od.com/armory/nginx:v1.12.2
+        imagePullPolicy: Always
         command:
         - bash
         - -c
-        image: harbor.od.com/armory/nginx:v1.12.2
-        imagePullPolicy: Always
-        livenessProbe:
-          failureThreshold: 3
-          httpGet:
-            path: /
-            port: 80
-            scheme: HTTP
-          initialDelaySeconds: 180
-          periodSeconds: 3
-          successThreshold: 1
-          timeoutSeconds: 1
-        name: armory-nginx
+        args:
+        - bash /opt/spinnaker/config/default/fetch.sh nginx && nginx -g 'daemon off;'
         ports:
         - containerPort: 80
           name: http
@@ -3333,6 +3245,16 @@ spec:
         - containerPort: 8085
           name: api
           protocol: TCP
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 180
+          periodSeconds: 3
+          successThreshold: 1
+          timeoutSeconds: 1
         readinessProbe:
           failureThreshold: 3
           httpGet:
@@ -3348,7 +3270,6 @@ spec:
           name: default-config
         - mountPath: /etc/nginx/conf.d
           name: custom-config
-      restartPolicy: Always
       imagePullSecrets:
       - name: harbor
       volumes:
@@ -3386,7 +3307,6 @@ spec:
     targetPort: 8085
   selector:
     app: armory-nginx
-  type: ClusterIP
 {% endcode %}
 <!-- endtab -->
 <!-- tab Ingress -->
@@ -3415,7 +3335,7 @@ spec:
 ## 应用资源配置清单
 任意一台运算节点上：
 ```
-[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/nginx/deployment.yaml 
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/nginx/dp.yaml 
 deployment.extensions/armory-nginx created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/nginx/svc.yaml 
 service/armory-nginx created

@@ -609,11 +609,11 @@ filebeat.inputs:
   fields:
     topic: logm-${PROJ_NAME}
   paths:
-    - /logm/\*.log
-    - /logm/\*/\*.log
-    - /logm/\*/\*/\*.log
-    - /logm/\*/\*/\*/\*.log
-    - /logm/\*/\*/\*/\*/\*.log
+    - /logm/*.log
+    - /logm/*/*.log
+    - /logm/*/*/*.log
+    - /logm/*/*/*/*.log
+    - /logm/*/*/*/*/*.log
   scan_frequency: 120s
   max_bytes: 10485760
   multiline.pattern: '$MULTILINE'
@@ -625,12 +625,12 @@ filebeat.inputs:
   fields:
     topic: logu-${PROJ_NAME}
   paths:
-    - /logu/\*.log
-    - /logu/\*/\*.log
-    - /logu/\*/\*/\*.log
-    - /logu/\*/\*/\*/\*.log
-    - /logu/\*/\*/\*/\*/\*.log
-    - /logu/\*/\*/\*/\*/\*/\*.log
+    - /logu/*.log
+    - /logu/*/*.log
+    - /logu/*/*/*.log
+    - /logu/*/*/*/*.log
+    - /logu/*/*/*/*/*.log
+    - /logu/*/*/*/*/*/*.log
 output.kafka:
   hosts: ["10.4.7.11:9092"]
   topic: k8s-fb-$ENV-%{[topic]}
@@ -779,8 +779,8 @@ spec:
 - 下载官方镜像
 
 ```
-[root@hdss7-200 ~]# docker pull logstash:6.7.2
-6.7.2: Pulling from library/logstash
+[root@hdss7-200 ~]# docker pull logstash:6.8.3
+6.8.3: Pulling from library/logstash
 8ba884070f61: Pull complete 
 063405b57b96: Pull complete 
 0a0115b8825c: Pull complete 
@@ -793,12 +793,12 @@ f55d8adfbc3d: Pull complete
 ca45dc8946a2: Pull complete 
 8b852a079ea9: Pull complete 
 Digest: sha256:46eaff19af5e14edd9b78e1d5bf16f6abcd9ad50e0338cbaf3024f2aadb2903b
-Status: Downloaded newer image for logstash:6.7.2
+Status: Downloaded newer image for logstash:6.8.3
 
-[root@hdss7-200 ~]# docker tag 857d9a1f8221 harbor.od.com/public/logstash:v6.7.2
+[root@hdss7-200 ~]# docker tag 857d9a1f8221 harbor.od.com/public/logstash:v6.8.3
 
-[root@hdss7-200 ~]# docker push harbor.od.com/public/logstash:v6.7.2
-docker push harbor.od.com/public/logstash:v6.7.2
+[root@hdss7-200 ~]# docker push harbor.od.com/public/logstash:v6.8.3
+docker push harbor.od.com/public/logstash:v6.8.3
 The push refers to a repository [harbor.od.com/public/logstash]
 c2b00f70cade: Mounted from public/filebeat 
 9a2c2851596d: Mounted from public/filebeat 
@@ -811,14 +811,14 @@ df859db41dd0: Mounted from public/filebeat
 1cbe912d7c00: Mounted from public/filebeat 
 ab5fbaca7e70: Mounted from public/filebeat 
 d69483a6face: Mounted from public/filebeat 
-v6.7.2: digest: sha256:6aacf97dfbcc5c64c2f1a12f43ee48a8dadb98657b9b8d4149d0fee0ec18be81 size: 2823
+v6.8.3: digest: sha256:6aacf97dfbcc5c64c2f1a12f43ee48a8dadb98657b9b8d4149d0fee0ec18be81 size: 2823
 ```
 - 自定义Dockerfile
 
 {% tabs logstash %}
 <!-- tab Dockerfile -->
 {% code %}
-From harbor.od.com/public/logstash:v6.7.2
+From harbor.od.com/public/logstash:v6.8.3
 ADD logstash.yml /usr/share/logstash/config
 {% endcode %}
 <!-- endtab -->
@@ -834,10 +834,10 @@ xpack.monitoring.enabled: false
 - 创建自定义镜像
 
 ```pwd /data/dockerfile/logstash
-[root@hdss7-200 logstash]# docker build . -t harbor.od.com/infra/logstash:v6.7.2
+[root@hdss7-200 logstash]# docker build . -t harbor.od.com/infra/logstash:v6.8.3
 Sending build context to Docker daemon 249.3 MB
-Step 1 : FROM harbor.od.com/public/logstash:v6.7.2
-v6.7.2: Pulling from public/logstash
+Step 1 : FROM harbor.od.com/public/logstash:v6.8.3
+v6.8.3: Pulling from public/logstash
 e60be144a6a5: Pull complete 
 6292c2b22d35: Pull complete 
 1bb4586d90e7: Pull complete 
@@ -850,13 +850,13 @@ e3c97754ddde: Pull complete
 32063a9aaefb: Pull complete 
 e87b22bf50f5: Pull complete 
 Digest: sha256:6aacf97dfbcc5c64c2f1a12f43ee48a8dadb98657b9b8d4149d0fee0ec18be81
-Status: Downloaded newer image for harbor.od.com/public/logstash:v6.7.2
+Status: Downloaded newer image for harbor.od.com/public/logstash:v6.8.3
  ---> 857d9a1f8221
 Step 2 : ADD logstash.yml /usr/share/logstash/config
  ---> 2ad32d3f5fef
 Removing intermediate container 1d3a1488c1b7
 Successfully built 2ad32d3f5fef
-[root@hdss7-200 logstash]# docker push harbor.od.com/infra/logstash:v6.7.2
+[root@hdss7-200 logstash]# docker push harbor.od.com/infra/logstash:v6.8.3
 ```
 
 ## 启动docker镜像
@@ -890,9 +890,9 @@ output {
 - 启动logstash镜像
 
 ```
-[root@hdss7-200 ~]# docker run -d --name logstash-test -v /etc/logstash:/etc/logstash harbor.od.com/infra/logstash:v6.7.2 -f /etc/logstash/logstash-test.conf
+[root@hdss7-200 ~]# docker run -d --name logstash-test -v /etc/logstash:/etc/logstash harbor.od.com/infra/logstash:v6.8.3 -f /etc/logstash/logstash-test.conf
 [root@hdss7-200 ~]# docker ps -a|grep logstash
-a5dcf56faa9a        harbor.od.com/infra/logstash:v6.7.2                                                                                "/usr/local/bin/docke"   8 seconds ago       Up 6 seconds                5044/tcp, 9600/tcp           jovial_swanson
+a5dcf56faa9a        harbor.od.com/infra/logstash:v6.8.3                                                                                "/usr/local/bin/docke"   8 seconds ago       Up 6 seconds                5044/tcp, 9600/tcp           jovial_swanson
 ```
 
 - 验证ElasticSearch里的索引
@@ -965,20 +965,17 @@ spec:
       containers:
       - name: kibana
         image: harbor.od.com/infra/kibana:v6.8.3
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5601
           protocol: TCP
         env:
         - name: ELASTICSEARCH_URL
           value: http://10.4.7.12:9200
-        imagePullPolicy: IfNotPresent
       imagePullSecrets:
       - name: harbor
-      restartPolicy: Always
-      terminationGracePeriodSeconds: 30
       securityContext: 
         runAsUser: 0
-      schedulerName: default-scheduler
   strategy:
     type: RollingUpdate
     rollingUpdate: 
@@ -1003,9 +1000,6 @@ spec:
     targetPort: 5601
   selector: 
     app: kibana
-  clusterIP: None
-  type: ClusterIP
-  sessionAffinity: None
 {% endcode %}
 <!-- endtab -->
 <!-- tab Ingress -->
@@ -1031,11 +1025,11 @@ spec:
 ## 应用资源配置清单
 任意运算节点上：
 ```
-[root@hdss7-21 ~]# kubectl apply -f dp.yaml 
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/kibana/dp.yaml
 deployment.extensions/kibana created
-[root@hdss7-21 ~]# kubectl apply -f svc.yaml 
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/kibana/svc.yaml
 service/kibana created
-[root@hdss7-21 ~]# kubectl apply -f ingress.yaml 
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/kibana/ingress.yaml
 ingress.extensions/kibana created
 ```
 ## 浏览器访问
