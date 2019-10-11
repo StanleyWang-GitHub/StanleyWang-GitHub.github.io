@@ -5,9 +5,33 @@ date: 2019-6-18 16:12:56
 - - -
 {% cq %}欢迎加入王导的VIP学习qq群：==>[<font color="FF7F50">932194668</font>](http://shang.qq.com/wpa/qunwpa?idkey=78869fddc5a661acb0639315eb52997c108de6625df5f0ee2f0372f176a032a6)<=={% endcq %}
 - - -
-# 部署对象式存储组件——minio
+# [Spinnaker](https://www.spinnaker.io)简介
+## Netfix开源
+
+## 架构
+![Spinnaker Architecture](/images/spinnaker-architecture.png "Spinnaker Architecture")
+
+- Deck is the browser-based UI.
+- Gate is the API gateway.
+> The Spinnaker UI and all api callers communicate with Spinnaker via Gate.
+- Orca is the orchestration engine. It handles all ad-hoc operations and pipelines. 
+- Clouddriver is responsible for all mutating calls to the cloud providers and for indexing/caching all deployed resources.
+- Front50 is used to persist the metadata of applications, pipelines, projects and notifications.
+- Rosco is the bakery. It produces immutable VM images (or image templates) for various cloud providers.
+> It is used to produce machine images (for example GCE images, AWS AMIs, Azure VM images). It currently wraps packer, but will be expanded to support additional mechanisms for producing images.
+- Igor is used to trigger pipelines via continuous integration jobs in systems like Jenkins and Travis CI, and it allows Jenkins/Travis stages to be used in pipelines.
+- Echo is Spinnaker’s eventing bus.
+> It supports sending notifications (e.g. Slack, email, SMS), and acts on incoming webhooks from services like Github.
+- Fiat is Spinnaker’s authorization service.
+> It is used to query a user’s access permissions for accounts, applications and service accounts.
+- Kayenta provides automated canary analysis for Spinnaker.
+- Halyard is Spinnaker’s configuration service.
+> Halyard manages the lifecycle of each of the above services. It only interacts with these services during Spinnaker startup, updates, and rollbacks.
+
+# 部署Spinnaker的Armory发行版
+## 部署对象式存储组件——minio
 运维主机`HDSS7-200.host.com`上：
-## 准备docker镜像
+### 准备docker镜像
 [镜像下载地址](https://hub.docker.com/r/minio/minio)
 ```
 [root@hdss7-200 ~]# docker pull minio/minio:latest
@@ -28,7 +52,7 @@ f1b5933fe4b5: Pushed
 latest: digest: sha256:a676c2f71ad261d10cba2527094810e8a37f98d79086694ec162cb7fea64f5e0 size: 1158
 ```
 
-## 准备资源配置清单
+### 准备资源配置清单
 {% tabs armory-minio %}
 <!-- tab Deployment -->
 vi /data/k8s-yaml/armory/minio/dp.yaml
@@ -129,12 +153,12 @@ spec:
 <!-- endtab -->
 {% endtabs %}
 
-## 解析域名
+### 解析域名
 `HDSS7-11.host.com`上
 ```vi /var/named/od.com.zone
 minio              A    10.4.7.10
 ```
-## 应用资源配置清单
+### 应用资源配置清单
 任意运算节点上：
 ```
 [root@hdss7-21 ~]# kubectl apply -f https://k8s-yaml.od.com/armory/minio/dp.yaml 
@@ -144,11 +168,11 @@ service/minio created
 [root@hdss7-21 ~]# kubectl apply -f https://k8s-yaml.od.com/armory/minio/ingress.yaml 
 ingress.extensions/minio created
 ```
-## 浏览器访问
+### 浏览器访问
 http://minio.od.com
 
-# 部署缓存组件——Redis
-## 准备docker镜像
+## 部署缓存组件——Redis
+### 准备docker镜像
 运维主机`HDSS7-200.host.com`上：
 [镜像下载地址](https://hub.docker.com/_/redis)
 ```
@@ -174,7 +198,7 @@ f99f83132c0a: Pushed
 6270adb5794c: Pushed 
 v4.0.14: digest: sha256:b1aaa4a4e2c0ae115c1bae57ce0f957dd9440f52fae42af9e1c2e165ea7e0aba size: 1571
 ```
-## 准备资源配置清单
+### 准备资源配置清单
 {% tabs armory-redis %}
 <!-- tab Deployment -->
 vi /data/k8s-yaml/armory/redis/dp.yaml
@@ -229,7 +253,7 @@ spec:
 <!-- endtab -->
 {% endtabs %}
 
-## 应用资源配置清单
+### 应用资源配置清单
 任意运算节点上：
 ```
 [root@hdss7-21 ~]# kubectl apply -f https://k8s-yaml.od.com/armory/redis/dp.yaml 
@@ -238,9 +262,9 @@ deployment.extensions/redis created
 service/redis created
 ```
 
-# 部署K8S云驱动组件——CloudDriver
+## 部署K8S云驱动组件——CloudDriver
 运维主机`HDSS7-200.host.com`上：
-## 准备docker镜像
+### 准备docker镜像
 [镜像下载地址](https://hub.docker.io/armory/spinnaker-clouddriver-slim)
 ```
 [root@hdss7-200 ~]# docker pull docker.io/armory/spinnaker-clouddriver-slim:release-1.8.x-14c9664
@@ -266,7 +290,7 @@ c77bb5c0e352: Pushed
 73046094a9b8: Pushed 
 v1.8.x: digest: sha256:e8fdea9e6838d2c2b5fe07beac46a0450148f9ef37167971fb18e3b4e6b470a8 size: 1792
 ```
-## 准备minio的secret
+### 准备minio的secret
 - 准备配置文件
 
 运维主机`HDSS7-200.host.com`上：
@@ -284,7 +308,7 @@ aws_secret_access_key=admin123
 secret/credentials created
 ```
 
-## 准备cluster-admin用户配置
+### 准备cluster-admin用户配置
 运维主机`HDSS7-200.host.com`上：
 - 签发admin.pem、admin-key.pem
 > 参考实验文档1
@@ -317,7 +341,7 @@ clusterrolebinding.rbac.authorization.k8s.io/myk8s-admin created
 [root@hdss7-21 .kube]# kubectl create cm default-kubeconfig --from-file=default-kubeconfig -n armory
 ```
 
-## 准备资源配置清单
+### 准备资源配置清单
 {% tabs armory-clouddriver %}
 <!-- tab ConfigMap1 -->
 vi /data/k8s-yaml/armory/clouddriver/init-env.yaml
@@ -2191,7 +2215,7 @@ spec:
 <!-- endtab -->
 {% endtabs %}
 
-## 应用资源配置清单
+### 应用资源配置清单
 任意一台运算节点上：
 ```
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/clouddriver/init-env.yaml 
@@ -2206,9 +2230,9 @@ deployment.extensions/armory-clouddriver created
 service/armory-clouddriver created
 ```
 
-# 部署对象存储管理组件——Front50
+## 部署对象存储管理组件——Front50
 运维主机`HDSS7-200.host.com`上：
-## 准备docker镜像
+### 准备docker镜像
 [镜像下载地址](https://hub.docker.io/armory/spinnaker-front50-slim)
 ```
 [root@hdss7-200 ~]# docker pull docker.io/armory/spinnaker-front50-slim:release-1.8.x-93febf2
@@ -2233,7 +2257,7 @@ df64d3292fd6: Pushed
 v1.8.x: digest: sha256:c8b66fbe74f5e2ca09ecea5232826790bc4715dd0147144de2bdc4b9656aa185 size: 1579
 ```
 
-## 准备资源配置清单
+### 准备资源配置清单
 {% tabs armory-front50 %}
 <!-- tab Deployment -->
 vi /data/k8s-yaml/armory/front50/dp.yaml
@@ -2358,7 +2382,7 @@ spec:
 <!-- endtab -->
 {% endtabs %}
 
-## 应用资源配置清单
+### 应用资源配置清单
 任意一台运算节点上：
 ```
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/front50/dp.yaml 
@@ -2367,13 +2391,13 @@ deployment.extensions/armory-front50 created
 service/armory-front50 created
 ```
 
-## 浏览器访问
+### 浏览器访问
 http://minio.od.com
 登录并观察存储是否创建
 
-# 部署资源编排组件——Orca
+## 部署资源编排组件——Orca
 运维主机`HDSS7-200.host.com`上：
-## 准备docker镜像
+### 准备docker镜像
 [镜像下载地址](https://hub.docker.io/armory/spinnaker-orca-slim:release-1.8.x-de4ab55)
 ```
 [root@hdss7-200 ~]# docker pull docker.io/armory/spinnaker-orca-slim:release-1.8.x-de4ab55
@@ -2398,7 +2422,7 @@ df64d3292fd6: Mounted from armory/front50
 v1.8.x: digest: sha256:337900b721558115c748255ffb2ecf471805cfe7bc5cfe93c52ac90482f2eff4 size: 1578
 ```
 
-## 准备资源配置清单
+### 准备资源配置清单
 {% tabs armory-orca %}
 <!-- tab Deployment -->
 vi /data/k8s-yaml/armory/orca/dp.yaml
@@ -2517,7 +2541,7 @@ spec:
 <!-- endtab -->
 {% endtabs %}
 
-## 应用资源配置清单
+### 应用资源配置清单
 任意一台运算节点上：
 ```
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/orca/dp.yaml 
@@ -2525,9 +2549,9 @@ deployment.extensions/armory-orca created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/orca/svc.yaml 
 service/armory-orca created
 ```
-# 部署消息调度组件——Echo
+## 部署消息调度组件——Echo
 运维主机`HDSS7-200.host.com`上：
-## 准备docker镜像
+### 准备docker镜像
 [镜像下载地址](https://hub.docker.io/armory/echo-armory)
 ```
 [root@hdss7-200 ~]# docker pull docker.io/armory/echo-armory:c36d576-release-1.8.x-617c567
@@ -2552,7 +2576,7 @@ e1f2ca83d794: Pushed
 v1.8.x: digest: sha256:3972fe52095a8f68f4f872ee56ff120b22c660a3cd3a8d9e7a824e3ef2b73e37 size: 1579
 ```
 
-## 准备资源配置清单
+### 准备资源配置清单
 {% tabs armory-echo %}
 <!-- tab Deployment -->
 vi /data/k8s-yaml/armory/echo/dp.yaml
@@ -2671,7 +2695,7 @@ spec:
 <!-- endtab -->
 {% endtabs %}
 
-## 应用资源配置清单
+### 应用资源配置清单
 任意一台运算节点上：
 ```
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/echo/dp.yaml 
@@ -2680,9 +2704,9 @@ deployment.extensions/armory-echo created
 service/armory-echo created
 ```
 
-# 部署流水线交互组件——Igor
+## 部署流水线交互组件——Igor
 运维主机`HDSS7-200.host.com`上：
-## 准备docker镜像
+### 准备docker镜像
 [镜像下载地址](https://hub.docker.io/armory/spinnaker-igor-slim)
 ```
 [root@hdss7-200 ~]# docker pull docker.io/armory/spinnaker-igor-slim:release-1.8-x-new-install-healthy-ae2b329
@@ -2707,7 +2731,7 @@ cd7100a72410: Mounted from spinnaker/clouddriver
 v1.8.x: digest: sha256:a12945b48ff428a2f1b5e58c9e1aba25ee1c4199f42f3f43910b9e009bc2cc94 size: 1578
 ```
 
-## 准备资源配置清单
+### 准备资源配置清单
 {% tabs armory-igor %}
 <!-- tab Deployment -->
 vi /data/k8s-yaml/armory/igor/dp.yaml
@@ -2830,7 +2854,7 @@ spec:
 <!-- endtab -->
 {% endtabs %}
 
-## 应用资源配置清单
+### 应用资源配置清单
 任意一台运算节点上：
 ```
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/igor/dp.yaml 
@@ -2839,9 +2863,9 @@ deployment.extensions/armory-igor created
 service/armory-igor created
 ```
 
-# 部署API组件——Gate
+## 部署API组件——Gate
 运维主机`HDSS7-200.host.com`上：
-## 准备docker镜像
+### 准备docker镜像
 [镜像下载地址](https://hub.docker.io/armory/gate-armory)
 ```
 [root@hdss7-200 ~]# docker pull docker.io/armory/gate-armory:dfafe73-release-1.8.x-5d505ca
@@ -2866,7 +2890,7 @@ f75150ad7e46: Pushed
 v1.8.x: digest: sha256:efbe278ea128806b6fe620e7b4e4d7441ca7dd94a7fa98760ffa086625b8d5f3 size: 1577
 ```
 
-## 准备资源配置清单
+### 准备资源配置清单
 {% tabs armory-gate %}
 <!-- tab Deployment -->
 vi /data/k8s-yaml/armory/gate/dp.yaml
@@ -3003,7 +3027,7 @@ spec:
 <!-- endtab -->
 {% endtabs %}
 
-## 应用资源配置清单
+### 应用资源配置清单
 任意一台运算节点上：
 ```
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/gate/dp.yaml 
@@ -3012,9 +3036,9 @@ deployment.extensions/armory-gate created
 service/armory-gate created
 ```
 
-#  部署前端网站项目——Deck
+## 部署前端网站项目——Deck
 运维主机`HDSS7-200.host.com`上：
-## 准备docker镜像
+### 准备docker镜像
 [镜像下载地址](https://hub.docker.io/armory/deck-armory)
 ```
 [root@hdss7-200 ~]# docker pull docker.io/armory/deck-armory:d4bf0cf-release-1.8.x-0a33f94
@@ -3051,7 +3075,7 @@ a8e78858b03b: Pushed
 v1.8.x: digest: sha256:299b6a10fbca18beda4c7d71472be3daf390b2d45447f43682879178fa2b2c19 size: 2822
 ```
 
-## 准备资源配置清单
+### 准备资源配置清单
 {% tabs armory-deck %}
 <!-- tab Deployment -->
 vi /data/k8s-yaml/armory/deck/dp.yaml
@@ -3166,7 +3190,7 @@ spec:
 <!-- endtab -->
 {% endtabs %}
 
-## 应用资源配置清单
+### 应用资源配置清单
 任意一台运算节点上：
 ```
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/deck/dp.yaml 
@@ -3175,9 +3199,9 @@ deployment.extensions/armory-deck created
 service/armory-deck created
 ```
 
-#  部署前端代理——Nginx
+## 部署前端代理——Nginx
 运维主机`HDSS7-200.host.com`上：
-## 准备docker镜像
+### 准备docker镜像
 [镜像下载地址](https://hub.docker.io/library/nginx)
 ```
 [root@hdss7-200 ~]# docker pull nginx:1.12.2
@@ -3197,7 +3221,7 @@ cf5b3c6798f7: Pushed
 v1.12.2: digest: sha256:671d8dbb5fc0e03626167acaa95cf21439d34761d110e081a0be98aa53513776 size: 948
 ```
 
-## 准备资源配置清单
+### 准备资源配置清单
 {% tabs armory-nginx %}
 <!-- tab Deployment -->
 vi /data/k8s-yaml/armory/nginx/dp.yaml
@@ -3332,7 +3356,13 @@ spec:
 <!-- endtab -->
 {% endtabs %}
 
-## 应用资源配置清单
+### 解析域名
+`HDSS7-11.host.com`上
+```vi /var/named/od.com.zone
+spinnaker          A    10.4.7.10
+```
+
+### 应用资源配置清单
 任意一台运算节点上：
 ```
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/nginx/dp.yaml 
@@ -3342,3 +3372,15 @@ service/armory-nginx created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/nginx/ingress.yaml 
 ingress.extensions/armory-nginx created
 ```
+
+# Spinnaker的Armory发行版使用详解
+## 浏览器访问
+http://spinnaker.od.com
+![spinnaker-init](/images/spinnaker-init.png "spinnaker-init")
+
+## 创建应用集
+![Create Application](/images/spinnaker-createapplication.png "Create Application")
+
+### 创建测试环境应用集
+![Create Test Application](/images/spinnaker-createapplication1.png "Create Test Application")
+![Create Test Application](/images/spinnaker-createapplication2.png "Create Test Application")
