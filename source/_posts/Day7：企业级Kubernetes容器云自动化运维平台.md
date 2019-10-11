@@ -628,18 +628,18 @@ data:
     CONFIG_LOCATION=${SPINNAKER_HOME:-"/opt/spinnaker"}/config
     CONTAINER=$1
 
-    rm -f /opt/spinnaker/config/\*.yml
+    rm -f /opt/spinnaker/config/*.yml
 
     mkdir -p ${CONFIG_LOCATION}
 
     # Setup the default configuration that comes with a distribution
-    for filename in /opt/spinnaker/config/default/\*.yml; do
+    for filename in /opt/spinnaker/config/default/*.yml; do
         cp $filename ${CONFIG_LOCATION}
     done
 
     # User specific config
     if [ -d /opt/spinnaker/config/custom ]; then
-        for filename in /opt/spinnaker/config/custom/\*; do
+        for filename in /opt/spinnaker/config/custom/*; do
             cp $filename ${CONFIG_LOCATION}
         done
     fi
@@ -667,7 +667,7 @@ data:
           -noprompt
     }
 
-    if [ \`which keytool\` ]; then
+    if [ `which keytool` ]; then
       echo "INFO: Keytool found adding certs where appropriate"
       add_ca_certs "${CONFIG_LOCATION}/ca.crt" "/etc/ssl/certs/java/cacerts" "custom-ca"
       #we'll want to add saml, oauth, authn/authz stuff here too
@@ -1080,18 +1080,18 @@ data:
       description:
       contact:
       patterns:
-        - /admin.\*
-        - /canary.\*
-        - /canaryConfig.\*
-        - /canaryJudgeResult.\*
-        - /credentials.\*
-        - /fetch.\*
+        - /admin.*
+        - /canary.*
+        - /canaryConfig.*
+        - /canaryJudgeResult.*
+        - /credentials.*
+        - /fetch.*
         - /health
-        - /judges.\*
-        - /metadata.\*
-        - /metricSetList.\*
-        - /metricSetPairList.\*
-        - /pipeline.\*
+        - /judges.*
+        - /metadata.*
+        - /metricSetList.*
+        - /metricSetPairList.*
+        - /pipeline.*
 
     security.basic.enabled: false
     management.security.enabled: false
@@ -1125,7 +1125,7 @@ data:
 
         #gzip  on;
 
-        include /etc/nginx/conf.d/\*.conf;
+        include /etc/nginx/conf.d/*.conf;
     }
 
     stream {
@@ -1158,8 +1158,8 @@ data:
                proxy_pass http://armory-platform:10000/;
            }
 
-           rewrite ^/login(.\*)$ /api/login$1 last;
-           rewrite ^/auth(.\*)$ /api/auth$1 last;
+           rewrite ^/login(.*)$ /api/login$1 last;
+           rewrite ^/auth(.*)$ /api/auth$1 last;
     }
   nginx.https.conf: |
     gzip on;
@@ -1196,8 +1196,8 @@ data:
             proxy_pass http://armory-platform:10000/;
         }
 
-        rewrite ^/login(.\*)$ /api/login$1 last;
-        rewrite ^/auth(.\*)$ /api/auth$1 last;
+        rewrite ^/login(.*)$ /api/login$1 last;
+        rewrite ^/auth(.*)$ /api/auth$1 last;
     }
   orca-armory.yml: |
     mine:
@@ -1258,7 +1258,7 @@ data:
               description: The key of your JIRA project.
             - name: type
               label: Issue Type
-              description: The type of your issue, e.g. \"Task\", \"Story\", etc.
+              description: The type of your issue, e.g. "Task", "Story", etc.
           payload: |
             {
               "fields" : {
@@ -1699,7 +1699,7 @@ data:
       deck:
         # Frontend configuration.
         # If you are proxying Spinnaker behind a single host, you may want to
-        # override these values. Remember to run \`reconfigure_spinnaker.sh\` after.
+        # override these values. Remember to run `reconfigure_spinnaker.sh` after.
         host: ${services.default.host}
         port: 9000
         baseUrl: ${services.default.protocol}://${services.deck.host}:${services.deck.port}
