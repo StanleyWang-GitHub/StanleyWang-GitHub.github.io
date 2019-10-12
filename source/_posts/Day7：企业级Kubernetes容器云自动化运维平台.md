@@ -6,7 +6,14 @@ date: 2019-6-18 16:12:56
 {% cq %}欢迎加入王导的VIP学习qq群：==>[<font color="FF7F50">932194668</font>](http://shang.qq.com/wpa/qunwpa?idkey=78869fddc5a661acb0639315eb52997c108de6625df5f0ee2f0372f176a032a6)<=={% endcq %}
 - - -
 # [Spinnaker](https://www.spinnaker.io)简介
-## Netfix开源
+> Spinnaker 是 Netflix 在2015年开源的一款持续交付平台，它继承了 Netflix 上一代集群和部署管理工具 Asgard：Web-based Cloud Management and Deployment的优点，同时根据公司业务以及技术的的发展抛弃了一些过时的设计：提高了持续交付系统的可复用性，提供了稳定可靠的API，提供了对基础设施和程序全局性的视图，配置、管理、运维都更简单，而且还完全兼容 Asgard，总之对于 Netflix 来说 Spinnaker 是更牛逼的持续交付平台。
+
+## 主要功能
+### 集群管理
+> 集群管理主要用于管理云资源，Spinnaker 所说的“云”可以理解成 AWS，即主要是 IaaS 的资源，比如 OpenStack，Google云，微软云等，后来还支持了容器和Kubernetes，但是管理方式还是按照管理基础设施的模式来设计的。
+
+### 部署管理
+> 管理部署流程是 Spinnaker 的核心功能，他负责将jenkins流水线创建的镜像，部署到Kubernetes集群中去，让服务真正运行起来。
 
 ## 架构
 ![Spinnaker Architecture](/images/spinnaker-architecture.png "Spinnaker Architecture")
@@ -20,12 +27,12 @@ date: 2019-6-18 16:12:56
 - Rosco is the bakery. It produces immutable VM images (or image templates) for various cloud providers.
 > It is used to produce machine images (for example GCE images, AWS AMIs, Azure VM images). It currently wraps packer, but will be expanded to support additional mechanisms for producing images.
 - Igor is used to trigger pipelines via continuous integration jobs in systems like Jenkins and Travis CI, and it allows Jenkins/Travis stages to be used in pipelines.
-- Echo is Spinnaker’s eventing bus.
+- Echo is Spinnaker's eventing bus.
 > It supports sending notifications (e.g. Slack, email, SMS), and acts on incoming webhooks from services like Github.
-- Fiat is Spinnaker’s authorization service.
-> It is used to query a user’s access permissions for accounts, applications and service accounts.
+- Fiat is Spinnaker's authorization service.
+> It is used to query a user's access permissions for accounts, applications and service accounts.
 - Kayenta provides automated canary analysis for Spinnaker.
-- Halyard is Spinnaker’s configuration service.
+- Halyard is Spinnaker's configuration service.
 > Halyard manages the lifecycle of each of the above services. It only interacts with these services during Spinnaker startup, updates, and rollbacks.
 
 # 部署Spinnaker的Armory发行版
@@ -308,12 +315,40 @@ aws_secret_access_key=admin123
 secret/credentials created
 ```
 
-### 准备cluster-admin用户配置
+### 准备K8S的用户配置
+#### 签发证书和私钥
 运维主机`HDSS7-200.host.com`上：
-- 签发admin.pem、admin-key.pem
-> 参考实验文档1
+- 准备证书签发请求文件admin-csr.json
 
-- 做admin.kubeconfig
+```vi /opt/certs/admin-csr.json
+{
+    "CN": "cluster-admin",
+    "hosts": [
+    ],
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [
+        {
+            "C": "CN",
+            "ST": "beijing",
+            "L": "beijing",
+            "O": "od",
+            "OU": "ops"
+        }
+    ]
+}
+```
+**注：**CN要设置为：cluster-admin
+
+- 签发生成admin.pem、admin-key.pem
+
+```pwd /opt/certs
+[root@hdss7-200 ~]# cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client admin-csr.json |cfssl-json -bare admin
+```
+
+#### 做kubeconfig配置
 
 任意运算节点上：
 ```
@@ -332,10 +367,10 @@ Switched to context "myk8s-context".
 clusterrolebinding.rbac.authorization.k8s.io/myk8s-admin created
 ```
 
-- 验证
+#### 验证cluster-admin用户
 > 将config文件拷贝至任意运算节点/root/.kube下，使用kubectl验证
 
-- 创建cm
+#### 创建ConfigMap配置
 
 ```pwd /root/.kube
 [root@hdss7-21 .kube]# kubectl create cm default-kubeconfig --from-file=default-kubeconfig -n armory
@@ -2230,7 +2265,7 @@ deployment.extensions/armory-clouddriver created
 service/armory-clouddriver created
 ```
 
-## 部署对象存储管理组件——Front50
+## 部署数据持久化组件——Front50
 运维主机`HDSS7-200.host.com`上：
 ### 准备docker镜像
 [镜像下载地址](https://hub.docker.io/armory/spinnaker-front50-slim)
@@ -2395,7 +2430,7 @@ service/armory-front50 created
 http://minio.od.com
 登录并观察存储是否创建
 
-## 部署资源编排组件——Orca
+## 部署任务编排组件——Orca
 运维主机`HDSS7-200.host.com`上：
 ### 准备docker镜像
 [镜像下载地址](https://hub.docker.io/armory/spinnaker-orca-slim:release-1.8.x-de4ab55)
@@ -2549,7 +2584,7 @@ deployment.extensions/armory-orca created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/armory/orca/svc.yaml 
 service/armory-orca created
 ```
-## 部署消息调度组件——Echo
+## 部署消息总线组件——Echo
 运维主机`HDSS7-200.host.com`上：
 ### 准备docker镜像
 [镜像下载地址](https://hub.docker.io/armory/echo-armory)
@@ -2863,7 +2898,7 @@ deployment.extensions/armory-igor created
 service/armory-igor created
 ```
 
-## 部署API组件——Gate
+## 部署API提供组件——Gate
 运维主机`HDSS7-200.host.com`上：
 ### 准备docker镜像
 [镜像下载地址](https://hub.docker.io/armory/gate-armory)
@@ -3382,5 +3417,331 @@ http://spinnaker.od.com
 ![Create Application](/images/spinnaker-createapplication.png "Create Application")
 
 ### 创建测试环境应用集
-![Create Test Application](/images/spinnaker-createapplication1.png "Create Test Application")
-![Create Test Application](/images/spinnaker-createapplication2.png "Create Test Application")
+- Actions -> Create Application
+  - Name
+  > test
+  - Owner Email
+  > stanley.wang.m@qq.com
+  - Description
+  > 测试环境应用集
+
+- Create
+
+### 创建生产环境应用集
+- Actions -> Create Application
+  - Name
+  > prod
+  - Owner Email
+  > stanley.wang.m@qq.com
+  - Description
+  > 生产环境应用集
+
+- Create
+
+![Create Application](/images/spinnaker-createapplication2.png "Create Application")
+
+## 创建测试环境部署流水线
+### dubbo服务提供者应用的部署流水线
+#### 创建流水线
+![Create Pipeline](/images/spinnaker-createpipeline.png "Create Pipeline")
+
+- PIPELINES
+- Configure a new pipeline
+  - Type
+  > Pipeline
+  - Pipeline Name
+  > dubbo-demo-service
+
+#### 创建配置参数（4个）
+ ![Add Parameter](/images/spinnaker-addparameter.png "Add Parameter")
+
+ - Add Parameter
+   - Name
+   > git_ver
+   - Required
+   > ✔
+   - Decription
+   > 项目的git版本号（commit id）或分支（branch name）
+ - Add Parameter
+   - Name
+   > add_tag
+   - Required
+   > ✔
+   - Decription
+   > 镜像版本号，建议填日期时间戳，例如：191010_1400
+ - Add Parameter
+   - Name
+   > image_name
+   - Required
+   > ✔
+   - Decription
+   > 项目的Docker镜像名
+   - Default Value
+   > app/dubbo-demo-service
+ - Add Parameter
+   - Name
+   > app_name
+   - Required
+   > ✔
+   - Decription
+   > 项目名
+   - Default_Value
+   > dubbo-demo-service
+- Save Changes
+
+#### 创建Stage1：与Jenkins集成（实现CI）
+![Stage1 Jenkins](/images/spinnaker-addstage1.png "Stage1 Jenkins")
+- Type
+> Jenkins
+- Jenkins Configuration
+  - Master
+  > jenkins-admin
+  - Job
+  > dubbo-demo
+- Job Parameters
+  - add_tag
+  > ${ parameters.add_tag }
+  - app_name
+  > ${ parameters.app_name }
+  - base_image
+  > base/jre8:8u112
+  - git_repo
+  > http://gitee.com/stanleywang/dubbo-demo-service.git
+  - git_ver
+  > ${ parameters.git_ver }
+  - image_name
+  > ${ parameters.image_name }
+  - maven
+  > 3.6.1-8u212
+  - mvn_cmd
+  > ✔ (Use Default)
+  - mvn_dir
+  > ✔ (Use Default)
+  - taget_dir
+  > ./dubbo-server/target
+- Save Changes
+- PIPELINES
+
+![Stage1 Done](/images/spinnaker-stage1done.png "Stage1 Done")
+
+#### 进行第一次构建
+![First CI](/images/spinnaker-firstci.png "First CI")
+- Start Manual Execution
+  - git_ver
+  > apollo
+  - add_tag
+  > 191010_1430
+- Run
+
+![First CI](/images/spinnaker-firstci1.png "First CI")
+- 观察Jenkins中的构建情况
+> 成功变绿，失败变红
+
+![First CI](/images/spinnaker-firstci2.png "First CI")
+
+#### 创建Stage2：与Kubernetes集成（CD）
+- Configure
+- Add stage
+  - Type
+  > Deploy
+  - Stage Name
+  > Deploy
+  - Depends On
+  > Jenkins
+- Deploy Configuration
+  > Add server group
+
+![Stage2 AddServerGroup](/images/spinnaker-stage2addservergroup.png "Stage2 AddServerGroup")
+- Basic Settings
+  - Account
+  > cluster-admin
+  - Namespace
+  > test
+  - Stack
+  > (可以为空)
+  - Detail
+  > dubbo-demo-service
+  - Containers
+  > harbor.od.com/app/dubbo-demo-service:apollo_191010_1430
+  > harbor.od.com/infra/filebeat:v7.4.0
+- Deployment
+  - Deployment
+  > ✔
+  - History Limit
+  > 7
+- Volume Sources -> Add Volume Source
+  - Volume Source
+  > EMPTYDIR
+  - Name
+  > logm
+- Advanced Settings -> Pod Annotations
+  - Add Annotations
+    - Key
+    > blackbox_scheme
+    - Value
+    > tcp
+  - Add Annotations
+    - Key
+    > blackbox_port
+    - Value
+    > 20880
+  - Add Annotations
+    - Key
+    > prometheus_io_scrape
+    - Value
+    > true
+  - Add Annotations
+    - Key
+    > prometheus_io_path
+    - Value
+    > /
+  - Add Annotations
+    - Key
+    > prometheus_io_port
+    - Value
+    > 12346
+- Container1(dubbo-demo-service)
+  - Basic Settings
+    - Environment Variables
+      - Name
+      > JAR_BALL
+      - Value
+      > dubbo-server.jar  
+      - Name
+      > C_OPTS
+      - Value
+      > -Denv=fat -Dapollo.meta=http://config.test
+  - Volume Mounts -> Add New Volume Mount
+    - Source Name
+    > logm
+    - Mount Path
+    > /opt/project_dir/logs
+- Container2(filebeat)
+  - Basic Settings
+    - Environment Variables
+      - Name
+      > ENV
+      - Value
+      > test
+      - Name
+      > PROJ_NAME
+      - Value
+      > dubbo-demo-service
+  - Volume Mounts -> Add New Volume Mount
+    - Source Name
+    > logm
+    - Mount Path
+    > /logm
+- Add
+- Save Changes
+- Edit stage as JSON
+
+修改里面imageDescription配置
+{% tabs dubbo-demo-service-test-json %}
+<!-- tab 原始 -->
+{% code %}
+"imageId": "harbor.od.com/app/dubbo-demo-service:apollo_191010_1501",
+"registry": "harbor.od.com",
+"repository": "app/dubbo-demo-service",
+"tag": "apollo_191010_1501"
+{% endcode %}
+<!-- endtab -->
+<!-- tab 改为 -->
+{% code %}
+"imageId": "harbor.od.com/${parameters.image_name}:${parameters.git_ver}_${parameters.add_tag}",
+"registry": "harbor.od.com",
+"repository": "${parameters.image_name}",
+"tag": "${parameters.git_ver}_${parameters.add_tag}"
+{% endcode %}
+<!-- endtab -->
+{% endtabs %}
+
+- Update Stage
+- Save Changes
+- 返回PIPELINES
+
+#### 进行第二次构建
+**注意：** K8S里删除test名称空间里的dubbo-demo-service的deployment
+
+![Second CI](/images/spinnaker-secondci.png "Second CI")
+![Second CI](/images/spinnaker-secondci2.png "Second CI")
+![Second CI](/images/spinnaker-secondci3.png "Second CI")
+
+### dubbo服务消费者应用的部署流水线
+**注意：**这是一个web服务，需要创建service和ingress，其余步骤与提供者服务相同。
+#### 创建流水线
+- Pipeline Name
+> dubbo-demo-web
+#### 创建Service
+- INFRASTRUCTURE
+- LOAD BALANCERS -> Create Load Balancer
+
+![Create Service](/images/spinnaker-lb.png "Create Service")
+
+- Basic Settings
+  - Account
+  > cluster-admin
+  - Namespace
+  > test
+  - Stack
+  > (可以为空)
+  - Detail
+  > dubbo-demo-web
+- Ports
+  - Name
+  > http
+  - Port
+  > 80
+  - Target Port
+  > 8080
+  - Protocol
+  > TCP
+- Create
+
+#### 创建Service
+- INFRASTRUCTURE
+- FIREWALLS -> Create Firewall
+
+![Create Ingress](/images/spinnaker-fw.png "Create Ingress")
+
+- Basic Settings
+  - Account
+  > cluster-admin
+  - Namespace
+  > test
+  - Stack
+  > (可以为空)
+  - Detail
+  > dubbo-demo-web
+- Backend
+  - Load Balancer
+  > test--dubbo-demo-web
+  - Port
+  > 80
+- Rules -> Add New Rule
+  - Host
+  > demo-test.od.com
+  - Add New Path
+    - Load Balancer
+    > test--dubbo-demo-web
+    - Path
+    > /
+    - Port
+    > 80
+- Create
+
+#### 配置流水线参数
+与dubbo服务提供者配置相同，略
+#### 配置Stage1
+与dubbo服务提供者配置基本相同，使用jenkins的tomcat-demo流水线，略
+#### 配置Stage2
+与dubbo服务提供者配置基本项目，需要选择Load Balancers，使用test--dubbo-demo-web，略
+
+## 创建生产环境部署流水线
+### dubbo服务提供者应用的部署流水线
+
+- 只有Stage2，没有Stage1（不再重复打包），其余与测试环境配置相同
+
+### dubbo服务消费者应用的部署流水线
+
+- 只有Stage2，没有Stage1（不再重复打包），其余与测试环境配置相同
