@@ -2627,3 +2627,7 @@ service/heapster created
 浏览器访问：http://dashboard.od.com
 ![加入heapster插件的dashboard](/images/heapster.png "加入heapster插件的dashboard")
 
+### 排错专用命令
+```
+for j in `kubectl get ns|sed '1d'|awk '{print $1}'`;do for i in `kubectl get pods -n $j|grep -iv running|sed '1d'|awk '{print $1}'`;do kubectl delete pods $i -n $j --force --grace-period=0;done;done
+```
