@@ -94,8 +94,8 @@ zone "od.com" IN {
 };
 ```
 
-#### 配置区域数据库
-- 配置主机域
+#### 配置区域数据文件
+- 配置主机域数据文件
 
 ```vi /var/named/host.com.zone
 $ORIGIN host.com.
@@ -109,15 +109,15 @@ $TTL 600	; 10 minutes
 				)
 			NS   dns.host.com.
 $TTL 60	; 1 minute
-dns      	        A    10.4.7.11
-HDSS7-11 	        A    10.4.7.11
+dns               A    10.4.7.11
+HDSS7-11          A    10.4.7.11
 HDSS7-12          A    10.4.7.12
 HDSS7-21          A    10.4.7.21
 HDSS7-22          A    10.4.7.22
 HDSS7-200         A    10.4.7.200
 ```
 
-- 配置业务域
+- 配置业务域数据文件
 
 ```vi /var/named/od.com.zone
 $ORIGIN od.com.
@@ -161,6 +161,7 @@ nameserver 10.4.7.11
 - Windows主机上
 
 > 网络和共享中心->网卡设置->设置DNS服务器
+> 如有必要，还应设置虚拟网卡的接口跃点数为：10
 
 ### 检查
 - Linux主机上
@@ -202,16 +203,16 @@ PS C:\Users\Administrator> ping hdss7-200.host.com
 > [cfssl-certinfo下载地址](https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64)
 
 ```
-[root@hdss7-200 ~]# wget  https://pkg.cfssl.org/R1.2/cfssl_linux-amd64 -O /usr/bin/cfssl
-[root@hdss7-200 ~]# wget  https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64 -O /usr/bin/cfssl-json
-[root@hdss7-200 ~]# wget  https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64 -O /usr/bin/cfssl-certinfo
+[root@hdss7-200 ~]# wget https://pkg.cfssl.org/R1.2/cfssl_linux-amd64 -O /usr/bin/cfssl
+[root@hdss7-200 ~]# wget https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64 -O /usr/bin/cfssl-json
+[root@hdss7-200 ~]# wget https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64 -O /usr/bin/cfssl-certinfo
 [root@hdss7-200 ~]# chmod +x /usr/bin/cfssl*
 ```
 
 ### 创建生成CA证书签名请求（csr）的JSON配置文件
 ```vi /opt/certs/ca-csr.json
 {
-    "CN": "kubernetes-ca",
+    "CN": "oldboyedu.com",
     "hosts": [
     ],
     "key": {
@@ -540,7 +541,7 @@ HDSS7-22.host.com|etcd follow|10.4.7.22
 运维主机`HDSS7-200.host.com`上：
 ```vi /opt/certs/etcd-peer-csr.json
 {
-    "CN": "etcd-peer",
+    "CN": "k8s-etcd",
     "hosts": [
         "10.4.7.11",
         "10.4.7.12",
@@ -798,7 +799,7 @@ specifically, section 10.2.3 ("Information Requirements").
 #### 创建生成证书签名请求（csr）的JSON配置文件
 ```vi /opt/certs/apiserver-csr.json 
 {
-    "CN": "apiserver",
+    "CN": "k8s-apiserver",
     "hosts": [
         "127.0.0.1",
         "192.168.0.1",
@@ -1324,7 +1325,7 @@ HDSS7-22.host.com|kubelet|10.4.7.22
 #### 创建生成证书签名请求（csr）的JSON配置文件
 ```vi kubelet-csr.json
 {
-    "CN": "kubelet-node",
+    "CN": "k8s-kubelet",
     "hosts": [
     "127.0.0.1",
     "10.4.7.10",
