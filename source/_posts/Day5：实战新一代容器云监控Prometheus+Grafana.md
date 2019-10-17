@@ -704,13 +704,20 @@ spec:
         args:
         - --config.file=/data/etc/prometheus.yml
         - --storage.tsdb.path=/data/prom-db
-        - --storage.tsdb.retention=72h
+        - --storage.tsdb.retention=2h
         ports:
         - containerPort: 9090
           protocol: TCP
         volumeMounts:
         - mountPath: /data
           name: data
+        resources:
+          requests:
+            cpu: "2000m"
+            memory: 3G
+          limits:
+            cpu: "2000m"
+            memory: 3Gi
       imagePullSecrets:
       - name: harbor
       securityContext:
@@ -721,7 +728,6 @@ spec:
         nfs:
           server: hdss7-200
           path: /data/nfs-volume/prometheus
-
 {% endcode %}
 <!-- endtab -->
 <!-- tab Service-->
