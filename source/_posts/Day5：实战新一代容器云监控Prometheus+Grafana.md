@@ -713,11 +713,11 @@ spec:
           name: data
         resources:
           requests:
-            cpu: "2000m"
-            memory: 3G
+            cpu: "1000m"
+            memory: "1.5Gi"
           limits:
             cpu: "2000m"
-            memory: 3Gi
+            memory: "3Gi"
       imagePullSecrets:
       - name: harbor
       securityContext:
