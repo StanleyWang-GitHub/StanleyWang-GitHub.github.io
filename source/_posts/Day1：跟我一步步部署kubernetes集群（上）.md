@@ -109,12 +109,12 @@ $TTL 600	; 10 minutes
 				)
 			NS   dns.host.com.
 $TTL 60	; 1 minute
-dns               A    10.4.7.11
-HDSS7-11          A    10.4.7.11
-HDSS7-12          A    10.4.7.12
-HDSS7-21          A    10.4.7.21
-HDSS7-22          A    10.4.7.22
-HDSS7-200         A    10.4.7.200
+dns                A    10.4.7.11
+HDSS7-11           A    10.4.7.11
+HDSS7-12           A    10.4.7.12
+HDSS7-21           A    10.4.7.21
+HDSS7-22           A    10.4.7.22
+HDSS7-200          A    10.4.7.200
 ```
 
 - 配置业务域数据文件
@@ -406,7 +406,7 @@ registryctl          /harbor/start.sh                 Up
 - 配置
 
 ```vi /var/named/od.com.zone
-harbor                     A    10.4.7.200
+harbor             A    10.4.7.200
 ```
 - 检查
 

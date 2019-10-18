@@ -616,7 +616,7 @@ server {
 
 `HDSS7-11.host.com`上
 ```vi /var/named/od.com.zone
-k8s-yaml                   A    10.4.7.200
+k8s-yaml           A    10.4.7.200
 ```
 以后所有的资源配置清单统一放置在运维主机的`/data/k8s-yaml`目录下即可
 ```
@@ -1075,7 +1075,7 @@ ingress.extensions/traefik-web-ui created
 ### 解析域名
 `HDSS7-11.host.com`上
 ```vi /var/named/od.com.zone
-traefik                    A    10.4.7.10
+traefik            A    10.4.7.10
 ```
 
 ### 配置反代
@@ -1280,7 +1280,7 @@ ingress.extensions/kubernetes-dashboard created
 ### 解析域名
 `HDSS7-11.host.com`上
 ```vi /var/named/od.com.zone
-dashboard                  A    10.4.7.10
+dashboard          A    10.4.7.10
 ```
 
 ### 浏览器访问

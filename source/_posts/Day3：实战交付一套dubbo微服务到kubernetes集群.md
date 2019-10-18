@@ -73,9 +73,9 @@ server.3=zk3.od.com:2888:3888
 ### 做dns解析
 `HDSS7-11.host.com`上
 ```vi /var/named/od.com.zone
-zk1	60 IN A 10.4.7.11
-zk2	60 IN A 10.4.7.12
-zk3	60 IN A 10.4.7.21
+zk1                A    10.4.7.11
+zk2                A    10.4.7.12
+zk3                A    10.4.7.21
 ```
 
 ### 依次启动
@@ -411,7 +411,7 @@ jenkins        jenkins.od.com                           80        0d
 ## 解析域名
 `HDSS7-11.host.com`上
 ```vi /var/named/od.com.zone
-jenkins	60 IN A 10.4.7.10
+jenkins            A    10.4.7.10
 ```
 
 ## 浏览器访问
@@ -1017,7 +1017,7 @@ http://dubbo-monitor.od.com
 ### 解析域名
 在DNS主机`HDSS7-11.host.com`上：
 ```vi /var/named/od.com.zone
-demo      A    10.9.7.10
+demo               A    10.4.7.10
 ```
 
 ### 准备k8s资源配置清单
