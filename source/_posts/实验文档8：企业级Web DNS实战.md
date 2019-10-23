@@ -392,7 +392,7 @@ include "/etc/named.namedmanager.conf";
 ```
 ## 改named.namedmanager.conf文件属性
 ```vi /etc/named.namedmanager.conf
-[root@hdss7-11 named]# chown apache.named /etc/named.namedmanager.conf
+[root@hdss7-11 named]# chown apache.apache /etc/named.namedmanager.conf
 [root@hdss7-11 named]# ls -l /etc/named.namedmanager.conf 
 -rw-r--r-- 1 apache named 112 Dec  16 11:19 /etc/named.namedmanager.conf
 ```

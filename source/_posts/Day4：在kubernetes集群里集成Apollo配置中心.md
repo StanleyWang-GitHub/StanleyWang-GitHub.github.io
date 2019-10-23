@@ -413,7 +413,7 @@ v1.4.0: digest: sha256:6a8e4fdda58de0dfba9985ebbf91c4d6f46f5274983d2efa8853b03f4
 ### 解析域名
 DNS主机`HDSS7-11.host.com`上：
 ```vi /var/named/od.com.zone
-mysql              A    10.4.7.10
+mysql              A    10.4.7.11
 config             A    10.4.7.10
 ```
 
