@@ -353,7 +353,7 @@ or
 ```
 [root@hdss7-12 elasticsearch]# su - es
 su: warning: cannot change directory to /home/es: No such file or directory
--bash-4.2$ /opt/elasticsearch/bin/elasticsearch &
+-bash-4.2$ /opt/elasticsearch/bin/elasticsearch -d
 [1] 8714
 [root@hdss7-12 elasticsearch]# ps -ef|grep elastic|grep -v grep
 es        8714     1 58 10:29 pts/0    00:00:19 /usr/java/jdk/bin/java -Xms512m -Xmx512m -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=75 -XX:+UseCMSInitiatingOccupancyOnly -XX:+AlwaysPreTouch -server -Xss1m -Djava.awt.headless=true -Dfile.encoding=UTF-8 -Djna.nosys=true -Djdk.io.permissionsUseCanonicalPath=true -Dio.netty.noUnsafe=true -Dio.netty.noKeySetOptimization=true -Dio.netty.recycler.maxCapacityPerThread=0 -Dlog4j.shutdownHookEnabled=false -Dlog4j2.disable.jmx=true -Dlog4j.skipJansi=true -XX:+HeapDumpOnOutOfMemoryError -Des.path.home=/opt/elasticsearch -cp /opt/elasticsearch/lib/* org.elasticsearch.bootstrap.Elasticsearch
