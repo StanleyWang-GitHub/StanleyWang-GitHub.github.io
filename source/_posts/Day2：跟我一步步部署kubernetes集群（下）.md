@@ -973,24 +973,24 @@ metadata:
   name: traefik-ingress-controller
   namespace: kube-system
   labels:
-    k8s-app: traefik-ingress-lb
+    k8s-app: traefik-ingress
 spec:
   template:
     metadata:
       labels:
-        k8s-app: traefik-ingress-lb
-        name: traefik-ingress-lb
+        k8s-app: traefik-ingress
+        name: traefik-ingress
     spec:
       serviceAccountName: traefik-ingress-controller
       terminationGracePeriodSeconds: 60
       containers:
       - image: harbor.od.com/public/traefik:v1.7.2
-        name: traefik-ingress-lb
+        name: traefik-ingress
         ports:
-        - name: http
+        - name: controller
           containerPort: 80
           hostPort: 81
-        - name: admin
+        - name: admin-web
           containerPort: 8080
         securityContext:
           capabilities:
@@ -1021,14 +1021,14 @@ metadata:
   namespace: kube-system
 spec:
   selector:
-    k8s-app: traefik-ingress-lb
+    k8s-app: traefik-ingress
   ports:
     - protocol: TCP
       port: 80
-      name: web
+      name: controller
     - protocol: TCP
       port: 8080
-      name: admin
+      name: admin-web
 {% endcode %}
 <!-- endtab -->
 <!-- tab Ingress-->
