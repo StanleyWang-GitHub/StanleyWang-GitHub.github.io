@@ -970,7 +970,7 @@ vi /data/k8s-yaml/traefik/ds.yaml
 apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
-  name: traefik-ingress-controller
+  name: traefik-ingress
   namespace: kube-system
   labels:
     k8s-app: traefik-ingress
@@ -987,7 +987,7 @@ spec:
       - image: harbor.od.com/public/traefik:v1.7.2
         name: traefik-ingress
         ports:
-        - name: controller
+        - name: ingress-controller
           containerPort: 80
           hostPort: 81
         - name: admin-web
@@ -1025,7 +1025,7 @@ spec:
   ports:
     - protocol: TCP
       port: 80
-      name: controller
+      name: ingress-controller
     - protocol: TCP
       port: 8080
       name: admin-web
