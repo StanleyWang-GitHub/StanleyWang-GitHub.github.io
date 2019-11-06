@@ -1180,23 +1180,18 @@ numprocs=1                                                                      
 directory=/opt/kubernetes/server/bin                                              ; directory to cwd to before exec (def no cwd)
 autostart=true                                                                    ; start at supervisord start (default: true)
 autorestart=true                                                                  ; retstart at unexpected quit (default: true)
-startsecs=22                                                                      ; number of secs prog must stay running (def. 1)
+startsecs=30                                                                      ; number of secs prog must stay running (def. 1)
 startretries=3                                                                    ; max # of serial start failures (default 3)
 exitcodes=0,2                                                                     ; 'expected' exit codes for process (default 0,2)
 stopsignal=QUIT                                                                   ; signal used to kill process (default TERM)
 stopwaitsecs=10                                                                   ; max num secs to wait b4 SIGKILL (default 10)
 user=root                                                                         ; setuid to this UNIX account to run the program
-redirect_stderr=false                                                             ; redirect proc stderr to stdout (default false)
-stdout_logfile=/data/logs/kubernetes/kube-controller-manager/controll.stderr.log  ; stderr log path, NONE for none; default AUTO
+redirect_stderr=true                                                              ; redirect proc stderr to stdout (default false)
+stdout_logfile=/data/logs/kubernetes/kube-controller-manager/controller.stdout.log  ; stderr log path, NONE for none; default AUTO
 stdout_logfile_maxbytes=64MB                                                      ; max # logfile bytes b4 rotation (default 50MB)
 stdout_logfile_backups=4                                                          ; # of stdout logfile backups (default 10)
 stdout_capture_maxbytes=1MB                                                       ; number of bytes in 'capturemode' (default 0)
 stdout_events_enabled=false                                                       ; emit events on stdout writes (default false)
-stderr_logfile=/data/logs/kubernetes/kube-controller-manager/controll.stdout.log  ; stdout log path, NONE for none; default AUTO
-stderr_logfile_maxbytes=64MB                                                      ; max # logfile bytes b4 rotation (default 50MB)
-stderr_logfile_backups=4                                                          ; # of stderr logfile backups (default 10)
-stderr_capture_maxbytes=1MB                                                       ; number of bytes in 'capturemode' (default 0)
-stderr_events_enabled=false                                                       ; emit events on stderr writes (default false)
 ```
 ### 启动服务并检查
 `HDSS7-21.host.com`上：
@@ -1248,23 +1243,18 @@ numprocs=1                                                               ; numbe
 directory=/opt/kubernetes/server/bin                                     ; directory to cwd to before exec (def no cwd)
 autostart=true                                                           ; start at supervisord start (default: true)
 autorestart=true                                                         ; retstart at unexpected quit (default: true)
-startsecs=22                                                             ; number of secs prog must stay running (def. 1)
+startsecs=30                                                             ; number of secs prog must stay running (def. 1)
 startretries=3                                                           ; max # of serial start failures (default 3)
 exitcodes=0,2                                                            ; 'expected' exit codes for process (default 0,2)
 stopsignal=QUIT                                                          ; signal used to kill process (default TERM)
 stopwaitsecs=10                                                          ; max num secs to wait b4 SIGKILL (default 10)
 user=root                                                                ; setuid to this UNIX account to run the program
-redirect_stderr=false                                                    ; redirect proc stderr to stdout (default false)
-stdout_logfile=/data/logs/kubernetes/kube-scheduler/scheduler.stderr.log ; stderr log path, NONE for none; default AUTO
+redirect_stderr=true                                                     ; redirect proc stderr to stdout (default false)
+stdout_logfile=/data/logs/kubernetes/kube-scheduler/scheduler.stdout.log ; stderr log path, NONE for none; default AUTO
 stdout_logfile_maxbytes=64MB                                             ; max # logfile bytes b4 rotation (default 50MB)
 stdout_logfile_backups=4                                                 ; # of stdout logfile backups (default 10)
 stdout_capture_maxbytes=1MB                                              ; number of bytes in 'capturemode' (default 0)
 stdout_events_enabled=false                                              ; emit events on stdout writes (default false)
-stderr_logfile=/data/logs/kubernetes/kube-scheduler/scheduler.stdout.log ; stdout log path, NONE for none; default AUTO
-stderr_logfile_maxbytes=64MB                                             ; max # logfile bytes b4 rotation (default 50MB)
-stderr_logfile_backups=4                                                 ; # of stderr logfile backups (default 10)
-stderr_capture_maxbytes=1MB                                              ; number of bytes in 'capturemode' (default 0)
-stderr_events_enabled=false                                              ; emit events on stderr writes (default false)
 ```
 
 ### 启动服务并检查
@@ -1497,7 +1487,8 @@ latest: digest: sha256:b31bfb4d0213f254d361e0079deaaebefa4f82ba7aa76ef82e90b4935
   --cgroup-driver systemd \
   --cluster-dns 192.168.0.2 \
   --cluster-domain cluster.local \
-  --runtime-cgroups=/systemd/system.slice --kubelet-cgroups=/systemd/system.slice \
+  --runtime-cgroups=/systemd/system.slice \
+  --kubelet-cgroups=/systemd/system.slice \
   --fail-swap-on="false" \
   --client-ca-file ./cert/ca.pem \
   --tls-cert-file ./cert/kubelet.pem \
@@ -1531,23 +1522,18 @@ numprocs=1                                        ; number of processes copies t
 directory=/opt/kubernetes/server/bin              ; directory to cwd to before exec (def no cwd)
 autostart=true                                    ; start at supervisord start (default: true)
 autorestart=true              		          ; retstart at unexpected quit (default: true)
-startsecs=22                                      ; number of secs prog must stay running (def. 1)
+startsecs=30                                      ; number of secs prog must stay running (def. 1)
 startretries=3                                    ; max # of serial start failures (default 3)
 exitcodes=0,2                                     ; 'expected' exit codes for process (default 0,2)
 stopsignal=QUIT                                   ; signal used to kill process (default TERM)
 stopwaitsecs=10                                   ; max num secs to wait b4 SIGKILL (default 10)
 user=root                                         ; setuid to this UNIX account to run the program
-redirect_stderr=false                             ; redirect proc stderr to stdout (default false)
-stdout_logfile=/data/logs/kubernetes/kube-kubelet/kubelet.stderr.log   ; stderr log path, NONE for none; default AUTO
+redirect_stderr=true                              ; redirect proc stderr to stdout (default false)
+stdout_logfile=/data/logs/kubernetes/kube-kubelet/kubelet.stdout.log   ; stderr log path, NONE for none; default AUTO
 stdout_logfile_maxbytes=64MB                      ; max # logfile bytes b4 rotation (default 50MB)
 stdout_logfile_backups=4                          ; # of stdout logfile backups (default 10)
 stdout_capture_maxbytes=1MB                       ; number of bytes in 'capturemode' (default 0)
 stdout_events_enabled=false                       ; emit events on stdout writes (default false)
-stderr_logfile=/data/logs/kubernetes/kube-kubelet/kubelet.stdout.log   ; stdout log path, NONE for none; default AUTO
-stderr_logfile_maxbytes=64MB                      ; max # logfile bytes b4 rotation (default 50MB)
-stderr_logfile_backups=4                          ; # of stderr logfile backups (default 10)
-stderr_capture_maxbytes=1MB                       ; number of bytes in 'capturemode' (default 0)
-stderr_events_enabled=false                       ; emit events on stderr writes (default false)
 ```
 
 ### 启动服务并检查
@@ -1567,8 +1553,8 @@ kube-scheduler-7-21              RUNNING   pid 10041, uptime 18:22:13
 `HDSS7-21.host.com`上：
 ```
 [root@hdss7-21 bin]# kubectl get node
-NAME        STATUS   ROLES    AGE   VERSION
-10.4.7.21   Ready    <none>   3m   v1.15.2
+NAME                STATUS   ROLES    AGE   VERSION
+hdss7-21.host.com   Ready    <none>   3m   v1.15.2
 ```
 
 ### 安装部署启动检查所有集群规划主机上的kubelet服务
@@ -1577,10 +1563,32 @@ NAME        STATUS   ROLES    AGE   VERSION
 ### 检查所有运算节点
 ```
 [root@hdss7-21 bin]# kubectl get node
-NAME        STATUS   ROLES    AGE   VERSION
-10.4.7.21   Ready    <none>  15m   v1.15.2
-10.4.7.22   Ready    <none>   3m   v1.15.2
+NAME                STATUS   ROLES    AGE   VERSION
+hdss7-21.host.com   Ready    <none>  15m   v1.15.2
+hdss7-22.host.com   Ready    <none>   3m   v1.15.2
 ```
+> 给node打角色标签
+
+```
+~]# kubectl label node hdss7-21.host.com node-role.kubernetes.io/master=
+node/hdss7-21.host.com labeled
+~]# kubectl label node hdss7-21.host.com node-role.kubernetes.io/node=
+node/hdss7-21.host.com labeled
+~]# kubectl label node hdss7-22.host.com node-role.kubernetes.io/master=
+node/hdss7-22.host.com labeled
+~]# kubectl label node hdss7-22.host.com node-role.kubernetes.io/node=
+node/hdss7-22.host.com labeled
+```
+> 标签过的效果
+
+```
+[root@hdss7-21 bin]# kubectl get node
+NAME                STATUS   ROLES         AGE     VERSION
+hdss7-21.host.com   Ready    master,node   10m     v1.15.4
+hdss7-22.host.com   Ready    master,node   5m44s   v1.15.4
+```
+
+**注：**删除标签用“-”
 
 ## 部署kube-proxy
 ### 集群规划
@@ -1738,23 +1746,18 @@ numprocs=1                                                           ; number of
 directory=/opt/kubernetes/server/bin                                 ; directory to cwd to before exec (def no cwd)
 autostart=true                                                       ; start at supervisord start (default: true)
 autorestart=true                                                     ; retstart at unexpected quit (default: true)
-startsecs=22                                                         ; number of secs prog must stay running (def. 1)
+startsecs=30                                                         ; number of secs prog must stay running (def. 1)
 startretries=3                                                       ; max # of serial start failures (default 3)
 exitcodes=0,2                                                        ; 'expected' exit codes for process (default 0,2)
 stopsignal=QUIT                                                      ; signal used to kill process (default TERM)
 stopwaitsecs=10                                                      ; max num secs to wait b4 SIGKILL (default 10)
 user=root                                                            ; setuid to this UNIX account to run the program
-redirect_stderr=false                                                ; redirect proc stderr to stdout (default false)
-stdout_logfile=/data/logs/kubernetes/kube-proxy/proxy.stderr.log     ; stderr log path, NONE for none; default AUTO
+redirect_stderr=true                                                 ; redirect proc stderr to stdout (default false)
+stdout_logfile=/data/logs/kubernetes/kube-proxy/proxy.stdout.log     ; stderr log path, NONE for none; default AUTO
 stdout_logfile_maxbytes=64MB                                         ; max # logfile bytes b4 rotation (default 50MB)
 stdout_logfile_backups=4                                             ; # of stdout logfile backups (default 10)
 stdout_capture_maxbytes=1MB                                          ; number of bytes in 'capturemode' (default 0)
 stdout_events_enabled=false                                          ; emit events on stdout writes (default false)
-stderr_logfile=/data/logs/kubernetes/kube-proxy/proxy.stdout.log     ; stdout log path, NONE for none; default AUTO
-stderr_logfile_maxbytes=64MB                                         ; max # logfile bytes b4 rotation (default 50MB)
-stderr_logfile_backups=4                                             ; # of stderr logfile backups (default 10)
-stderr_capture_maxbytes=1MB                                          ; number of bytes in 'capturemode' (default 0)
-stderr_events_enabled=false                                          ; emit events on stderr writes (default false)
 ```
 ### 启动服务并检查
 `HDSS7-21.host.com`上：
