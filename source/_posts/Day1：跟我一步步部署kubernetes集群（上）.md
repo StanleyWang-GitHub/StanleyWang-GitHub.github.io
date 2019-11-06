@@ -75,7 +75,7 @@ Installing:
 ```vi /etc/named/named.conf
 listen-on port 53 { 10.4.7.11; };
 allow-query     { any; };
-forwarders      { 8.8.8.8; };
+forwarders      { 10.4.7.1; };
 dnssec-enable no;
 dnssec-validation no;
 ```
@@ -212,7 +212,7 @@ PS C:\Users\Administrator> ping hdss7-200.host.com
 ### 创建生成CA证书签名请求（csr）的JSON配置文件
 ```vi /opt/certs/ca-csr.json
 {
-    "CN": "oldboyedu.com",
+    "CN": "OldboyEdu",
     "hosts": [
     ],
     "key": {
@@ -438,7 +438,9 @@ server {
 
 #### 启动
 ```
-[root@hdss7-200 harbor]# nginx
+[root@hdss7-200 harbor]# systemctl start nginx
+[root@hdss7-200 harbor]# systemctl enable nginx
+Created symlink from /etc/systemd/system/multi-user.target.wants/nginx.service to /usr/lib/systemd/system/nginx.service.
 
 [root@hdss7-200 harbor]# netstat -luntp|grep nginx
 tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      6590/nginx: master  
@@ -653,11 +655,10 @@ total 12
        --log-output stdout
 ```
 **注意：**etcd集群各主机的启动脚本略有不同，部署其他节点时注意修改。
-### 调整权限和目录
+### 调整权限
 `HDSS7-12.host.com`上：
 ```
 [root@hdss7-12 certs]# chmod +x /opt/etcd/etcd-server-startup.sh
-[root@hdss7-12 certs]# mkdir -p /data/logs/etcd-server
 ```
 ### 安装supervisor软件
 `HDSS7-12.host.com`上：
@@ -675,23 +676,18 @@ numprocs=1                                                      ; number of proc
 directory=/opt/etcd                                             ; directory to cwd to before exec (def no cwd)
 autostart=true                                                  ; start at supervisord start (default: true)
 autorestart=true                                                ; retstart at unexpected quit (default: true)
-startsecs=22                                                    ; number of secs prog must stay running (def. 1)
+startsecs=30                                                    ; number of secs prog must stay running (def. 1)
 startretries=3                                                  ; max # of serial start failures (default 3)
 exitcodes=0,2                                                   ; 'expected' exit codes for process (default 0,2)
 stopsignal=QUIT                                                 ; signal used to kill process (default TERM)
 stopwaitsecs=10                                                 ; max num secs to wait b4 SIGKILL (default 10)
 user=etcd                                                       ; setuid to this UNIX account to run the program
-redirect_stderr=false                                           ; redirect proc stderr to stdout (default false)
+redirect_stderr=true                                            ; redirect proc stderr to stdout (default false)
 stdout_logfile=/data/logs/etcd-server/etcd.stdout.log           ; stdout log path, NONE for none; default AUTO
 stdout_logfile_maxbytes=64MB                                    ; max # logfile bytes b4 rotation (default 50MB)
 stdout_logfile_backups=4                                        ; # of stdout logfile backups (default 10)
 stdout_capture_maxbytes=1MB                                     ; number of bytes in 'capturemode' (default 0)
 stdout_events_enabled=false                                     ; emit events on stdout writes (default false)
-stderr_logfile=/data/logs/etcd-server/etcd.stderr.log           ; stderr log path, NONE for none; default AUTO
-stderr_logfile_maxbytes=64MB                                    ; max # logfile bytes b4 rotation (default 50MB)
-stderr_logfile_backups=4                                        ; # of stderr logfile backups (default 10)
-stderr_capture_maxbytes=1MB                                     ; number of bytes in 'capturemode' (default 0)
-stderr_events_enabled=false                                     ; emit events on stderr writes (default false)
 ```
 **注意：**etcd集群各主机启动配置略有不同，配置其他节点时注意修改。
 
@@ -978,23 +974,18 @@ numprocs=1                                                      ; number of proc
 directory=/opt/kubernetes/server/bin                            ; directory to cwd to before exec (def no cwd)
 autostart=true                                                  ; start at supervisord start (default: true)
 autorestart=true                                                ; retstart at unexpected quit (default: true)
-startsecs=22                                                    ; number of secs prog must stay running (def. 1)
+startsecs=30                                                    ; number of secs prog must stay running (def. 1)
 startretries=3                                                  ; max # of serial start failures (default 3)
 exitcodes=0,2                                                   ; 'expected' exit codes for process (default 0,2)
 stopsignal=QUIT                                                 ; signal used to kill process (default TERM)
 stopwaitsecs=10                                                 ; max num secs to wait b4 SIGKILL (default 10)
 user=root                                                       ; setuid to this UNIX account to run the program
-redirect_stderr=false                                           ; redirect proc stderr to stdout (default false)
-stdout_logfile=/data/logs/kubernetes/kube-apiserver/apiserver.stderr.log        ; stderr log path, NONE for none; default AUTO
+redirect_stderr=true                                            ; redirect proc stderr to stdout (default false)
+stdout_logfile=/data/logs/kubernetes/kube-apiserver/apiserver.stdout.log        ; stderr log path, NONE for none; default AUTO
 stdout_logfile_maxbytes=64MB                                    ; max # logfile bytes b4 rotation (default 50MB)
 stdout_logfile_backups=4                                        ; # of stdout logfile backups (default 10)
 stdout_capture_maxbytes=1MB                                     ; number of bytes in 'capturemode' (default 0)
 stdout_events_enabled=false                                     ; emit events on stdout writes (default false)
-stderr_logfile=/data/logs/kubernetes/kube-apiserver/apiserver.stdout.log        ; stdout log path, NONE for none; default AUTO
-stderr_logfile_maxbytes=64MB                                    ; max # logfile bytes b4 rotation (default 50MB)
-stderr_logfile_backups=4                                        ; # of stderr logfile backups (default 10)
-stderr_capture_maxbytes=1MB                                     ; number of bytes in 'capturemode' (default 0)
-stderr_events_enabled=false                                     ; emit events on stderr writes (default false)
 ```
 ### 启动服务并检查
 `HDSS7-21.host.com`上：
