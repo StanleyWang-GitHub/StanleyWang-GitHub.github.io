@@ -704,7 +704,8 @@ spec:
         args:
         - --config.file=/data/etc/prometheus.yml
         - --storage.tsdb.path=/data/prom-db
-        - --storage.tsdb.retention=2h
+        - --storage.tsdb.min-block-duration=10m
+        - --storage.tsdb.retention=72h
         ports:
         - containerPort: 9090
           protocol: TCP
