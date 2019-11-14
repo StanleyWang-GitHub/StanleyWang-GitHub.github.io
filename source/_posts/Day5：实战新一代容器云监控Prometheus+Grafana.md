@@ -1326,6 +1326,9 @@ spec:
 ## 应用资源配置清单
 任意运算节点上：
 ```
+[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/grafana/rbac.yaml 
+clusterrole.rbac.authorization.k8s.io/grafana created
+clusterrolebinding.rbac.authorization.k8s.io/grafana created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/grafana/dp.yaml 
 deployment.extensions/grafana created
 [root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/grafana/svc.yaml 
