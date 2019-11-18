@@ -987,7 +987,7 @@ spec:
       - image: harbor.od.com/public/traefik:v1.7.2
         name: traefik-ingress
         ports:
-        - name: ingress-controller
+        - name: controller
           containerPort: 80
           hostPort: 81
         - name: admin-web
@@ -1025,7 +1025,7 @@ spec:
   ports:
     - protocol: TCP
       port: 80
-      name: ingress-controller
+      name: controller
     - protocol: TCP
       port: 8080
       name: admin-web
