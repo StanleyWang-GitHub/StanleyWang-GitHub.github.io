@@ -529,17 +529,14 @@ exitcodes=0,2                                                ; 'expected' exit c
 stopsignal=QUIT                                              ; signal used to kill process (default TERM)
 stopwaitsecs=10                                              ; max num secs to wait b4 SIGKILL (default 10)
 user=root                                                    ; setuid to this UNIX account to run the program
-redirect_stderr=false                                        ; redirect proc stderr to stdout (default false)
-stdout_logfile=/data/logs/flanneld/flanneld.stderr.log       ; stderr log path, NONE for none; default AUTO
+killasgroup=true                                             ; kill all process in a group
+stopasgroup=true                                             ; stop all process in a group
+redirect_stderr=true                                         ; redirect proc stderr to stdout (default false)
+stdout_logfile=/data/logs/flanneld/flanneld.stdout.log       ; stderr log path, NONE for none; default AUTO
 stdout_logfile_maxbytes=64MB                                 ; max # logfile bytes b4 rotation (default 50MB)
 stdout_logfile_backups=4                                     ; # of stdout logfile backups (default 10)
 stdout_capture_maxbytes=1MB                                  ; number of bytes in 'capturemode' (default 0)
 stdout_events_enabled=false                                  ; emit events on stdout writes (default false)
-stderr_logfile=/data/logs/flanneld/flanneld.stdout.log       ; stdout log path, NONE for none; default AUTO
-stderr_logfile_maxbytes=64MB                                 ; max # logfile bytes b4 rotation (default 50MB)
-stderr_logfile_backups=4                                     ; # of stderr logfile backups (default 10)
-stderr_capture_maxbytes=1MB                                  ; number of bytes in 'capturemode' (default 0)
-stderr_events_enabled=false                                  ; emit events on stderr writes (default false)
 ```
 
 ### 操作etcd，增加host-gw
