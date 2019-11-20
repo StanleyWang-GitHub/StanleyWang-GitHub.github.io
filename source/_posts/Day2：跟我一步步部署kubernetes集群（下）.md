@@ -264,6 +264,60 @@ Use "kubectl <command> --help" for more information about a given command.
 Use "kubectl options" for a list of global command-line options (applies to all commands).
 ```
 
+### kubectl命令自动补全
+各运算节点上：
+```
+[root@hdss7-21 ~]# yum install bash-completion -y
+Loaded plugins: fastestmirror
+Determining fastest mirrors
+epel/x86_64/metalink                                                                                                                                 | 4.0 kB  00:00:00     
+ * epel: mirrors.yun-idc.com
+base                                                                                                                                                 | 3.6 kB  00:00:00     
+docker-ce-stable                                                                                                                                     | 3.5 kB  00:00:00     
+epel                                                                                                                                                 | 5.3 kB  00:00:00     
+extras                                                                                                                                               | 2.9 kB  00:00:00     
+updates                                                                                                                                              | 2.9 kB  00:00:00     
+(1/4): epel/x86_64/updateinfo                                                                                                                        | 1.0 MB  00:00:00     
+(2/4): docker-ce-stable/x86_64/primary_db                                                                                                            |  37 kB  00:00:00     
+(3/4): epel/x86_64/primary_db                                                                                                                        | 6.9 MB  00:00:02     
+(4/4): updates/7/x86_64/primary_db                                                                                                                   | 4.2 MB  00:00:03     
+Resolving Dependencies
+--> Running transaction check
+---> Package bash-completion.noarch 1:2.1-6.el7 will be installed
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+============================================================================================================================================================================
+ Package                                        Arch                                  Version                                     Repository                           Size
+============================================================================================================================================================================
+Installing:
+ bash-completion                                noarch                                1:2.1-6.el7                                 base                                 85 k
+
+Transaction Summary
+============================================================================================================================================================================
+Install  1 Package
+
+Total download size: 85 k
+Installed size: 259 k
+Downloading packages:
+bash-completion-2.1-6.el7.noarch.rpm                                                                                                                 |  85 kB  00:00:00     
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+  Installing : 1:bash-completion-2.1-6.el7.noarch                                                                                                                       1/1 
+  Verifying  : 1:bash-completion-2.1-6.el7.noarch                                                                                                                       1/1 
+
+Installed:
+  bash-completion.noarch 1:2.1-6.el7                                                                                                                                        
+
+Complete!
+
+[root@hdss7-21 ~]# kubectl completion bash > /etc/bash_completion.d/kubectl
+```
+重新登录即可
+
 ## 声明式资源管理方法
 ### 陈述式资源管理方法的局限性
 ```
