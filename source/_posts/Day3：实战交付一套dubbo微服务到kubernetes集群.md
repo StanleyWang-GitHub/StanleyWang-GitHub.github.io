@@ -316,25 +316,18 @@ spec:
       containers:
       - name: jenkins
         image: harbor.od.com/infra/jenkins:v2.164.3
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
           protocol: TCP
         env:
         - name: JAVA_OPTS
           value: -Xmx512m -Xms512m
-        resources:
-          limits: 
-            cpu: 500m
-            memory: 1Gi
-          requests: 
-            cpu: 500m
-            memory: 1Gi
         volumeMounts:
         - name: data
           mountPath: /var/jenkins_home
         - name: docker
           mountPath: /run/docker.sock
-        imagePullPolicy: IfNotPresent
       imagePullSecrets:
       - name: harbor
       restartPolicy: Always
