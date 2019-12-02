@@ -132,7 +132,7 @@ ADD id_rsa /root/.ssh/id_rsa
 ADD config.json /root/.docker/config.json
 ADD get-docker.sh /get-docker.sh
 RUN echo "    StrictHostKeyChecking no" >> /etc/ssh/ssh_config &&\
-    /get-docker.sh
+    /get-docker.sh --mirror Aliyun
 ```
 这个Dockerfile里我们主要做了以下几件事
 - 设置容器用户为root
@@ -419,6 +419,10 @@ http://jenkins.od.com
 ```
 ### 安装插件
 ![jenkins安装页面](/images/jenkins-install.png "jenkins安装页面")
+
+```vi /data/nfs-volume/jenkins_home/updates
+sed -i 's/http:\/\/updates.jenkins-ci.org\/download/https:\/\/mirrors.tuna.tsinghua.edu.cn\/jenkins/g' default.json && sed -i 's/http:\/\/www.google.com/https:\/\/www.baidu.com/g' default.json
+```
 
 ### 设置用户
 ![jenkins设置用户](/images/jenkins-user.png "jenkins设置用户")
