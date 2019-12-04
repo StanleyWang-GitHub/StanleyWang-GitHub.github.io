@@ -810,7 +810,7 @@ dubbo.log4j.file=logs/dubbo-monitor.log
 [root@hdss7-200 src]# mkdir /data/dockerfile/dubbo-monitor
 [root@hdss7-200 src]# cp -a dubbo-monitor/* /data/dockerfile/dubbo-monitor/
 [root@hdss7-200 src]# cd /data/dockerfile/dubbo-monitor/
-[root@hdss7-200 dubbo-monitor]# sed -r -i -e '/^nohup/{p;:a;N;$!ba;d}'  ./dubbo-monitor-simple/bin/start.sh && sed  -r -i -e "s%^nohup(.*)%exec \1%"  ./dubbo-monitor-simple/bin/start.sh
+[root@hdss7-200 dubbo-monitor]# sed -r -i -e '/^nohup/{p;:a;N;$!ba;d}'  ./dubbo-monitor-simple/bin/start.sh && sed  -r -i -e "s%^nohup(.*)&%exec \1%"  ./dubbo-monitor-simple/bin/start.sh
 ```
 2. 准备Dockerfile
 ```vi /data/dockerfile/dubbo-monitor/Dockerfile
