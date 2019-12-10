@@ -801,14 +801,11 @@ specifically, section 10.2.3 ("Information Requirements").
     "hosts": [
         "127.0.0.1",
         "192.168.0.1",
+        "10.4.7.10",
         "kubernetes.default",
         "kubernetes.default.svc",
         "kubernetes.default.svc.cluster",
-        "kubernetes.default.svc.cluster.local",
-        "10.4.7.10",
-        "10.4.7.21",
-        "10.4.7.22",
-        "10.4.7.23"
+        "kubernetes.default.svc.cluster.local"
     ],
     "key": {
         "algo": "rsa",
@@ -1316,16 +1313,6 @@ HDSS7-22.host.com|kubelet|10.4.7.22
 {
     "CN": "k8s-kubelet",
     "hosts": [
-    "127.0.0.1",
-    "10.4.7.10",
-    "10.4.7.21",
-    "10.4.7.22",
-    "10.4.7.23",
-    "10.4.7.24",
-    "10.4.7.25",
-    "10.4.7.26",
-    "10.4.7.27",
-    "10.4.7.28"
     ],
     "key": {
         "algo": "rsa",
