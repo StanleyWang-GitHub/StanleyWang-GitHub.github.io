@@ -420,7 +420,7 @@ http://jenkins.od.com
 ### 安装插件
 ![jenkins安装页面](/images/jenkins-install.png "jenkins安装页面")
 
-```vi /data/nfs-volume/jenkins_home/updates
+```pwd /data/nfs-volume/jenkins_home/updates
 sed -i 's/http:\/\/updates.jenkins-ci.org\/download/https:\/\/mirrors.tuna.tsinghua.edu.cn\/jenkins/g' default.json && sed -i 's/http:\/\/www.google.com/https:\/\/www.baidu.com/g' default.json
 ```
 
