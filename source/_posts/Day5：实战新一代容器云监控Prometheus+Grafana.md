@@ -1531,3 +1531,314 @@ Datasource|Prometheus
 ![BlackBox](/images/grafana-blackbox.png "BlackBox")
 <!-- endtab -->
 {% endtabs %}
+
+# 部署Alertmanager
+## 准备Alertmanager镜像
+运维主机`HDSS7-200.host.com`上：
+```
+[root@hdss7-200 ~]# docker pull docker.io/prom/alertmanager:v0.19.0
+v0.19.0: Pulling from prom/alertmanager
+8e674ad76dce: Already exists 
+e77d2419d1c2: Already exists 
+fc0b06cce5a2: Pull complete 
+1cc6eb76696f: Pull complete 
+c4b97307695d: Pull complete 
+d49e70084386: Pull complete 
+Digest: sha256:7dbf4949a317a056d11ed8f379826b04d0665fad5b9334e1d69b23e946056cd3
+Status: Downloaded newer image for prom/alertmanager:v0.19.0
+docker.io/prom/alertmanager:v0.19.0
+[root@hdss7-200 ~]# docker tag 30594e96cbe8 harbor.od.com/infra/alertmanager:v0.19.0
+[root@hdss7-200 ~]# docker push harbor.od.com/infra/alertmanager:v0.19.0
+The push refers to repository [harbor.od.com/infra/alertmanager]
+bb7386721ef9: Pushed 
+13b4609b0c95: Pushed 
+ba550e698377: Pushed 
+fa5b6d2332d5: Pushed 
+3163e6173fcc: Pushed 
+6194458b07fc: Pushed 
+v0.19.0: digest: sha256:8088fac0a74480912fbb76088247d0c4e934f1dd2bd199b52c40c1e9dba69917 size: 1575
+```
+
+## 准备资源配置清单
+运维主机`HDSS7-200.host.com`上：
+```pwd /data/k8s-yaml
+[root@hdss7-200 k8s-yaml]# mkdir /data/k8s-yaml/alertmanager && cd /data/k8s-yaml/alertmanager 
+```
+{% tabs alertmanager%}
+<!-- tab ConfigMap -->
+vi /data/k8s-yaml/alertmanager/cm.yaml
+{% code %}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: infra
+data:
+  config.yml: |-
+    global:
+      # 在没有报警的情况下声明为已解决的时间
+      resolve_timeout: 5m
+      # 配置邮件发送信息
+      smtp_smarthost: 'smtp.163.com:25'
+      smtp_from: 'ws2319@163.com'
+      smtp_auth_username: 'ws2319@163.com'
+      smtp_auth_password: 'xxxxxx'
+      smtp_require_tls: false
+    # 所有报警信息进入后的根路由，用来设置报警的分发策略
+    route:
+      # 这里的标签列表是接收到报警信息后的重新分组标签，例如，接收到的报警信息里面有许多具有 cluster=A 和 alertname=LatncyHigh 这样的标签的报警信息将会批量被聚合到一个分组里面
+      group_by: ['alertname', 'cluster']
+      # 当一个新的报警分组被创建后，需要等待至少group_wait时间来初始化通知，这种方式可以确保您能有足够的时间为同一分组来获取多个警报，然后一起触发这个报警信息。
+      group_wait: 30s
+
+      # 当第一个报警发送后，等待'group_interval'时间来发送新的一组报警信息。
+      group_interval: 5m
+
+      # 如果一个报警信息已经发送成功了，等待'repeat_interval'时间来重新发送他们
+      repeat_interval: 5m
+
+      # 默认的receiver：如果一个报警没有被一个route匹配，则发送给默认的接收器
+      receiver: default
+
+    receivers:
+    - name: 'default'
+      email_configs:
+      - to: '87527941@qq.com'
+        send_resolved: true
+{% endcode %}
+<!-- endtab -->
+<!-- tab Deployment -->
+vi /data/k8s-yaml/alertmanager/dp.yaml
+{% code %}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: alertmanager
+  namespace: infra
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alertmanager
+  template:
+    metadata:
+      labels:
+        app: alertmanager
+    spec:
+      containers:
+      - name: alertmanager
+        image: harbor.od.com/infra/alertmanager:v0.19.0
+        args:
+          - "--config.file=/etc/alertmanager/config.yml"
+          - "--storage.path=/alertmanager"
+        ports:
+        - name: alertmanager
+          containerPort: 9093
+        volumeMounts:
+        - name: alertmanager-cm
+          mountPath: /etc/alertmanager
+      volumes:
+      - name: alertmanager-cm
+        configMap:
+          name: alertmanager-config
+      imagePullSecrets:
+      - name: harbor
+{% endcode %}
+<!-- endtab -->
+<!-- tab Service-->
+vi /data/k8s-yaml/alertmanager/svc.yaml
+{% code %}
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager
+  namespace: infra
+spec:
+  selector: 
+    app: alertmanager
+  ports:
+    - port: 80
+      targetPort: 9093
+{% endcode %}
+<!-- endtab -->
+{% endtabs %}
+
+## 应用资源配置清单
+任意运算节点上：
+
+```
+[root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/alertmanager/cm.yaml
+configmap/alertmanager-config created
+[root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/alertmanager/dp.yaml
+deployment.extensions/alertmanager created
+[root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/alertmanager/svc.yaml
+service/alertmanager created
+```
+
+## 准备alertmanger告警规则配置
+```vi /data/nfs-volume/prometheus/etc/rules.yml
+groups:
+- name: hostStatsAlert
+  rules:
+  - alert: hostCpuUsageAlert
+    expr: sum(avg without (cpu)(irate(node_cpu{mode!='idle'}[5m]))) by (instance) > 0.85
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "{{ $labels.instance }} CPU usage above 85% (current value: {{ $value }}%)"
+  - alert: hostMemUsageAlert
+    expr: (node_memory_MemTotal - node_memory_MemAvailable)/node_memory_MemTotal > 0.85
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "{{ $labels.instance }} MEM usage above 85% (current value: {{ $value }}%)"
+  - alert: OutOfInodes
+    expr: node_filesystem_free{fstype="overlay",mountpoint ="/"} / node_filesystem_size{fstype="overlay",mountpoint ="/"} * 100 < 10
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Out of inodes (instance {{ $labels.instance }})"
+      description: "Disk is almost running out of available inodes (< 10% left) (current value: {{ $value }})"
+  - alert: OutOfDiskSpace
+    expr: node_filesystem_free{fstype="overlay",mountpoint ="/rootfs"} / node_filesystem_size{fstype="overlay",mountpoint ="/rootfs"} * 100 < 10
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Out of disk space (instance {{ $labels.instance }})"
+      description: "Disk is almost full (< 10% left) (current value: {{ $value }})"
+  - alert: UnusualNetworkThroughputIn
+    expr: sum by (instance) (irate(node_network_receive_bytes[2m])) / 1024 / 1024 > 100
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Unusual network throughput in (instance {{ $labels.instance }})"
+      description: "Host network interfaces are probably receiving too much data (> 100 MB/s) (current value: {{ $value }})"
+  - alert: UnusualNetworkThroughputOut
+    expr: sum by (instance) (irate(node_network_transmit_bytes[2m])) / 1024 / 1024 > 100
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Unusual network throughput out (instance {{ $labels.instance }})"
+      description: "Host network interfaces are probably sending too much data (> 100 MB/s) (current value: {{ $value }})"
+  - alert: UnusualDiskReadRate
+    expr: sum by (instance) (irate(node_disk_bytes_read[2m])) / 1024 / 1024 > 50
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Unusual disk read rate (instance {{ $labels.instance }})"
+      description: "Disk is probably reading too much data (> 50 MB/s) (current value: {{ $value }})"
+  - alert: UnusualDiskWriteRate
+    expr: sum by (instance) (irate(node_disk_bytes_written[2m])) / 1024 / 1024 > 50
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Unusual disk write rate (instance {{ $labels.instance }})"
+      description: "Disk is probably writing too much data (> 50 MB/s) (current value: {{ $value }})"
+  - alert: UnusualDiskReadLatency
+    expr: rate(node_disk_read_time_ms[1m]) / rate(node_disk_reads_completed[1m]) > 100
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Unusual disk read latency (instance {{ $labels.instance }})"
+      description: "Disk latency is growing (read operations > 100ms) (current value: {{ $value }})"
+  - alert: UnusualDiskWriteLatency
+    expr: rate(node_disk_write_time_ms[1m]) / rate(node_disk_writes_completedl[1m]) > 100
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Unusual disk write latency (instance {{ $labels.instance }})"
+      description: "Disk latency is growing (write operations > 100ms) (current value: {{ $value }})"
+- name: http_status
+  rules:
+  - alert: ProbeFailed
+    expr: probe_success == 0
+    for: 1m
+    labels:
+      severity: error
+    annotations:
+      summary: "Probe failed (instance {{ $labels.instance }})"
+      description: "Probe failed (current value: {{ $value }})"
+  - alert: StatusCode
+    expr: probe_http_status_code <= 199 OR probe_http_status_code >= 400
+    for: 1m
+    labels:
+      severity: error
+    annotations:
+      summary: "Status Code (instance {{ $labels.instance }})"
+      description: "HTTP status code is not 200-399 (current value: {{ $value }})"
+  - alert: SslCertificateWillExpireSoon
+    expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 30
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "SSL certificate will expire soon (instance {{ $labels.instance }})"
+      description: "SSL certificate expires in 30 days (current value: {{ $value }})"
+  - alert: SslCertificateHasExpired
+    expr: probe_ssl_earliest_cert_expiry - time()  <= 0
+    for: 5m
+    labels:
+      severity: error
+    annotations:
+      summary: "SSL certificate has expired (instance {{ $labels.instance }})"
+      description: "SSL certificate has expired already (current value: {{ $value }})"
+  - alert: BlackboxSlowPing
+    expr: probe_icmp_duration_seconds > 2
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Blackbox slow ping (instance {{ $labels.instance }})"
+      description: "Blackbox ping took more than 2s (current value: {{ $value }})"
+  - alert: BlackboxSlowRequests
+    expr: probe_http_duration_seconds > 2 
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Blackbox slow requests (instance {{ $labels.instance }})"
+      description: "Blackbox request took more than 2s (current value: {{ $value }})"
+  - alert: PodCpuUsagePercent
+    expr: sum(sum(label_replace(irate(container_cpu_usage_seconds_total[1m]),"pod","$1","container_label_io_kubernetes_pod_name", "(.*)"))by(pod) / on(pod) group_right kube_pod_container_resource_limits_cpu_cores *100 )by(container,namespace,node,pod,severity) > 80
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Pod cpu usage percent has exceeded 80% (current value: {{ $value }}%)"
+```
+
+## 修改Prometheus配置
+- 在Prometheus配置文件最后添加
+
+```vi /data/nfs-volume/prometheus/etc/prometheus.yml
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager"]
+rule_files:
+ - "/data/etc/rules.yml"
+```
+
+- 重载Prometheus配置
+
+找到Prometheus运行的运算节点
+```
+[root@hdss7-21 ~]# ps -ef|grep prometheus
+root      3357  3030  0 21:12 pts/0    00:00:00 grep --color=auto prometheus
+root     16027 16008  5 Nov14 ?        1-14:55:02 /bin/prometheus --config.file=/data/etc/prometheus.yml --storage.tsdb.path=/data/prom-db --storage.tsdb.min-block-duration=10m --storage.tsdb.retention=72h
+root     41726 41706  0 Nov14 ?        02:47:00 /traefik --api --kubernetes --logLevel=INFO --insecureskipverify=true --kubernetes.endpoint=https://10.202.48.10:7443 --accesslog --accesslog.filepath=/var/log/traefik_access.log --traefiklog --traefiklog.filepath=/var/log/traefik.log --metrics.prometheus
+
+[root@hdss7-21 ~]# kill -SIGHUP 16027
+```
+
+## 测试告警
