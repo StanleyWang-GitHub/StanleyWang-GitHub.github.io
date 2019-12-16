@@ -1536,8 +1536,8 @@ Datasource|Prometheus
 ## 准备Alertmanager镜像
 运维主机`HDSS7-200.host.com`上：
 ```
-[root@hdss7-200 ~]# docker pull docker.io/prom/alertmanager:v0.19.0
-v0.19.0: Pulling from prom/alertmanager
+[root@hdss7-200 ~]# docker pull docker.io/prom/alertmanager:v0.14.0
+v0.14.0: Pulling from prom/alertmanager
 8e674ad76dce: Already exists 
 e77d2419d1c2: Already exists 
 fc0b06cce5a2: Pull complete 
@@ -1545,10 +1545,10 @@ fc0b06cce5a2: Pull complete
 c4b97307695d: Pull complete 
 d49e70084386: Pull complete 
 Digest: sha256:7dbf4949a317a056d11ed8f379826b04d0665fad5b9334e1d69b23e946056cd3
-Status: Downloaded newer image for prom/alertmanager:v0.19.0
-docker.io/prom/alertmanager:v0.19.0
-[root@hdss7-200 ~]# docker tag 30594e96cbe8 harbor.od.com/infra/alertmanager:v0.19.0
-[root@hdss7-200 ~]# docker push harbor.od.com/infra/alertmanager:v0.19.0
+Status: Downloaded newer image for prom/alertmanager:v0.14.0
+docker.io/prom/alertmanager:v0.14.0
+[root@hdss7-200 ~]# docker tag 30594e96cbe8 harbor.od.com/infra/alertmanager:v0.14.0
+[root@hdss7-200 ~]# docker push harbor.od.com/infra/alertmanager:v0.14.0
 The push refers to repository [harbor.od.com/infra/alertmanager]
 bb7386721ef9: Pushed 
 13b4609b0c95: Pushed 
@@ -1556,7 +1556,7 @@ ba550e698377: Pushed
 fa5b6d2332d5: Pushed 
 3163e6173fcc: Pushed 
 6194458b07fc: Pushed 
-v0.19.0: digest: sha256:8088fac0a74480912fbb76088247d0c4e934f1dd2bd199b52c40c1e9dba69917 size: 1575
+v0.14.0: digest: sha256:8088fac0a74480912fbb76088247d0c4e934f1dd2bd199b52c40c1e9dba69917 size: 1575
 ```
 
 ## 准备资源配置清单
@@ -1627,7 +1627,7 @@ spec:
     spec:
       containers:
       - name: alertmanager
-        image: harbor.od.com/infra/alertmanager:v0.19.0
+        image: harbor.od.com/infra/alertmanager:v0.14.0
         args:
           - "--config.file=/etc/alertmanager/config.yml"
           - "--storage.path=/alertmanager"
