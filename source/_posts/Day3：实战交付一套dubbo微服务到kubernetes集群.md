@@ -443,7 +443,8 @@ sed -i 's/http:\/\/updates.jenkins-ci.org\/download/https:\/\/mirrors.tuna.tsing
 ### 调整安全选项
 - Manage Jenkins
 - Configure Global Security
-- Allow anonymous read access
+> Authorization 勾上 Allow anonymous read access
+> CSRF Protection 勾掉 Prevent Cross Site Request Forgery exploits
 
 ## 配置New job
 - create new jobs
