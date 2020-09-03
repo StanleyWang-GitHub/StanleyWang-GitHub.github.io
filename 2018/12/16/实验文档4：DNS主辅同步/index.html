@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+  
+  
+    
+    
+  <script src="/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css?v=1.0.2">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.0.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon32.ico?v=7.0.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon16.ico?v=7.0.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.0.0" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '7.0.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="欢迎加入王导的VIP学习qq群：==&amp;gt;932194668&amp;lt;==   DNS主辅同步架构   IP 主机名 功能    10.4.7.11 HDSS7-11.host.com DNS主   10.4.7.12 HDSS7-12.host.com DNS辅   注意：所有资源记录的增、删、改的操作，均在主DNS上进行，辅助DNS仅提供查询功能     辅助DNS主机上安装部署BIND9安">
+<meta property="og:type" content="article">
+<meta property="og:title" content="实验文档4：DNS主辅同步">
+<meta property="og:url" content="https://StanleyWang-GitHub.github.io/2018/12/16/实验文档4：DNS主辅同步/index.html">
+<meta property="og:site_name" content="Stanley&#39;s Blog">
+<meta property="og:description" content="欢迎加入王导的VIP学习qq群：==&amp;gt;932194668&amp;lt;==   DNS主辅同步架构   IP 主机名 功能    10.4.7.11 HDSS7-11.host.com DNS主   10.4.7.12 HDSS7-12.host.com DNS辅   注意：所有资源记录的增、删、改的操作，均在主DNS上进行，辅助DNS仅提供查询功能     辅助DNS主机上安装部署BIND9安">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2020-09-03T08:33:09.898Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="实验文档4：DNS主辅同步">
+<meta name="twitter:description" content="欢迎加入王导的VIP学习qq群：==&amp;gt;932194668&amp;lt;==   DNS主辅同步架构   IP 主机名 功能    10.4.7.11 HDSS7-11.host.com DNS主   10.4.7.12 HDSS7-12.host.com DNS辅   注意：所有资源记录的增、删、改的操作，均在主DNS上进行，辅助DNS仅提供查询功能     辅助DNS主机上安装部署BIND9安">
+
+
+
+
+
+
+  <link rel="canonical" href="https://StanleyWang-GitHub.github.io/2018/12/16/实验文档4：DNS主辅同步/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>实验文档4：DNS主辅同步 | Stanley's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Stanley's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://StanleyWang-GitHub.github.io/2018/12/16/实验文档4：DNS主辅同步/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Stanley Wang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Stanley's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">实验文档4：DNS主辅同步
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-12-16 14:12:56" itemprop="dateCreated datePublished" datetime="2018-12-16T14:12:56+08:00">2018-12-16</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-09-03 16:33:09" itemprop="dateModified" datetime="2020-09-03T16:33:09+08:00">2020-09-03</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/Web-DNS技术/" itemprop="url" rel="index"><span itemprop="name">Web DNS技术</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-symbolscount">
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">本文字数：</span>
+                
+                <span title="本文字数">4.8k</span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">4 分钟</span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <hr>
+<blockquote class="blockquote-center"><p>欢迎加入王导的VIP学习qq群：==&gt;<a href="http://shang.qq.com/wpa/qunwpa?idkey=78869fddc5a661acb0639315eb52997c108de6625df5f0ee2f0372f176a032a6" target="_blank" rel="noopener"><font color="FF7F50">932194668</font></a>&lt;==</p>
+</blockquote>
+<hr>
+<h1 id="DNS主辅同步架构"><a href="#DNS主辅同步架构" class="headerlink" title="DNS主辅同步架构"></a>DNS主辅同步架构</h1><table>
+<thead>
+<tr>
+<th>IP</th>
+<th>主机名</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>10.4.7.11</td>
+<td>HDSS7-11.host.com</td>
+<td>DNS主</td>
+</tr>
+<tr>
+<td>10.4.7.12</td>
+<td>HDSS7-12.host.com</td>
+<td>DNS辅</td>
+</tr>
+<tr>
+<td><strong>注意</strong>：所有资源记录的增、删、改的操作，均在主DNS上进行，辅助DNS仅提供查询功能</td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<h1 id="辅助DNS主机上安装部署BIND9"><a href="#辅助DNS主机上安装部署BIND9" class="headerlink" title="辅助DNS主机上安装部署BIND9"></a>辅助DNS主机上安装部署BIND9</h1><h2 id="安装BIND9软件"><a href="#安装BIND9软件" class="headerlink" title="安装BIND9软件"></a>安装BIND9软件</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">#yum install bind</span><br><span class="line">=============================================================================================================================================================</span><br><span class="line"> Package                                       Arch                          Version                                    Repository                      Size</span><br><span class="line">=============================================================================================================================================================</span><br><span class="line">Installing:</span><br><span class="line"> bind                                          x86_64                        32:9.9.4-73.el7_6                          updates                        1.8 M</span><br></pre></td></tr></table></figure>
+
+<p><strong>注意</strong>：辅助DNS的BIND9软件版本应小于等于主DNS的BIND9软件版本</p>
+<h2 id="修改辅助DNS主配置文件"><a href="#修改辅助DNS主配置文件" class="headerlink" title="修改辅助DNS主配置文件"></a>修改辅助DNS主配置文件</h2><p>修改主配置文件，并加入<code>masterfile-format text;</code></p>
+<figure class="highlight plain"><figcaption><span>/etc/named.conf</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">options &#123;</span><br><span class="line">  listen-on port 53 &#123; 10.4.7.12; &#125;;</span><br><span class="line">  directory 	&quot;/var/named&quot;;</span><br><span class="line">  dump-file 	&quot;/var/named/data/cache_dump.db&quot;;</span><br><span class="line">  statistics-file &quot;/var/named/data/named_stats.txt&quot;;</span><br><span class="line">  memstatistics-file &quot;/var/named/data/named_mem_stats.txt&quot;;</span><br><span class="line">  allow-query     &#123; any; &#125;;</span><br><span class="line">  masterfile-format text;</span><br><span class="line">  /* </span><br><span class="line">   - If you are building an AUTHORITATIVE DNS server, do NOT enable recursion.</span><br><span class="line">   - If you are building a RECURSIVE (caching) DNS server, you need to enable </span><br><span class="line">     recursion. </span><br><span class="line">   - If your recursive DNS server has a public IP address, you MUST enable access </span><br><span class="line">     control to limit queries to your legitimate users. Failing to do so will</span><br><span class="line">     cause your server to become part of large scale DNS amplification </span><br><span class="line">     attacks. Implementing BCP38 within your network would greatly</span><br><span class="line">     reduce such attack surface </span><br><span class="line">  */</span><br><span class="line">  recursion yes;</span><br><span class="line"></span><br><span class="line">  dnssec-enable no;</span><br><span class="line">  dnssec-validation no;</span><br><span class="line"></span><br><span class="line">  /* Path to ISC DLV key */</span><br><span class="line">  bindkeys-file &quot;/etc/named.iscdlv.key&quot;;</span><br><span class="line"></span><br><span class="line">  managed-keys-directory &quot;/var/named/dynamic&quot;;</span><br><span class="line"></span><br><span class="line">  pid-file &quot;/run/named/named.pid&quot;;</span><br><span class="line">  session-keyfile &quot;/run/named/session.key&quot;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">logging &#123;</span><br><span class="line">  channel default_debug &#123;</span><br><span class="line">    file &quot;data/named.run&quot;;</span><br><span class="line">    severity dynamic;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">zone &quot;.&quot; IN &#123;</span><br><span class="line">  type hint;</span><br><span class="line">  file &quot;named.ca&quot;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">include &quot;/etc/named.rfc1912.zones&quot;;</span><br><span class="line">include &quot;/etc/named.root.key&quot;;</span><br></pre></td></tr></table></figure>
+
+<h1 id="修改主DNS主配置文件"><a href="#修改主DNS主配置文件" class="headerlink" title="修改主DNS主配置文件"></a>修改主DNS主配置文件</h1><h2 id="加入以下配置"><a href="#加入以下配置" class="headerlink" title="加入以下配置"></a>加入以下配置</h2><figure class="highlight plain"><figcaption><span>/etc/named.conf</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">allow-transfer &#123; 10.4.7.12; &#125;;</span><br><span class="line">also-notify &#123; 10.4.7.12; &#125;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="检查配置并重启主DNS"><a href="#检查配置并重启主DNS" class="headerlink" title="检查配置并重启主DNS"></a>检查配置并重启主DNS</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># named-checkconf</span><br><span class="line"># systemctl restart named</span><br></pre></td></tr></table></figure>
+
+<h2 id="检查完全区域数据传送"><a href="#检查完全区域数据传送" class="headerlink" title="检查完全区域数据传送"></a>检查完全区域数据传送</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-12 ~]# dig -t axfr host.com @10.4.7.11</span><br><span class="line"></span><br><span class="line">; &lt;&lt;&gt;&gt; DiG 9.9.4-RedHat-9.9.4-73.el7_6 &lt;&lt;&gt;&gt; -t axfr host.com @10.4.7.11</span><br><span class="line">;; global options: +cmd</span><br><span class="line">host.com.		600	IN	SOA	dns.host.com. dnsadmin.host.com. 2018121601 10800 900 604800 86400</span><br><span class="line">host.com.		600	IN	NS	ns1.host.com.</span><br><span class="line">HDSS7-11.host.com.	60	IN	A	10.4.7.11</span><br><span class="line">HDSS7-12.host.com.	60	IN	A	10.4.7.12</span><br><span class="line">ns1.host.com.		60	IN	A	10.4.7.11</span><br><span class="line">host.com.		600	IN	SOA	dns.host.com. dnsadmin.host.com. 2018121601 10800 900 604800 86400</span><br><span class="line">;; Query time: 0 msec</span><br><span class="line">;; SERVER: 10.4.7.11#53(10.4.7.11)</span><br><span class="line">;; WHEN: Sun Dec 16 14:16:01 CST 2018</span><br><span class="line">;; XFR size: 6 records (messages 1, bytes 220)</span><br></pre></td></tr></table></figure>
+
+<h1 id="辅助DNS上创建自定义正解区域配置"><a href="#辅助DNS上创建自定义正解区域配置" class="headerlink" title="辅助DNS上创建自定义正解区域配置"></a>辅助DNS上创建自定义正解区域配置</h1><figure class="highlight plain"><figcaption><span>/etc/named.rfc1912.zones</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">zone &quot;host.com&quot; IN &#123;</span><br><span class="line">  type  slave;</span><br><span class="line">  masters &#123; 10.4.7.11; &#125;;</span><br><span class="line">  file  &quot;slaves/host.com.zone&quot;;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="检查配置并启动辅助DNS"><a href="#检查配置并启动辅助DNS" class="headerlink" title="检查配置并启动辅助DNS"></a>检查配置并启动辅助DNS</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># named-checkconf</span><br><span class="line"># systemctl start named</span><br></pre></td></tr></table></figure>
+
+<h2 id="检查同步过来的区域数据库文件"><a href="#检查同步过来的区域数据库文件" class="headerlink" title="检查同步过来的区域数据库文件"></a>检查同步过来的区域数据库文件</h2><figure class="highlight plain"><figcaption><span>/var/named/slaves/host.com.zone</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-12 slaves]# ll</span><br><span class="line">-rw-r--r-- 1 named named 392 Feb 10 21:08 host.com.zone</span><br><span class="line">[root@hdss7-12 slaves]# cat host.com.zone </span><br><span class="line">$ORIGIN .</span><br><span class="line">$TTL 600	; 10 minutes</span><br><span class="line">host.com		IN SOA	dns.host.com. dnsadmin.host.com. (</span><br><span class="line">				2018121601 ; serial</span><br><span class="line">				10800      ; refresh (3 hours)</span><br><span class="line">				900        ; retry (15 minutes)</span><br><span class="line">				604800     ; expire (1 week)</span><br><span class="line">				86400      ; minimum (1 day)</span><br><span class="line">				)</span><br><span class="line">			NS	ns1.host.com.</span><br><span class="line">$ORIGIN host.com.</span><br><span class="line">$TTL 60	; 1 minute</span><br><span class="line">HDSS7-11		A	10.4.7.11</span><br><span class="line">HDSS7-12		A	10.4.7.12</span><br><span class="line">ns1			A	10.4.7.11</span><br></pre></td></tr></table></figure>
+
+<h2 id="检查解析是否正确"><a href="#检查解析是否正确" class="headerlink" title="检查解析是否正确"></a>检查解析是否正确</h2><h3 id="使用主DNS查询一个A记录"><a href="#使用主DNS查询一个A记录" class="headerlink" title="使用主DNS查询一个A记录"></a>使用主DNS查询一个A记录</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># dig -t A HDSS7-11.host.com @10.4.7.11 +short</span><br><span class="line">10.4.7.11</span><br></pre></td></tr></table></figure>
+
+<h3 id="使用辅助DNS查询一个A记录"><a href="#使用辅助DNS查询一个A记录" class="headerlink" title="使用辅助DNS查询一个A记录"></a>使用辅助DNS查询一个A记录</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># dig -t A HDSS7-11.host.com @10.4.7.12 +short</span><br><span class="line">10.4.7.11</span><br></pre></td></tr></table></figure>
+
+<h1 id="辅助DNS上创建自定义反解区域配置"><a href="#辅助DNS上创建自定义反解区域配置" class="headerlink" title="辅助DNS上创建自定义反解区域配置"></a>辅助DNS上创建自定义反解区域配置</h1><p>略</p>
+<h1 id="增加、删除、修改记录，并验证同步"><a href="#增加、删除、修改记录，并验证同步" class="headerlink" title="增加、删除、修改记录，并验证同步"></a>增加、删除、修改记录，并验证同步</h1><p><strong>注意</strong>：一定要手动修改主DNS上SOA记录里的serial值！</p>
+<h2 id="增加记录"><a href="#增加记录" class="headerlink" title="增加记录"></a>增加记录</h2><h2 id="删除记录"><a href="#删除记录" class="headerlink" title="删除记录"></a>删除记录</h2><h2 id="修改记录"><a href="#修改记录" class="headerlink" title="修改记录"></a>修改记录</h2><h1 id="再增加一个od-com的业务域，并验证主辅同步（复习）"><a href="#再增加一个od-com的业务域，并验证主辅同步（复习）" class="headerlink" title="再增加一个od.com的业务域，并验证主辅同步（复习）"></a>再增加一个od.com的业务域，并验证主辅同步（复习）</h1><h2 id="主DNS上增加自定义区域"><a href="#主DNS上增加自定义区域" class="headerlink" title="主DNS上增加自定义区域"></a>主DNS上增加自定义区域</h2><h2 id="主DNS上增加自定义区域数据库文件"><a href="#主DNS上增加自定义区域数据库文件" class="headerlink" title="主DNS上增加自定义区域数据库文件"></a>主DNS上增加自定义区域数据库文件</h2><h2 id="主DNS上增加自定义区域资源记录"><a href="#主DNS上增加自定义区域资源记录" class="headerlink" title="主DNS上增加自定义区域资源记录"></a>主DNS上增加自定义区域资源记录</h2><h2 id="检查配置并重启主DNS服务"><a href="#检查配置并重启主DNS服务" class="headerlink" title="检查配置并重启主DNS服务"></a>检查配置并重启主DNS服务</h2><h2 id="辅助DNS上增加自定义区域"><a href="#辅助DNS上增加自定义区域" class="headerlink" title="辅助DNS上增加自定义区域"></a>辅助DNS上增加自定义区域</h2><h2 id="检查完全区域数据传送-1"><a href="#检查完全区域数据传送-1" class="headerlink" title="检查完全区域数据传送"></a>检查完全区域数据传送</h2><h2 id="检查配置并重启辅助DNS服务"><a href="#检查配置并重启辅助DNS服务" class="headerlink" title="检查配置并重启辅助DNS服务"></a>检查配置并重启辅助DNS服务</h2><h2 id="验证主辅同步"><a href="#验证主辅同步" class="headerlink" title="验证主辅同步"></a>验证主辅同步</h2><h3 id="分别使用主DNS和辅助DNS查询新业务域的A记录"><a href="#分别使用主DNS和辅助DNS查询新业务域的A记录" class="headerlink" title="分别使用主DNS和辅助DNS查询新业务域的A记录"></a>分别使用主DNS和辅助DNS查询新业务域的A记录</h3><h3 id="在主DNS上新增一条A记录，并验证主辅同步"><a href="#在主DNS上新增一条A记录，并验证主辅同步" class="headerlink" title="在主DNS上新增一条A记录，并验证主辅同步"></a>在主DNS上新增一条A记录，并验证主辅同步</h3><h3 id="在主DNS上修改一条A记录，并验证主辅同步"><a href="#在主DNS上修改一条A记录，并验证主辅同步" class="headerlink" title="在主DNS上修改一条A记录，并验证主辅同步"></a>在主DNS上修改一条A记录，并验证主辅同步</h3><h3 id="在主DNS上删除一条A记录，并验证主辅同步"><a href="#在主DNS上删除一条A记录，并验证主辅同步" class="headerlink" title="在主DNS上删除一条A记录，并验证主辅同步"></a>在主DNS上删除一条A记录，并验证主辅同步</h3><h1 id="客户端配置DNS解析高可用"><a href="#客户端配置DNS解析高可用" class="headerlink" title="客户端配置DNS解析高可用"></a>客户端配置DNS解析高可用</h1><p>在客户端主机（以Linux主机为例，Windows和Mac操作系统略）配置主、辅DNS</p>
+<figure class="highlight plain"><figcaption><span>/etc/resolv.conf</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">#cat /etc/resolv.conf </span><br><span class="line"># Generated by NetworkManager</span><br><span class="line">search host.com od.com</span><br><span class="line">nameserver 10.4.7.11</span><br><span class="line">nameserver 10.4.7.12</span><br></pre></td></tr></table></figure>
+
+<p>这样客户端高可用就配置好了，任意一个DNS服务器宕机也不会影响正常解析</p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById(&quot;QR&quot;); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechat.png" alt="Stanley Wang 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.2yuan.png" alt="Stanley Wang 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/12/16/实验文档5：DNS工具和rndc远程管理DNS实战/" rel="next" title="实验文档5：DNS工具和rndc远程管理DNS实战">
+                <i class="fa fa-chevron-left"></i> 实验文档5：DNS工具和rndc远程管理DNS实战
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/12/16/实验文档3：自定义反解域/" rel="prev" title="实验文档3：自定义反解域">
+                实验文档3：自定义反解域 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.jpg" alt="Stanley Wang">
+            
+              <p class="site-author-name" itemprop="name">Stanley Wang</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">19</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://gitee.com/stanleywang" title="GitHub &rarr; https://gitee.com/stanleywang" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="mailto:stanley.wang.m@qq.com" title="E-Mail &rarr; mailto:stanley.wang.m@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#DNS主辅同步架构"><span class="nav-number">1.</span> <span class="nav-text">DNS主辅同步架构</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#辅助DNS主机上安装部署BIND9"><span class="nav-number">2.</span> <span class="nav-text">辅助DNS主机上安装部署BIND9</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#安装BIND9软件"><span class="nav-number">2.1.</span> <span class="nav-text">安装BIND9软件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#修改辅助DNS主配置文件"><span class="nav-number">2.2.</span> <span class="nav-text">修改辅助DNS主配置文件</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#修改主DNS主配置文件"><span class="nav-number">3.</span> <span class="nav-text">修改主DNS主配置文件</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#加入以下配置"><span class="nav-number">3.1.</span> <span class="nav-text">加入以下配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#检查配置并重启主DNS"><span class="nav-number">3.2.</span> <span class="nav-text">检查配置并重启主DNS</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#检查完全区域数据传送"><span class="nav-number">3.3.</span> <span class="nav-text">检查完全区域数据传送</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#辅助DNS上创建自定义正解区域配置"><span class="nav-number">4.</span> <span class="nav-text">辅助DNS上创建自定义正解区域配置</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#检查配置并启动辅助DNS"><span class="nav-number">4.1.</span> <span class="nav-text">检查配置并启动辅助DNS</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#检查同步过来的区域数据库文件"><span class="nav-number">4.2.</span> <span class="nav-text">检查同步过来的区域数据库文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#检查解析是否正确"><span class="nav-number">4.3.</span> <span class="nav-text">检查解析是否正确</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#使用主DNS查询一个A记录"><span class="nav-number">4.3.1.</span> <span class="nav-text">使用主DNS查询一个A记录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用辅助DNS查询一个A记录"><span class="nav-number">4.3.2.</span> <span class="nav-text">使用辅助DNS查询一个A记录</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#辅助DNS上创建自定义反解区域配置"><span class="nav-number">5.</span> <span class="nav-text">辅助DNS上创建自定义反解区域配置</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#增加、删除、修改记录，并验证同步"><span class="nav-number">6.</span> <span class="nav-text">增加、删除、修改记录，并验证同步</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#增加记录"><span class="nav-number">6.1.</span> <span class="nav-text">增加记录</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#删除记录"><span class="nav-number">6.2.</span> <span class="nav-text">删除记录</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#修改记录"><span class="nav-number">6.3.</span> <span class="nav-text">修改记录</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#再增加一个od-com的业务域，并验证主辅同步（复习）"><span class="nav-number">7.</span> <span class="nav-text">再增加一个od.com的业务域，并验证主辅同步（复习）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#主DNS上增加自定义区域"><span class="nav-number">7.1.</span> <span class="nav-text">主DNS上增加自定义区域</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#主DNS上增加自定义区域数据库文件"><span class="nav-number">7.2.</span> <span class="nav-text">主DNS上增加自定义区域数据库文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#主DNS上增加自定义区域资源记录"><span class="nav-number">7.3.</span> <span class="nav-text">主DNS上增加自定义区域资源记录</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#检查配置并重启主DNS服务"><span class="nav-number">7.4.</span> <span class="nav-text">检查配置并重启主DNS服务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#辅助DNS上增加自定义区域"><span class="nav-number">7.5.</span> <span class="nav-text">辅助DNS上增加自定义区域</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#检查完全区域数据传送-1"><span class="nav-number">7.6.</span> <span class="nav-text">检查完全区域数据传送</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#检查配置并重启辅助DNS服务"><span class="nav-number">7.7.</span> <span class="nav-text">检查配置并重启辅助DNS服务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#验证主辅同步"><span class="nav-number">7.8.</span> <span class="nav-text">验证主辅同步</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#分别使用主DNS和辅助DNS查询新业务域的A记录"><span class="nav-number">7.8.1.</span> <span class="nav-text">分别使用主DNS和辅助DNS查询新业务域的A记录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#在主DNS上新增一条A记录，并验证主辅同步"><span class="nav-number">7.8.2.</span> <span class="nav-text">在主DNS上新增一条A记录，并验证主辅同步</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#在主DNS上修改一条A记录，并验证主辅同步"><span class="nav-number">7.8.3.</span> <span class="nav-text">在主DNS上修改一条A记录，并验证主辅同步</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#在主DNS上删除一条A记录，并验证主辅同步"><span class="nav-number">7.8.4.</span> <span class="nav-text">在主DNS上删除一条A记录，并验证主辅同步</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#客户端配置DNS解析高可用"><span class="nav-number">8.</span> <span class="nav-text">客户端配置DNS解析高可用</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Stanley Wang</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+    <span title="站点总字数">278k</span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    
+    <span title="站点阅读时长">4:13</span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+    
+    
+  
+  <script color="0,0,255" opacity="0.5" zindex="-1" count="99" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/src/utils.js?v=7.0.0"></script>
+
+  <script src="/js/src/motion.js?v=7.0.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/src/schemes/muse.js?v=7.0.0"></script>
+
+
+
+
+  
+  <script src="/js/src/scrollspy.js?v=7.0.0"></script>
+<script src="/js/src/post-details.js?v=7.0.0"></script>
+
+
+
+  
+
+
+  <script src="/js/src/bootstrap.js?v=7.0.0"></script>
+
+
+
+  
+
+
+  
+
+
+  
+  <script>
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url).replace(/\/{2,}/g, '/');
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x"></i></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x"></i></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+  
+
+  
+  
+
+  
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  <style>
+    .copy-btn {
+      display: inline-block;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 20px;
+      color: #333;
+      white-space: nowrap;
+      vertical-align: middle;
+      cursor: pointer;
+      background-color: #eee;
+      background-image: linear-gradient(#fcfcfc, #eee);
+      border: 1px solid #d5d5d5;
+      border-radius: 3px;
+      user-select: none;
+      outline: 0;
+    }
+
+    .highlight-wrap .copy-btn {
+      transition: opacity .3s ease-in-out;
+      opacity: 0;
+      padding: 2px 6px;
+      position: absolute;
+      right: 4px;
+      top: 8px;
+    }
+
+    .highlight-wrap:hover .copy-btn,
+    .highlight-wrap .copy-btn:focus {
+      opacity: 1
+    }
+
+    .highlight-wrap {
+      position: relative;
+    }
+  </style>
+  <script>
+    $('.highlight').each(function(i, e) {
+      var $wrap = $('<div>').addClass('highlight-wrap');
+      $(e).after($wrap);
+      $wrap.append($('<button>').addClass('copy-btn').append('复制').on('click', function(e) {
+        var code = $(this).parent().find('.code').find('.line').map(function(i, e) {
+          return $(e).text();
+        }).toArray().join('\n');
+        var ta = document.createElement('textarea');
+        var range = document.createRange(); //For Chrome
+        var sel = window.getSelection(); //For Chrome
+        var yPosition = window.pageYOffset || document.documentElement.scrollTop;
+        ta.style.top = yPosition + 'px'; //Prevent page scroll
+        ta.style.position = 'absolute';
+        ta.style.opacity = '0';
+        ta.value = code;
+        ta.textContent = code; //For FireFox
+        ta.contentEditable = true;
+        ta.readOnly = false;
+        document.body.appendChild(ta);
+        range.selectNode(ta);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        ta.setSelectionRange(0, code.length);
+        var result = document.execCommand('copy');
+        
+          if (result) $(this).text('复制成功');
+          else $(this).text('复制失败');
+        
+        ta.blur(); //For iOS
+        $(this).blur();
+      })).on('mouseleave', function(e) {
+        var $b = $(this).find('.copy-btn');
+        setTimeout(function() {
+          $b.text('复制');
+        }, 300);
+      }).append(e);
+    })
+  </script>
+
+
+</body>
+</html>

@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+  
+  
+    
+    
+  <script src="/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css?v=1.0.2">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.0.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon32.ico?v=7.0.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon16.ico?v=7.0.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.0.0" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '7.0.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="欢迎加入王导的VIP学习qq群：==&amp;gt;932194668&amp;lt;==   DNS管理工具安装1# yum install bind-utils -y  工具一：nslookupWindows操作系统也有的一个常用工具 交互式123456789101112131415161718192021222324#nslookup &amp;gt; server localhostDefault server">
+<meta property="og:type" content="article">
+<meta property="og:title" content="实验文档5：DNS工具和rndc远程管理DNS实战">
+<meta property="og:url" content="https://StanleyWang-GitHub.github.io/2018/12/16/实验文档5：DNS工具和rndc远程管理DNS实战/index.html">
+<meta property="og:site_name" content="Stanley&#39;s Blog">
+<meta property="og:description" content="欢迎加入王导的VIP学习qq群：==&amp;gt;932194668&amp;lt;==   DNS管理工具安装1# yum install bind-utils -y  工具一：nslookupWindows操作系统也有的一个常用工具 交互式123456789101112131415161718192021222324#nslookup &amp;gt; server localhostDefault server">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2020-09-03T08:33:09.901Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="实验文档5：DNS工具和rndc远程管理DNS实战">
+<meta name="twitter:description" content="欢迎加入王导的VIP学习qq群：==&amp;gt;932194668&amp;lt;==   DNS管理工具安装1# yum install bind-utils -y  工具一：nslookupWindows操作系统也有的一个常用工具 交互式123456789101112131415161718192021222324#nslookup &amp;gt; server localhostDefault server">
+
+
+
+
+
+
+  <link rel="canonical" href="https://StanleyWang-GitHub.github.io/2018/12/16/实验文档5：DNS工具和rndc远程管理DNS实战/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>实验文档5：DNS工具和rndc远程管理DNS实战 | Stanley's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Stanley's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://StanleyWang-GitHub.github.io/2018/12/16/实验文档5：DNS工具和rndc远程管理DNS实战/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Stanley Wang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Stanley's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">实验文档5：DNS工具和rndc远程管理DNS实战
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-12-16 12:12:56" itemprop="dateCreated datePublished" datetime="2018-12-16T12:12:56+08:00">2018-12-16</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-09-03 16:33:09" itemprop="dateModified" datetime="2020-09-03T16:33:09+08:00">2020-09-03</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/Web-DNS技术/" itemprop="url" rel="index"><span itemprop="name">Web DNS技术</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-symbolscount">
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">本文字数：</span>
+                
+                <span title="本文字数">6.1k</span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">6 分钟</span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <hr>
+<blockquote class="blockquote-center"><p>欢迎加入王导的VIP学习qq群：==&gt;<a href="http://shang.qq.com/wpa/qunwpa?idkey=78869fddc5a661acb0639315eb52997c108de6625df5f0ee2f0372f176a032a6" target="_blank" rel="noopener"><font color="FF7F50">932194668</font></a>&lt;==</p>
+</blockquote>
+<hr>
+<h1 id="DNS管理工具"><a href="#DNS管理工具" class="headerlink" title="DNS管理工具"></a>DNS管理工具</h1><h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># yum install bind-utils -y</span><br></pre></td></tr></table></figure>
+
+<h2 id="工具一：nslookup"><a href="#工具一：nslookup" class="headerlink" title="工具一：nslookup"></a>工具一：nslookup</h2><p>Windows操作系统也有的一个常用工具</p>
+<h3 id="交互式"><a href="#交互式" class="headerlink" title="交互式"></a>交互式</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">#nslookup </span><br><span class="line">&gt; server localhost</span><br><span class="line">Default server: localhost</span><br><span class="line">Address: 127.0.0.1#53</span><br><span class="line">Default server: localhost</span><br><span class="line">Address: 127.0.0.1#53</span><br><span class="line">&gt; www.bkjf-inc.com</span><br><span class="line">Server:		localhost</span><br><span class="line">Address:	127.0.0.1#53</span><br><span class="line"></span><br><span class="line">Name:	www.bkjf-inc.com</span><br><span class="line">Address: 192.144.198.128</span><br><span class="line">-------以上是权威应答</span><br><span class="line">&gt; server 8.8.8.8</span><br><span class="line">Default server: 8.8.8.8</span><br><span class="line">Address: 8.8.8.8#53</span><br><span class="line">&gt; www.bkjf-inc.com</span><br><span class="line">Server:		8.8.8.8</span><br><span class="line">Address:	8.8.8.8#53</span><br><span class="line"></span><br><span class="line">Non-authoritative answer:</span><br><span class="line">Name:	www.bkjf-inc.com</span><br><span class="line">Address: 192.144.198.128</span><br><span class="line">-------以上是非权威应答</span><br></pre></td></tr></table></figure>
+
+<h3 id="非交互式"><a href="#非交互式" class="headerlink" title="非交互式"></a>非交互式</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">#nslookup www.baidu.com</span><br><span class="line">Server:		183.60.83.19</span><br><span class="line">Address:	183.60.83.19#53</span><br><span class="line"></span><br><span class="line">Non-authoritative answer:</span><br><span class="line">www.baidu.com	canonical name = www.a.shifen.com.</span><br><span class="line">Name:	www.a.shifen.com</span><br><span class="line">Address: 220.181.112.244</span><br><span class="line">Name:	www.a.shifen.com</span><br><span class="line">Address: 220.181.111.37</span><br></pre></td></tr></table></figure>
+
+<h2 id="工具二：host"><a href="#工具二：host" class="headerlink" title="工具二：host"></a>工具二：host</h2><p>简单粗暴的小工具</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">#host -t A www.baidu.com</span><br><span class="line">www.baidu.com is an alias for www.a.shifen.com.</span><br><span class="line">www.a.shifen.com has address 220.181.112.244</span><br><span class="line">www.a.shifen.com has address 220.181.111.37</span><br></pre></td></tr></table></figure>
+
+<h2 id="工具三：dig"><a href="#工具三：dig" class="headerlink" title="工具三：dig"></a>工具三：dig</h2><p>功能强大的DNS工具，重点掌握</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">#dig -t A www.baidu.com @localhost</span><br><span class="line"></span><br><span class="line">; &lt;&lt;&gt;&gt; DiG 9.9.4-RedHat-9.9.4-73.el7_6 &lt;&lt;&gt;&gt; -t A www.baidu.com @localhost</span><br><span class="line">;; global options: +cmd</span><br><span class="line">;; Got answer:</span><br><span class="line">;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 46476</span><br><span class="line">;; flags: qr rd ra; QUERY: 1, ANSWER: 3, AUTHORITY: 5, ADDITIONAL: 6</span><br><span class="line"></span><br><span class="line">;; OPT PSEUDOSECTION:</span><br><span class="line">; EDNS: version: 0, flags:; udp: 4096</span><br><span class="line">;; QUESTION SECTION:</span><br><span class="line">;www.baidu.com.			IN	A</span><br><span class="line"></span><br><span class="line">;; ANSWER SECTION:</span><br><span class="line">www.baidu.com.		1200	IN	CNAME	www.a.shifen.com.</span><br><span class="line">www.a.shifen.com.	300	IN	A	220.181.111.37</span><br><span class="line">www.a.shifen.com.	300	IN	A	220.181.112.244</span><br><span class="line"></span><br><span class="line">;; AUTHORITY SECTION:</span><br><span class="line">a.shifen.com.		1200	IN	NS	ns3.a.shifen.com.</span><br><span class="line">a.shifen.com.		1200	IN	NS	ns2.a.shifen.com.</span><br><span class="line">a.shifen.com.		1200	IN	NS	ns4.a.shifen.com.</span><br><span class="line">a.shifen.com.		1200	IN	NS	ns5.a.shifen.com.</span><br><span class="line">a.shifen.com.		1200	IN	NS	ns1.a.shifen.com.</span><br><span class="line"></span><br><span class="line">;; ADDITIONAL SECTION:</span><br><span class="line">ns5.a.shifen.com.	1200	IN	A	180.76.76.95</span><br><span class="line">ns1.a.shifen.com.	1200	IN	A	61.135.165.224</span><br><span class="line">ns3.a.shifen.com.	1200	IN	A	112.80.255.253</span><br><span class="line">ns4.a.shifen.com.	1200	IN	A	14.215.177.229</span><br><span class="line">ns2.a.shifen.com.	1200	IN	A	220.181.57.142</span><br><span class="line"></span><br><span class="line">;; Query time: 561 msec</span><br><span class="line">;; SERVER: 127.0.0.1#53(127.0.0.1)</span><br><span class="line">;; WHEN: Fri Mar 01 09:45:51 CST 2019</span><br><span class="line">;; MSG SIZE  rcvd: 271</span><br></pre></td></tr></table></figure>
+
+<p>常用参数：</p>
+<ul>
+<li>+[no]addition</li>
+<li>+short</li>
+</ul>
+<h2 id="工具四：nsupdate"><a href="#工具四：nsupdate" class="headerlink" title="工具四：nsupdate"></a>工具四：nsupdate</h2><p>不常用，需要在zone配置文件里声明<code>allow-update { acl; };</code></p>
+<h3 id="调整zone配置文件"><a href="#调整zone配置文件" class="headerlink" title="调整zone配置文件"></a>调整zone配置文件</h3><figure class="highlight plain"><figcaption><span>/etc/named.rfc1912.zones</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">zone &quot;bkjf-inc.com&quot; IN &#123;</span><br><span class="line">        type master;</span><br><span class="line">        file &quot;bkjf-inc.com.zone&quot;;</span><br><span class="line">        allow-update &#123; 10.4.7.11/32; &#125;;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>重启named服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># systemctl restart named</span><br></pre></td></tr></table></figure>
+
+<h3 id="新增一条记录"><a href="#新增一条记录" class="headerlink" title="新增一条记录"></a>新增一条记录</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">#nsupdate </span><br><span class="line">&gt; server 10.4.7.11</span><br><span class="line">&gt; update add update.bkjf-inc.com 60 A 10.4.7.11</span><br><span class="line">&gt; send</span><br><span class="line">&gt; quit</span><br></pre></td></tr></table></figure>
+
+<p>检查：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">#nslookup update.bkjf-inc.com</span><br><span class="line">Server:		10.4.7.11</span><br><span class="line">Address:	10.4.7.11#53</span><br><span class="line"></span><br><span class="line">Name:	update.bkjf-inc.com</span><br><span class="line">Address: 10.4.7.11</span><br></pre></td></tr></table></figure>
+
+<h3 id="查看区域数据库文件"><a href="#查看区域数据库文件" class="headerlink" title="查看区域数据库文件"></a>查看区域数据库文件</h3><figure class="highlight plain"><figcaption><span>/var/named/</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">-rw-r--r-- 1 root  root   335 Feb 28 10:57 bkjf-inc.com.zone</span><br><span class="line">-rw-r--r-- 1 named named  733 Mar  1 09:54 bkjf-inc.com.zone.jnl</span><br><span class="line">#file bkjf-inc.com.zone.jnl </span><br><span class="line">bkjf-inc.com.zone.jnl: data</span><br></pre></td></tr></table></figure>
+
+<p>产生了一个jnl的数据文件，不能使用文本编辑器打开</p>
+<blockquote>
+<p>jnl文件（journal文件）是BIND9动态更新的时候记录更新内容所生成的日志文件。</p>
+</blockquote>
+<h3 id="删除一条记录"><a href="#删除一条记录" class="headerlink" title="删除一条记录"></a>删除一条记录</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">#nsupdate </span><br><span class="line">&gt; server 10.4.7.11</span><br><span class="line">&gt; update delete update.bkjf-inc.com</span><br><span class="line">&gt; send</span><br><span class="line">&gt; quit</span><br></pre></td></tr></table></figure>
+
+<p>检查</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">#nslookup update.bkjf-inc.com</span><br><span class="line">Server:		10.4.7.11</span><br><span class="line">Address:	10.4.7.11#53</span><br><span class="line"></span><br><span class="line">** server can&apos;t find update.bkjf-inc.com: NXDOMAIN</span><br></pre></td></tr></table></figure>
+
+<h3 id="更新一条记录"><a href="#更新一条记录" class="headerlink" title="更新一条记录"></a>更新一条记录</h3><p>不支持直接更新，需要先执行删除，再新增</p>
+<h3 id="nsupdate使用小结："><a href="#nsupdate使用小结：" class="headerlink" title="nsupdate使用小结："></a>nsupdate使用小结：</h3><ul>
+<li>优点<ul>
+<li>命令简单，便于记忆</li>
+<li>不用手动变更SOA的serial序列号，自动滚动</li>
+<li>不需要重启/重载BIND9服务/配置，生效快</li>
+<li>可以通过配置acl实现远程管理</li>
+</ul>
+</li>
+<li>缺点<ul>
+<li>jnl文件无法使用文本文件的方式打开</li>
+<li>只能依赖完全区域传送查看所有区域的记录</li>
+<li>更新操作复杂，先删再增</li>
+<li>远程管理有安全隐患，需要加强审计</li>
+<li>动态域在rndc管理上多一步</li>
+</ul>
+</li>
+</ul>
+<h1 id="rndc远程管理DNS"><a href="#rndc远程管理DNS" class="headerlink" title="rndc远程管理DNS"></a>rndc远程管理DNS</h1><h2 id="生成rndc-key"><a href="#生成rndc-key" class="headerlink" title="生成rndc-key"></a>生成rndc-key</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">#rndc-confgen -r /dev/urandom</span><br><span class="line"># Start of rndc.conf</span><br><span class="line">key &quot;rndc-key&quot; &#123;</span><br><span class="line">	algorithm hmac-md5;</span><br><span class="line">	secret &quot;MFM4AocpN0lcoL4fN2lA6Q==&quot;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">options &#123;</span><br><span class="line">	default-key &quot;rndc-key&quot;;</span><br><span class="line">	default-server 127.0.0.1;</span><br><span class="line">	default-port 953;</span><br><span class="line">&#125;;</span><br><span class="line"># End of rndc.conf</span><br><span class="line"></span><br><span class="line"># Use with the following in named.conf, adjusting the allow list as needed:</span><br><span class="line"># key &quot;rndc-key&quot; &#123;</span><br><span class="line"># 	algorithm hmac-md5;</span><br><span class="line"># 	secret &quot;MFM4AocpN0lcoL4fN2lA6Q==&quot;;</span><br><span class="line"># &#125;;</span><br><span class="line"># </span><br><span class="line"># controls &#123;</span><br><span class="line"># 	inet 127.0.0.1 port 953</span><br><span class="line"># 		allow &#123; 127.0.0.1; &#125; keys &#123; &quot;rndc-key&quot;; &#125;;</span><br><span class="line"># &#125;;</span><br><span class="line"># End of named.conf</span><br></pre></td></tr></table></figure>
+
+<h2 id="把rndc-key和controls配置到bind的主配置文件的options段里"><a href="#把rndc-key和controls配置到bind的主配置文件的options段里" class="headerlink" title="把rndc-key和controls配置到bind的主配置文件的options段里"></a>把rndc-key和controls配置到bind的主配置文件的options段里</h2><figure class="highlight plain"><figcaption><span>/etc/named.conf</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">key &quot;rndc-key&quot; &#123;</span><br><span class="line">	algorithm hmac-md5;</span><br><span class="line">	secret &quot;MFM4AocpN0lcoL4fN2lA6Q==&quot;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">controls &#123;</span><br><span class="line">      inet 10.4.7.11 port 953</span><br><span class="line">               allow &#123; 10.4.7.11;10.4.7.12; &#125; keys &#123; &quot;rndc-key&quot;; &#125;;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p><strong>注意：</strong>这里要配置一下controls段的acl，限定好哪些主机可以使用rndc管理DNS服务</p>
+<h2 id="重启bind9服务"><a href="#重启bind9服务" class="headerlink" title="重启bind9服务"></a>重启bind9服务</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># systemctl restart named</span><br></pre></td></tr></table></figure>
+
+<p>rndc的服务端监听在953端口，检查一下端口是否起来</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># netstat -luntp|grep 953</span><br><span class="line">tcp        0      0 10.4.7.11:953           0.0.0.0:*               LISTEN      11136/named</span><br></pre></td></tr></table></figure>
+
+<h2 id="在远程管理主机上安装bind"><a href="#在远程管理主机上安装bind" class="headerlink" title="在远程管理主机上安装bind"></a>在远程管理主机上安装bind</h2><p>rndc命令在bind包里，所以远程管理主机需要安装bind（不需要启动named）</p>
+<h2 id="在远程管理主机上做rndc-conf"><a href="#在远程管理主机上做rndc-conf" class="headerlink" title="在远程管理主机上做rndc.conf"></a>在远程管理主机上做rndc.conf</h2><p>使用rndc进行远程管理的主机上，都需要配置rndc.conf，且rndc-key要和DNS服务器上的key一致</p>
+<figure class="highlight plain"><figcaption><span>/etc/rndc.conf</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">key &quot;rndc-key&quot; &#123;</span><br><span class="line">	algorithm hmac-md5;</span><br><span class="line">	secret &quot;MFM4AocpN0lcoL4fN2lA6Q==&quot;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">options &#123;</span><br><span class="line">	default-key &quot;rndc-key&quot;;   </span><br><span class="line">	default-server 10.4.7.11;</span><br><span class="line">	default-port 953;   </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="使用rndc命令远程管理DNS"><a href="#使用rndc命令远程管理DNS" class="headerlink" title="使用rndc命令远程管理DNS"></a>使用rndc命令远程管理DNS</h2><h3 id="查询DNS服务状态（可以取值做监控）"><a href="#查询DNS服务状态（可以取值做监控）" class="headerlink" title="查询DNS服务状态（可以取值做监控）"></a>查询DNS服务状态（可以取值做监控）</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">#rndc status </span><br><span class="line">version: 9.9.4-RedHat-9.9.4-73.el7_6 &lt;id:8f9657aa&gt;</span><br><span class="line">CPUs found: 2</span><br><span class="line">worker threads: 2</span><br><span class="line">UDP listeners per interface: 2</span><br><span class="line">number of zones: 105</span><br><span class="line">debug level: 0</span><br><span class="line">xfers running: 0</span><br><span class="line">xfers deferred: 0</span><br><span class="line">soa queries in progress: 0</span><br><span class="line">query logging is OFF</span><br><span class="line">recursive clients: 0/0/1000</span><br><span class="line">tcp clients: 0/100</span><br><span class="line">server is up and running</span><br></pre></td></tr></table></figure>
+
+<h3 id="管理静态域-allow-update-none"><a href="#管理静态域-allow-update-none" class="headerlink" title="管理静态域(allow-update { none; };)"></a>管理静态域(allow-update { none; };)</h3><figure class="highlight plain"><figcaption><span>静态域zone文件</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">zone &quot;od.com&quot; IN &#123;</span><br><span class="line">	type master;</span><br><span class="line">	file &quot;od.com.zone&quot;;</span><br><span class="line">	allow-update &#123; none; &#125;;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>增、删、改一条记录后</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># rndc reload od.com</span><br><span class="line">zone reload up-to-date</span><br></pre></td></tr></table></figure>
+
+<h3 id="管理动态域（allow-update-10-4-7-11-）"><a href="#管理动态域（allow-update-10-4-7-11-）" class="headerlink" title="管理动态域（allow-update { 10.4.7.11; };）"></a>管理动态域（allow-update { 10.4.7.11; };）</h3><figure class="highlight plain"><figcaption><span>动态域zone文件</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">zone &quot;host.com&quot; IN &#123;</span><br><span class="line">	type master;</span><br><span class="line">	file &quot;host.com.zone&quot;;</span><br><span class="line">	allow-update &#123; 10.4.7.11; &#125;;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>增、删、改一条记录后</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#rndc reload host.com</span><br><span class="line">rndc: &apos;reload&apos; failed: dynamic zone</span><br></pre></td></tr></table></figure>
+
+<p>直接reload会报错，需要先<code>freeze</code>再<code>thaw</code>才行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#rndc freeze host.com</span><br><span class="line">#rndc thaw host.com</span><br><span class="line">The zone reload and thaw was successful.</span><br></pre></td></tr></table></figure>
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById(&quot;QR&quot;); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechat.png" alt="Stanley Wang 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.2yuan.png" alt="Stanley Wang 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/12/16/实验文档6：智能DNS实战/" rel="next" title="实验文档6：智能DNS实战">
+                <i class="fa fa-chevron-left"></i> 实验文档6：智能DNS实战
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/12/16/实验文档4：DNS主辅同步/" rel="prev" title="实验文档4：DNS主辅同步">
+                实验文档4：DNS主辅同步 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.jpg" alt="Stanley Wang">
+            
+              <p class="site-author-name" itemprop="name">Stanley Wang</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">19</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://gitee.com/stanleywang" title="GitHub &rarr; https://gitee.com/stanleywang" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="mailto:stanley.wang.m@qq.com" title="E-Mail &rarr; mailto:stanley.wang.m@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#DNS管理工具"><span class="nav-number">1.</span> <span class="nav-text">DNS管理工具</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#安装"><span class="nav-number">1.1.</span> <span class="nav-text">安装</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#工具一：nslookup"><span class="nav-number">1.2.</span> <span class="nav-text">工具一：nslookup</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#交互式"><span class="nav-number">1.2.1.</span> <span class="nav-text">交互式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#非交互式"><span class="nav-number">1.2.2.</span> <span class="nav-text">非交互式</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#工具二：host"><span class="nav-number">1.3.</span> <span class="nav-text">工具二：host</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#工具三：dig"><span class="nav-number">1.4.</span> <span class="nav-text">工具三：dig</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#工具四：nsupdate"><span class="nav-number">1.5.</span> <span class="nav-text">工具四：nsupdate</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#调整zone配置文件"><span class="nav-number">1.5.1.</span> <span class="nav-text">调整zone配置文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#新增一条记录"><span class="nav-number">1.5.2.</span> <span class="nav-text">新增一条记录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#查看区域数据库文件"><span class="nav-number">1.5.3.</span> <span class="nav-text">查看区域数据库文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#删除一条记录"><span class="nav-number">1.5.4.</span> <span class="nav-text">删除一条记录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#更新一条记录"><span class="nav-number">1.5.5.</span> <span class="nav-text">更新一条记录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#nsupdate使用小结："><span class="nav-number">1.5.6.</span> <span class="nav-text">nsupdate使用小结：</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#rndc远程管理DNS"><span class="nav-number">2.</span> <span class="nav-text">rndc远程管理DNS</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#生成rndc-key"><span class="nav-number">2.1.</span> <span class="nav-text">生成rndc-key</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#把rndc-key和controls配置到bind的主配置文件的options段里"><span class="nav-number">2.2.</span> <span class="nav-text">把rndc-key和controls配置到bind的主配置文件的options段里</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#重启bind9服务"><span class="nav-number">2.3.</span> <span class="nav-text">重启bind9服务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#在远程管理主机上安装bind"><span class="nav-number">2.4.</span> <span class="nav-text">在远程管理主机上安装bind</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#在远程管理主机上做rndc-conf"><span class="nav-number">2.5.</span> <span class="nav-text">在远程管理主机上做rndc.conf</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用rndc命令远程管理DNS"><span class="nav-number">2.6.</span> <span class="nav-text">使用rndc命令远程管理DNS</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#查询DNS服务状态（可以取值做监控）"><span class="nav-number">2.6.1.</span> <span class="nav-text">查询DNS服务状态（可以取值做监控）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#管理静态域-allow-update-none"><span class="nav-number">2.6.2.</span> <span class="nav-text">管理静态域(allow-update { none; };)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#管理动态域（allow-update-10-4-7-11-）"><span class="nav-number">2.6.3.</span> <span class="nav-text">管理动态域（allow-update { 10.4.7.11; };）</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Stanley Wang</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+    <span title="站点总字数">278k</span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    
+    <span title="站点阅读时长">4:13</span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+    
+    
+  
+  <script color="0,0,255" opacity="0.5" zindex="-1" count="99" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/src/utils.js?v=7.0.0"></script>
+
+  <script src="/js/src/motion.js?v=7.0.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/src/schemes/muse.js?v=7.0.0"></script>
+
+
+
+
+  
+  <script src="/js/src/scrollspy.js?v=7.0.0"></script>
+<script src="/js/src/post-details.js?v=7.0.0"></script>
+
+
+
+  
+
+
+  <script src="/js/src/bootstrap.js?v=7.0.0"></script>
+
+
+
+  
+
+
+  
+
+
+  
+  <script>
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url).replace(/\/{2,}/g, '/');
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x"></i></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x"></i></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+  
+
+  
+  
+
+  
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  <style>
+    .copy-btn {
+      display: inline-block;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 20px;
+      color: #333;
+      white-space: nowrap;
+      vertical-align: middle;
+      cursor: pointer;
+      background-color: #eee;
+      background-image: linear-gradient(#fcfcfc, #eee);
+      border: 1px solid #d5d5d5;
+      border-radius: 3px;
+      user-select: none;
+      outline: 0;
+    }
+
+    .highlight-wrap .copy-btn {
+      transition: opacity .3s ease-in-out;
+      opacity: 0;
+      padding: 2px 6px;
+      position: absolute;
+      right: 4px;
+      top: 8px;
+    }
+
+    .highlight-wrap:hover .copy-btn,
+    .highlight-wrap .copy-btn:focus {
+      opacity: 1
+    }
+
+    .highlight-wrap {
+      position: relative;
+    }
+  </style>
+  <script>
+    $('.highlight').each(function(i, e) {
+      var $wrap = $('<div>').addClass('highlight-wrap');
+      $(e).after($wrap);
+      $wrap.append($('<button>').addClass('copy-btn').append('复制').on('click', function(e) {
+        var code = $(this).parent().find('.code').find('.line').map(function(i, e) {
+          return $(e).text();
+        }).toArray().join('\n');
+        var ta = document.createElement('textarea');
+        var range = document.createRange(); //For Chrome
+        var sel = window.getSelection(); //For Chrome
+        var yPosition = window.pageYOffset || document.documentElement.scrollTop;
+        ta.style.top = yPosition + 'px'; //Prevent page scroll
+        ta.style.position = 'absolute';
+        ta.style.opacity = '0';
+        ta.value = code;
+        ta.textContent = code; //For FireFox
+        ta.contentEditable = true;
+        ta.readOnly = false;
+        document.body.appendChild(ta);
+        range.selectNode(ta);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        ta.setSelectionRange(0, code.length);
+        var result = document.execCommand('copy');
+        
+          if (result) $(this).text('复制成功');
+          else $(this).text('复制失败');
+        
+        ta.blur(); //For iOS
+        $(this).blur();
+      })).on('mouseleave', function(e) {
+        var $b = $(this).find('.copy-btn');
+        setTimeout(function() {
+          $b.text('复制');
+        }, 300);
+      }).append(e);
+    })
+  </script>
+
+
+</body>
+</html>

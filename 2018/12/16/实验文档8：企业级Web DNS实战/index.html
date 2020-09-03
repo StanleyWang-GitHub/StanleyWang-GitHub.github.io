@@ -1,0 +1,1872 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+  
+  
+    
+    
+  <script src="/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css?v=1.0.2">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.0.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon32.ico?v=7.0.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon16.ico?v=7.0.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.0.0" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '7.0.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="欢迎加入王导的VIP学习qq群：==&amp;gt;932194668&amp;lt;==   系统环境12345#cat /etc/redhat-release CentOS Linux release 7.6.1810 (Core)#uname -aLinux node 3.10.0-862.el7.x86_64 #1 SMP Fri Apr 20 16:44:24 UTC 2018 x86_64 x86_">
+<meta property="og:type" content="article">
+<meta property="og:title" content="实验文档8：企业级Web DNS实战">
+<meta property="og:url" content="https://StanleyWang-GitHub.github.io/2018/12/16/实验文档8：企业级Web DNS实战/index.html">
+<meta property="og:site_name" content="Stanley&#39;s Blog">
+<meta property="og:description" content="欢迎加入王导的VIP学习qq群：==&amp;gt;932194668&amp;lt;==   系统环境12345#cat /etc/redhat-release CentOS Linux release 7.6.1810 (Core)#uname -aLinux node 3.10.0-862.el7.x86_64 #1 SMP Fri Apr 20 16:44:24 UTC 2018 x86_64 x86_">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2020-09-03T08:33:09.905Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="实验文档8：企业级Web DNS实战">
+<meta name="twitter:description" content="欢迎加入王导的VIP学习qq群：==&amp;gt;932194668&amp;lt;==   系统环境12345#cat /etc/redhat-release CentOS Linux release 7.6.1810 (Core)#uname -aLinux node 3.10.0-862.el7.x86_64 #1 SMP Fri Apr 20 16:44:24 UTC 2018 x86_64 x86_">
+
+
+
+
+
+
+  <link rel="canonical" href="https://StanleyWang-GitHub.github.io/2018/12/16/实验文档8：企业级Web DNS实战/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>实验文档8：企业级Web DNS实战 | Stanley's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Stanley's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://StanleyWang-GitHub.github.io/2018/12/16/实验文档8：企业级Web DNS实战/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Stanley Wang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Stanley's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">实验文档8：企业级Web DNS实战
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-12-16 06:12:56" itemprop="dateCreated datePublished" datetime="2018-12-16T06:12:56+08:00">2018-12-16</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-09-03 16:33:09" itemprop="dateModified" datetime="2020-09-03T16:33:09+08:00">2020-09-03</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/Web-DNS技术/" itemprop="url" rel="index"><span itemprop="name">Web DNS技术</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-symbolscount">
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">本文字数：</span>
+                
+                <span title="本文字数">24k</span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">21 分钟</span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <hr>
+<blockquote class="blockquote-center"><p>欢迎加入王导的VIP学习qq群：==&gt;<a href="http://shang.qq.com/wpa/qunwpa?idkey=78869fddc5a661acb0639315eb52997c108de6625df5f0ee2f0372f176a032a6" target="_blank" rel="noopener"><font color="FF7F50">932194668</font></a>&lt;==</p>
+</blockquote>
+<hr>
+<h1 id="系统环境"><a href="#系统环境" class="headerlink" title="系统环境"></a>系统环境</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">#cat /etc/redhat-release </span><br><span class="line">CentOS Linux release 7.6.1810 (Core)</span><br><span class="line"></span><br><span class="line">#uname -a</span><br><span class="line">Linux node 3.10.0-862.el7.x86_64 #1 SMP Fri Apr 20 16:44:24 UTC 2018 x86_64 x86_64 x86_64 GNU/Linux</span><br></pre></td></tr></table></figure>
+
+<h1 id="安装部署namedmanager"><a href="#安装部署namedmanager" class="headerlink" title="安装部署namedmanager"></a>安装部署namedmanager</h1><h2 id="准备rpm包"><a href="#准备rpm包" class="headerlink" title="准备rpm包"></a>准备rpm包</h2><p><a href="https://repos.jethrocarr.com/pub/jethrocarr/linux/centos/7/jethrocarr-custom/x86_64/" target="_blank" rel="noopener">https://repos.jethrocarr.com/pub/jethrocarr/linux/centos/7/jethrocarr-custom/x86_64/</a></p>
+<h2 id="下载最新版"><a href="#下载最新版" class="headerlink" title="下载最新版"></a>下载最新版</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 opt]# ll</span><br><span class="line">total 62244</span><br><span class="line">-rw-r--r-- 1 root root   102136 Feb  1 18:17 namedmanager-bind-1.9.0-2.el7.centos.noarch.rpm</span><br><span class="line">-rw-r--r-- 1 root root  1084340 Feb  1 18:17 namedmanager-www-1.9.0-2.el7.centos.noarch.rpm</span><br></pre></td></tr></table></figure>
+
+<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 opt]# yum localinstall namedmanager-* -y</span><br><span class="line">...</span><br><span class="line">Installed:</span><br><span class="line">  namedmanager-bind.noarch 0:1.9.0-2.el7.centos                                 namedmanager-www.noarch 0:1.9.0-2.el7.centos                                </span><br><span class="line"></span><br><span class="line">Dependency Installed:</span><br><span class="line">  apr.x86_64 0:1.4.8-3.el7_4.1                        apr-util.x86_64 0:1.5.2-6.el7                    bind.x86_64 32:9.9.4-73.el7_6                       </span><br><span class="line">  httpd.x86_64 0:2.4.6-88.el7.centos                  httpd-tools.x86_64 0:2.4.6-88.el7.centos         libzip.x86_64 0:0.10.1-8.el7                        </span><br><span class="line">  mailcap.noarch 0:2.1.41-2.el7                       mariadb.x86_64 1:5.5.60-1.el7_5                  mariadb-libs.x86_64 1:5.5.60-1.el7_5                </span><br><span class="line">  mariadb-server.x86_64 1:5.5.60-1.el7_5              mod_ssl.x86_64 1:2.4.6-88.el7.centos             perl-Compress-Raw-Bzip2.x86_64 0:2.061-3.el7        </span><br><span class="line">  perl-Compress-Raw-Zlib.x86_64 1:2.061-4.el7         perl-DBD-MySQL.x86_64 0:4.023-6.el7              perl-DBI.x86_64 0:1.627-4.el7                       </span><br><span class="line">  perl-IO-Compress.noarch 0:2.061-2.el7               perl-Net-Daemon.noarch 0:0.48-5.el7              perl-PlRPC.noarch 0:0.2020-14.el7                   </span><br><span class="line">  php.x86_64 0:5.4.16-46.el7                          php-cli.x86_64 0:5.4.16-46.el7                   php-common.x86_64 0:5.4.16-46.el7                   </span><br><span class="line">  php-intl.x86_64 0:5.4.16-46.el7                     php-ldap.x86_64 0:5.4.16-46.el7                  php-mysqlnd.x86_64 0:5.4.16-46.el7                  </span><br><span class="line">  php-pdo.x86_64 0:5.4.16-46.el7                      php-process.x86_64 0:5.4.16-46.el7               php-soap.x86_64 0:5.4.16-46.el7                     </span><br><span class="line">  php-xml.x86_64 0:5.4.16-46.el7                     </span><br><span class="line"></span><br><span class="line">Dependency Updated:</span><br><span class="line">  bind-libs.x86_64 32:9.9.4-73.el7_6  bind-libs-lite.x86_64 32:9.9.4-73.el7_6  bind-license.noarch 32:9.9.4-73.el7_6  bind-utils.x86_64 32:9.9.4-73.el7_6 </span><br><span class="line"></span><br><span class="line">Complete!</span><br></pre></td></tr></table></figure>
+
+<h2 id="先配mysql"><a href="#先配mysql" class="headerlink" title="先配mysql"></a>先配mysql</h2><h3 id="启动mysql"><a href="#启动mysql" class="headerlink" title="启动mysql"></a>启动mysql</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 mysql]# systemctl start mariadb.service</span><br></pre></td></tr></table></figure>
+
+<h3 id="开机自启动"><a href="#开机自启动" class="headerlink" title="开机自启动"></a>开机自启动</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 ~]# systemctl enable mariadb</span><br><span class="line">Created symlink from /etc/systemd/system/multi-user.target.wants/mariadb.service to /usr/lib/systemd/system/mariadb.service.</span><br></pre></td></tr></table></figure>
+
+<h3 id="配mysql的root密码"><a href="#配mysql的root密码" class="headerlink" title="配mysql的root密码"></a>配mysql的root密码</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 mysql]# mysqladmin -uroot password 123456</span><br></pre></td></tr></table></figure>
+
+<h3 id="导入namedmanager的数据库脚本"><a href="#导入namedmanager的数据库脚本" class="headerlink" title="导入namedmanager的数据库脚本"></a>导入namedmanager的数据库脚本</h3><figure class="highlight plain"><figcaption><span>/usr/share/namedmanager/resources/autoinstall.pl</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 ~]# cd /usr/share/namedmanager/resources/</span><br><span class="line">[root@hdss7-11 resources]# ./autoinstall.pl </span><br><span class="line">autoinstall.pl</span><br><span class="line"></span><br><span class="line">This script setups the NamedManager database components:</span><br><span class="line"> * NamedManager MySQL user</span><br><span class="line"> * NamedManager database</span><br><span class="line"> * NamedManager configuration files</span><br><span class="line"></span><br><span class="line">THIS SCRIPT ONLY NEEDS TO BE RUN FOR THE VERY FIRST INSTALL OF NAMEDMANAGER.</span><br><span class="line">DO NOT RUN FOR ANY OTHER REASON</span><br><span class="line"></span><br><span class="line">Please enter MySQL root password (if any): 123456</span><br><span class="line"></span><br><span class="line">输入123456</span><br><span class="line"></span><br><span class="line">Searching ../sql/ for latest install schema...</span><br><span class="line">../sql//version_20131222_install.sql is the latest file and will be used for the install.</span><br><span class="line">Importing file ../sql//version_20131222_install.sql</span><br><span class="line">Creating user...</span><br><span class="line">Updating configuration file...</span><br><span class="line">DB installation complete!</span><br><span class="line"></span><br><span class="line">You can now login with the default username/password of setup/setup123 at http://localhost/namedmanager</span><br></pre></td></tr></table></figure>
+
+<h2 id="配置namedmanager"><a href="#配置namedmanager" class="headerlink" title="配置namedmanager"></a>配置namedmanager</h2><h3 id="config-php，增加一条配置"><a href="#config-php，增加一条配置" class="headerlink" title="config.php，增加一条配置"></a>config.php，增加一条配置</h3><figure class="highlight plain"><figcaption><span>/etc/namedmanager/config.php</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$_SERVER[&apos;HTTPS&apos;] = &quot;TRUE&quot;;</span><br></pre></td></tr></table></figure>
+
+<h3 id="config-bind-php，修改以下三条配置"><a href="#config-bind-php，修改以下三条配置" class="headerlink" title="config-bind.php，修改以下三条配置"></a>config-bind.php，修改以下三条配置</h3><figure class="highlight plain"><figcaption><span>/etc/namedmanager/config-bind.php</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$config[&quot;api_url&quot;]              = &quot;http://dns-manager.od.com/namedmanager&quot;;     // Application Install Location</span><br><span class="line">$config[&quot;api_server_name&quot;]      = &quot;dns-manager.od.com&quot;;                         // Name of the DNS server (important: part of the authentication process)</span><br><span class="line">$config[&quot;api_auth_key&quot;]         = &quot;verycloud&quot;;                                  // API authentication key</span><br><span class="line">$config[&quot;log_file&quot;]             = &quot;/var/log/namedmanager_bind_configwriter&quot;;</span><br></pre></td></tr></table></figure>
+
+<h3 id="php-ini，修改一条配置"><a href="#php-ini，修改一条配置" class="headerlink" title="php.ini，修改一条配置"></a>php.ini，修改一条配置</h3><figure class="highlight plain"><figcaption><span>/etc/php.ini</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">; How many GET/POST/COOKIE input variables may be accepted</span><br><span class="line">max_input_vars = 10000</span><br></pre></td></tr></table></figure>
+
+<h3 id="绑host（临时）"><a href="#绑host（临时）" class="headerlink" title="绑host（临时）"></a>绑host（临时）</h3><figure class="highlight plain"><figcaption><span>/etc/hosts</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">10.4.7.11   dns-manager.od.com</span><br></pre></td></tr></table></figure>
+
+<h3 id="配apache"><a href="#配apache" class="headerlink" title="配apache"></a>配apache</h3><figure class="highlight plain"><figcaption><span>/etc/httpd/conf/httpd.conf</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Listen 10.4.7.11:8080</span><br><span class="line">ServerName dns-manager.od.com</span><br><span class="line">&lt;Directory /&gt;</span><br><span class="line">    AllowOverride none</span><br><span class="line">    allow from all</span><br><span class="line">    #Require all denied</span><br><span class="line">&lt;/Directory&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="配nginx"><a href="#配nginx" class="headerlink" title="配nginx"></a>配nginx</h3><figure class="highlight plain"><figcaption><span>/etc/nginx/conf.d/dns-manager.od.com.conf</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">server &#123;</span><br><span class="line">    server_name dns-manager.od.com;</span><br><span class="line">   </span><br><span class="line">	location =/ &#123;</span><br><span class="line">		rewrite ^/(.*) http://dns-manager.od.com/namedmanager  permanent;</span><br><span class="line">	&#125;</span><br><span class="line">	location / &#123;</span><br><span class="line">		proxy_pass http://10.4.7.11:8080;</span><br><span class="line">		proxy_set_header Host       $http_host;</span><br><span class="line">		proxy_set_header x-forwarded-for $proxy_add_x_forwarded_for;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="启动apache和nginx"><a href="#启动apache和nginx" class="headerlink" title="启动apache和nginx"></a>启动apache和nginx</h2><ul>
+<li><p>启动apache</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 ~]# systemctl start httpd</span><br><span class="line">[root@hdss7-11 ~]# systemctl enable httpd</span><br><span class="line">Created symlink from /etc/systemd/system/multi-user.target.wants/httpd.service to /usr/lib/systemd/system/httpd.service.</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>启动nginx</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 ~]# nginx -t</span><br><span class="line">nginx: the configuration file /etc/nginx/nginx.conf syntax is ok</span><br><span class="line">nginx: configuration file /etc/nginx/nginx.conf test is successful</span><br><span class="line">[root@hdss7-11 ~]# nginx</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<p>访问<a href="http://dns-manager.od.com" target="_blank" rel="noopener">http://dns-manager.od.com</a>，看看页面是否正常</p>
+<h2 id="继续改namedmanager的配置"><a href="#继续改namedmanager的配置" class="headerlink" title="继续改namedmanager的配置"></a>继续改namedmanager的配置</h2><h3 id="改namedmanager-bind-configwriter-php"><a href="#改namedmanager-bind-configwriter-php" class="headerlink" title="改namedmanager_bind_configwriter.php"></a>改namedmanager_bind_configwriter.php</h3><figure class="highlight plain"><figcaption><span>/usr/share/namedmanager/bind/namedmanager_bind_configwriter.php</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">if (flock($fh_lock, LOCK_EX ))</span><br><span class="line">&#123;</span><br><span class="line">	log_write(&quot;debug&quot;, &quot;script&quot;, &quot;Obtained filelock&quot;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="启动namedmanager-logpush-rcsysinit"><a href="#启动namedmanager-logpush-rcsysinit" class="headerlink" title="启动namedmanager_logpush.rcsysinit"></a>启动namedmanager_logpush.rcsysinit</h3><h4 id="加执行权限"><a href="#加执行权限" class="headerlink" title="加执行权限"></a>加执行权限</h4><figure class="highlight plain"><figcaption><span>/usr/share/namedmanager/resources/namedmanager_logpush.rcsysinit</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 resources]# chmod u+x namedmanager_logpush.rcsysinit</span><br></pre></td></tr></table></figure>
+
+<h4 id="启动该脚本"><a href="#启动该脚本" class="headerlink" title="启动该脚本"></a>启动该脚本</h4><figure class="highlight plain"><figcaption><span>/usr/share/namedmanager/resources/namedmanager_logpush.rcsysinit</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 resources]# sh namedmanager_logpush.rcsysinit start</span><br><span class="line">Starting namedmanager_logpush service:</span><br><span class="line">[root@hdss7-11 resources]# nohup: redirecting stderr to stdout</span><br></pre></td></tr></table></figure>
+
+<h4 id="检查是否启动"><a href="#检查是否启动" class="headerlink" title="检查是否启动"></a>检查是否启动</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 resources]# ps -ef|grep php|egrep -v grep</span><br><span class="line">root      10738      1  0 10:49 pts/1    00:00:00 php -q /usr/share/namedmanager/bind/namedmanager_logpush.php</span><br></pre></td></tr></table></figure>
+
+<h4 id="用supervisor管理起来"><a href="#用supervisor管理起来" class="headerlink" title="用supervisor管理起来"></a>用supervisor管理起来</h4><p>这个脚本非常重要，是整个namedmanager软件的<strong>核心</strong>，所以要保证它一直在后台启动，这里我们用<code>supervisor</code>这个软件把它管理起来</p>
+<h5 id="先安装supervisor软件"><a href="#先安装supervisor软件" class="headerlink" title="先安装supervisor软件"></a>先安装supervisor软件</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 resources]# yum install supervisor -y</span><br><span class="line">ependencies Resolved</span><br><span class="line"></span><br><span class="line">=============================================================================================================================================================</span><br><span class="line"> Package                                     Arch                             Version                                   Repository                      Size</span><br><span class="line">=============================================================================================================================================================</span><br><span class="line">Installing:</span><br><span class="line"> supervisor                                  noarch                           3.1.4-1.el7                               epel                           446 k</span><br><span class="line">Installing for dependencies:</span><br><span class="line"> python-meld3                                x86_64                           0.6.10-1.el7                              epel                            73 k</span><br><span class="line"> python-setuptools                           noarch                           0.9.8-7.el7                               base                           397 k</span><br><span class="line"></span><br><span class="line">Transaction Summary</span><br><span class="line">=============================================================================================================================================================</span><br><span class="line">Install  1 Package (+2 Dependent packages)</span><br><span class="line"></span><br><span class="line">Total download size: 916 k</span><br><span class="line">Installed size: 4.4 M</span><br><span class="line">...</span><br><span class="line">Installed:</span><br><span class="line">  supervisor.noarch 0:3.1.4-1.el7                                                                                                                            </span><br><span class="line"></span><br><span class="line">Dependency Installed:</span><br><span class="line">  python-meld3.x86_64 0:0.6.10-1.el7                                          python-setuptools.noarch 0:0.9.8-7.el7                                         </span><br><span class="line"></span><br><span class="line">Complete!</span><br></pre></td></tr></table></figure>
+
+<h5 id="创建脚本启动的配置文件"><a href="#创建脚本启动的配置文件" class="headerlink" title="创建脚本启动的配置文件"></a>创建脚本启动的配置文件</h5><figure class="highlight plain"><figcaption><span>/etc/supervisord.d/namedmanager_logpush.ini</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">[program:namedmanager_logpush]</span><br><span class="line">command=php -q /usr/share/namedmanager/bind/namedmanager_logpush.php 2&gt;&amp;1 &gt; /var/log/namedmanager_logpush</span><br><span class="line">numprocs=1                                                     </span><br><span class="line">directory=/usr/share/namedmanager/resources                           </span><br><span class="line">autostart=true                                                 </span><br><span class="line">autorestart=true                                               </span><br><span class="line">startsecs=22                                                   </span><br><span class="line">startretries=4                                             </span><br><span class="line">exitcodes=0,2                                                  </span><br><span class="line">stopsignal=QUIT                                                </span><br><span class="line">stopwaitsecs=10                                                </span><br><span class="line">user=root                                                      </span><br><span class="line">redirect_stderr=false                                          </span><br><span class="line">stdout_logfile=/var/log/namedmanager_logpush.out</span><br><span class="line">stdout_logfile_maxbytes=64MB                                   </span><br><span class="line">stdout_logfile_backups=4                                       </span><br><span class="line">stdout_capture_maxbytes=1MB                                    </span><br><span class="line">stdout_events_enabled=false                                    </span><br><span class="line">stderr_logfile=/var/log/namedmanager_logpush.err</span><br><span class="line">stderr_logfile_maxbytes=64MB                                   </span><br><span class="line">stderr_logfile_backups=4                                       </span><br><span class="line">stderr_capture_maxbytes=1MB                                    </span><br><span class="line">stderr_events_enabled=false</span><br></pre></td></tr></table></figure>
+
+<h5 id="启动supservisord服务"><a href="#启动supservisord服务" class="headerlink" title="启动supservisord服务"></a>启动supservisord服务</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 resources]# systemctl start supervisord</span><br></pre></td></tr></table></figure>
+
+<h5 id="开机自启"><a href="#开机自启" class="headerlink" title="开机自启"></a>开机自启</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 resources]# systemctl enable supervisord</span><br><span class="line">Created symlink from /etc/systemd/system/multi-user.target.wants/supervisord.service to /usr/lib/systemd/system/supervisord.service.</span><br></pre></td></tr></table></figure>
+
+<h4 id="查看脚本启动情况"><a href="#查看脚本启动情况" class="headerlink" title="查看脚本启动情况"></a>查看脚本启动情况</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 resources]# supervisorctl status</span><br><span class="line">namedmanager_logpush             RUNNING   pid 9194, uptime 0:01:44</span><br><span class="line">[root@hdss7-11 resources]# ps -ef|grep -v grep|grep php</span><br><span class="line">root       9194   8979  0 11:14 ?        00:00:00 php -q /usr/share/namedmanager/bind/namedmanager_logpush.php 2&gt;&amp;1 &gt; /var/log/namedmanager_logpush</span><br></pre></td></tr></table></figure>
+
+<p>这样脚本就可以保证高可用性了</p>
+<h4 id="检查日志"><a href="#检查日志" class="headerlink" title="检查日志"></a>检查日志</h4><figure class="highlight plain"><figcaption><span>/var/log/namedmanager_logpush</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 resources]# tail -fn 200 /var/log/namedmanager_logpush</span><br><span class="line">Error: Unable to authenticate with NamedManager API - check that auth API key and server name are valid</span><br></pre></td></tr></table></figure>
+
+<p>有报错，所以需要继续配置</p>
+<h3 id="改inc-soap-api-php"><a href="#改inc-soap-api-php" class="headerlink" title="改inc_soap_api.php"></a>改inc_soap_api.php</h3><figure class="highlight plain"><figcaption><span>/usr/share/namedmanager/bind/include/application/inc_soap_api.php</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">preg_match(&quot;/^http:\/\/(\S*?)[:0-9]*\//&quot;, $GLOBALS[&quot;config&quot;][&quot;api_url&quot;], $matches);</span><br></pre></td></tr></table></figure>
+
+<h3 id="重启namedmanager-logpush-rcsysinit"><a href="#重启namedmanager-logpush-rcsysinit" class="headerlink" title="重启namedmanager_logpush.rcsysinit"></a>重启namedmanager_logpush.rcsysinit</h3><p>如果已经用<code>supervisor</code>软件管理起来了，只需要kill掉脚本进程即可</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 resources]# ps -ef|grep -v grep|grep php|awk &apos;&#123;print $2&#125;&apos;|xargs kill -9</span><br><span class="line">[root@hdss7-11 resources]# ps -ef|grep -v grep|grep php</span><br><span class="line">root       9295   8979  1 11:18 ?        00:00:00 php -q /usr/share/namedmanager/bind/namedmanager_logpush.php 2&gt;&amp;1 &gt; /var/log/namedmanager_logpush </span><br><span class="line">[root@hdss7-11 resources]# supervisorctl       </span><br><span class="line">namedmanager_logpush             RUNNING   pid 9295, uptime 0:00:23</span><br></pre></td></tr></table></figure>
+
+<p>否则需要手动重启脚本</p>
+<figure class="highlight plain"><figcaption><span>/usr/share/namedmanager/resources/namedmanager_logpush.rcsysinit</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 resources]# sh namedmanager_logpush.rcsysinit restart</span><br><span class="line">Stopping namedmanager_logpush services:</span><br><span class="line">Starting namedmanager_logpush service:</span><br><span class="line">nohup: redirecting stderr to stdout</span><br></pre></td></tr></table></figure>
+
+<h1 id="配置BIND9"><a href="#配置BIND9" class="headerlink" title="配置BIND9"></a>配置BIND9</h1><h2 id="先配rndc"><a href="#先配rndc" class="headerlink" title="先配rndc"></a>先配rndc</h2><h3 id="rndc-key"><a href="#rndc-key" class="headerlink" title="rndc.key"></a>rndc.key</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 ~]# cat /etc/rndc.key </span><br><span class="line">key &quot;rndc-key&quot; &#123;</span><br><span class="line">	algorithm hmac-sha256;</span><br><span class="line">	secret &quot;CD/4vqb9l0WiMy5TXjfeu1cMhyRerQ9kL2jwdBFWwa4=&quot;;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>如果没有，使用如下命令生成rndc.key</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 ~]# rndc-confgen -r /dev/urandom</span><br></pre></td></tr></table></figure>
+
+<h3 id="配rndc-conf"><a href="#配rndc-conf" class="headerlink" title="配rndc.conf"></a>配rndc.conf</h3><figure class="highlight plain"><figcaption><span>/etc/rndc.conf</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">key &quot;rndc-key&quot; &#123;</span><br><span class="line">	algorithm hmac-sha256;</span><br><span class="line">	secret &quot;CD/4vqb9l0WiMy5TXjfeu1cMhyRerQ9kL2jwdBFWwa4=&quot;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">options &#123;</span><br><span class="line">	default-key &quot;rndc-key&quot;;   </span><br><span class="line">	default-server 10.4.7.11;</span><br><span class="line">	default-port 953;   </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h3 id="删除rndc-key"><a href="#删除rndc-key" class="headerlink" title="删除rndc.key"></a>删除rndc.key</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 ~]# rm -f /etc/rndc.key</span><br></pre></td></tr></table></figure>
+
+<h2 id="BIND9主配置文件"><a href="#BIND9主配置文件" class="headerlink" title="BIND9主配置文件"></a>BIND9主配置文件</h2><figure class="highlight plain"><figcaption><span>/etc/named.conf</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line">options &#123;</span><br><span class="line">    listen-on port 53 &#123; 10.4.7.11; &#125;;</span><br><span class="line">    directory 	&quot;/var/named&quot;;</span><br><span class="line">    dump-file 	&quot;/var/named/data/cache_dump.db&quot;;</span><br><span class="line">    statistics-file &quot;/var/named/data/named_stats.txt&quot;;</span><br><span class="line">    memstatistics-file &quot;/var/named/data/named_mem_stats.txt&quot;;</span><br><span class="line">    allow-query     &#123; any; &#125;;</span><br><span class="line">    allow-transfer &#123; 10.4.7.12; &#125;;</span><br><span class="line">    also-notify &#123; 10.4.7.12; &#125;;</span><br><span class="line"></span><br><span class="line">    /* </span><br><span class="line">     - If you are building an AUTHORITATIVE DNS server, do NOT enable recursion.</span><br><span class="line">     - If you are building a RECURSIVE (caching) DNS server, you need to enable </span><br><span class="line">       recursion. </span><br><span class="line">     - If your recursive DNS server has a public IP address, you MUST enable access </span><br><span class="line">       control to limit queries to your legitimate users. Failing to do so will</span><br><span class="line">       cause your server to become part of large scale DNS amplification </span><br><span class="line">       attacks. Implementing BCP38 within your network would greatly</span><br><span class="line">       reduce such attack surface </span><br><span class="line">    */</span><br><span class="line">    recursion yes;  </span><br><span class="line"></span><br><span class="line">    dnssec-enable no;</span><br><span class="line">    dnssec-validation no;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    /* Path to ISC DLV key */</span><br><span class="line">    bindkeys-file &quot;/etc/named.iscdlv.key&quot;;</span><br><span class="line"></span><br><span class="line">    managed-keys-directory &quot;/var/named/dynamic&quot;;</span><br><span class="line"></span><br><span class="line">    pid-file &quot;/run/named/named.pid&quot;;</span><br><span class="line">    session-keyfile &quot;/run/named/session.key&quot;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">key &quot;rndc-key&quot; &#123;</span><br><span class="line">    algorithm hmac-sha256;</span><br><span class="line">    secret &quot;CD/4vqb9l0WiMy5TXjfeu1cMhyRerQ9kL2jwdBFWwa4=&quot;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">controls &#123;</span><br><span class="line">    inet 10.4.7.11 port 953</span><br><span class="line">        allow &#123; 10.4.7.11; &#125; keys &#123; &quot;rndc-key&quot;; &#125;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">logging &#123;</span><br><span class="line">    channel default_debug &#123;</span><br><span class="line">        file &quot;data/named.run&quot;;</span><br><span class="line">        severity dynamic;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">zone &quot;.&quot; IN &#123;</span><br><span class="line">    type hint;</span><br><span class="line">    file &quot;named.ca&quot;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">include &quot;/etc/named.rfc1912.zones&quot;;</span><br><span class="line">include &quot;/etc/named.root.key&quot;;</span><br><span class="line">include &quot;/etc/named.namedmanager.conf&quot;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="改named-namedmanager-conf文件属性"><a href="#改named-namedmanager-conf文件属性" class="headerlink" title="改named.namedmanager.conf文件属性"></a>改named.namedmanager.conf文件属性</h2><figure class="highlight plain"><figcaption><span>/etc/named.namedmanager.conf</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 named]# chown apache.apache /etc/named.namedmanager.conf</span><br><span class="line">[root@hdss7-11 named]# ls -l /etc/named.namedmanager.conf </span><br><span class="line">-rw-r--r-- 1 apache named 112 Dec  16 11:19 /etc/named.namedmanager.conf</span><br></pre></td></tr></table></figure>
+
+<h2 id="检查配置并启动BIND9"><a href="#检查配置并启动BIND9" class="headerlink" title="检查配置并启动BIND9"></a>检查配置并启动BIND9</h2><h3 id="检查配置"><a href="#检查配置" class="headerlink" title="检查配置"></a>检查配置</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 ~]# named-checkconf</span><br></pre></td></tr></table></figure>
+
+<h3 id="启动BIND9"><a href="#启动BIND9" class="headerlink" title="启动BIND9"></a>启动BIND9</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 ~]# systemctl start named</span><br></pre></td></tr></table></figure>
+
+<h3 id="开机自启动-1"><a href="#开机自启动-1" class="headerlink" title="开机自启动"></a>开机自启动</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 ~]# systemctl enable named</span><br></pre></td></tr></table></figure>
+
+<h3 id="检查启动情况"><a href="#检查启动情况" class="headerlink" title="检查启动情况"></a>检查启动情况</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-11 ~]# netstat -luntp|grep 53</span><br><span class="line">tcp        0      0 10.4.7.11:53            0.0.0.0:*               LISTEN      10922/named         </span><br><span class="line">tcp        0      0 10.4.7.11:953           0.0.0.0:*               LISTEN      10922/named         </span><br><span class="line">udp        0      0 10.4.7.11:53            0.0.0.0:*                           10922/named</span><br></pre></td></tr></table></figure>
+
+<h1 id="配置NamedManager页面"><a href="#配置NamedManager页面" class="headerlink" title="配置NamedManager页面"></a>配置NamedManager页面</h1><p>浏览器打开<a href="http://dns-manager.od.com" target="_blank" rel="noopener">http://dns-manager.od.com</a>（提前绑好host），用户名/密码：setup/setup123</p>
+<h2 id="配置Configuration选项卡"><a href="#配置Configuration选项卡" class="headerlink" title="配置Configuration选项卡"></a>配置Configuration选项卡</h2><h3 id="Zone-Configuration-Defaults"><a href="#Zone-Configuration-Defaults" class="headerlink" title="Zone Configuration Defaults"></a>Zone Configuration Defaults</h3><ul>
+<li>DEFAULT_HOSTMASTER<blockquote>
+<p><a href="mailto:87527941@qq.com" target="_blank" rel="noopener">87527941@qq.com</a></p>
+</blockquote>
+</li>
+<li>DEFAULT_TTL_SOA<blockquote>
+<p>86400</p>
+</blockquote>
+</li>
+<li>DEFAULT_TTL_NS<blockquote>
+<p>120</p>
+</blockquote>
+</li>
+<li>DEFAULT_TTL_MX<blockquote>
+<p>60</p>
+</blockquote>
+</li>
+<li>DEFAULT_TTL_OTHER<blockquote>
+<p>60</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="API-Configuration"><a href="#API-Configuration" class="headerlink" title="API Configuration"></a>API Configuration</h3><ul>
+<li>ADMIN_API_KEY<blockquote>
+<p>verycloud</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="Date-and-Time-Configuration"><a href="#Date-and-Time-Configuration" class="headerlink" title="Date and Time Configuration"></a>Date and Time Configuration</h3><ul>
+<li>DATEFORMAT<blockquote>
+<p>yyyy-mm-dd</p>
+</blockquote>
+</li>
+<li>TIMEZONE_DEFAULT<blockquote>
+<p>Asia/Shanghai</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="Save-Changes"><a href="#Save-Changes" class="headerlink" title="Save Changes"></a>Save Changes</h3><h2 id="配置New-Servers选项卡"><a href="#配置New-Servers选项卡" class="headerlink" title="配置New Servers选项卡"></a>配置New Servers选项卡</h2><h3 id="Add-NewServer"><a href="#Add-NewServer" class="headerlink" title="Add NewServer"></a>Add NewServer</h3><h4 id="Server-Details"><a href="#Server-Details" class="headerlink" title="Server Details"></a>Server Details</h4><ul>
+<li>Name Server FQDN *<blockquote>
+<p>dns-manager.od.com<br><strong>注意</strong>：这里一定要填<code>config-bind.php</code>里对应<code>$config[&quot;api_server_name&quot;]</code>项配置的值</p>
+</blockquote>
+</li>
+<li>Description<blockquote>
+<p>dns server for od.com</p>
+</blockquote>
+<h4 id="Server-Type"><a href="#Server-Type" class="headerlink" title="Server Type"></a>Server Type</h4></li>
+<li>Server Type<blockquote>
+<p>API (supports Bind)</p>
+</blockquote>
+</li>
+<li>API Authentication Key *<blockquote>
+<p>verycloud</p>
+</blockquote>
+<h4 id="Server-Domain-Settings"><a href="#Server-Domain-Settings" class="headerlink" title="Server Domain Settings"></a>Server Domain Settings</h4>必须勾选以下三项</li>
+<li>Nameserver Group *<blockquote>
+<p>default – Default Nameserver Group</p>
+</blockquote>
+</li>
+<li>Primary Nameserver *<blockquote>
+<p>Make this server the primary one used for DNS SOA records.</p>
+</blockquote>
+</li>
+<li>Use as NS Record *<blockquote>
+<p>Adds this name server to all domains as a public NS record.</p>
+</blockquote>
+</li>
+</ul>
+<h4 id="Save-Changes-1"><a href="#Save-Changes-1" class="headerlink" title="Save Changes"></a>Save Changes</h4><p>保存后<code>View Name Servers</code>选项卡下，<code>Logging Status</code>应变绿且成为<code>status_synced</code>，如一直不变绿，需要进行排错，不要继续往下做了。</p>
+<h2 id="配置Domain-Zones选项卡"><a href="#配置Domain-Zones选项卡" class="headerlink" title="配置Domain/Zones选项卡"></a>配置Domain/Zones选项卡</h2><h3 id="添加Domain-Zone"><a href="#添加Domain-Zone" class="headerlink" title="添加Domain/Zone"></a>添加Domain/Zone</h3><p>两种方式</p>
+<ul>
+<li>手动添加域</li>
+<li>自动导入域</li>
+</ul>
+<h4 id="Add-Domain（手动添加）"><a href="#Add-Domain（手动添加）" class="headerlink" title="Add Domain（手动添加）"></a>Add Domain（手动添加）</h4><h5 id="Domain-Details"><a href="#Domain-Details" class="headerlink" title="Domain Details"></a>Domain Details</h5><ul>
+<li>Domain Type * <blockquote>
+<p>Standard Domain<br>Reverse Domain (IPv4)<br>Reverse Domain (IPv6)<br>根据实际情况选择，这里选择Standard Domain（正解域）</p>
+</blockquote>
+</li>
+<li>Domain Name *<blockquote>
+<p>od.com</p>
+</blockquote>
+</li>
+<li>Description<blockquote>
+<p>od.com domain </p>
+</blockquote>
+</li>
+</ul>
+<h5 id="Domain-Server-Groups"><a href="#Domain-Server-Groups" class="headerlink" title="Domain Server Groups"></a>Domain Server Groups</h5><p><strong>注意</strong>：一定要勾选域服务器组</p>
+<blockquote>
+<p>default – Default Nameserver Group</p>
+</blockquote>
+<h5 id="Start-of-Authority-Record"><a href="#Start-of-Authority-Record" class="headerlink" title="Start of Authority Record"></a>Start of Authority Record</h5><ul>
+<li>Email Administrator Address *<blockquote>
+<p>Email Administrator Address *</p>
+</blockquote>
+</li>
+<li>Domain Serial *<blockquote>
+<p>2018121601</p>
+</blockquote>
+</li>
+<li>Refresh Timer *<blockquote>
+<p>21600</p>
+</blockquote>
+</li>
+<li>Refresh Retry Timeout *<blockquote>
+<p>3600</p>
+</blockquote>
+</li>
+<li>Expiry Timer *<blockquote>
+<p>604800</p>
+</blockquote>
+</li>
+<li>Default Record TTL *<blockquote>
+<p>60<br><strong>注意</strong>：这里配置SOA记录最后一个参数值没有按套路出牌，配置的<strong>并不是</strong>否定应答超时时间（NegativeAnswerTTL），而是默认资源记录的过期时间</p>
+</blockquote>
+</li>
+</ul>
+<h5 id="Save-Changes-2"><a href="#Save-Changes-2" class="headerlink" title="Save Changes"></a>Save Changes</h5><h4 id="Import-Domain（自动导入）"><a href="#Import-Domain（自动导入）" class="headerlink" title="Import Domain（自动导入）"></a>Import Domain（自动导入）</h4><ul>
+<li>Import Source<blockquote>
+<p>Bind 8/9 Compatible Zonefile</p>
+</blockquote>
+</li>
+<li>Zone File<blockquote>
+<p>选择文件host.com.txt</p>
+</blockquote>
+</li>
+</ul>
+<h5 id="导入一个正解域"><a href="#导入一个正解域" class="headerlink" title="导入一个正解域"></a>导入一个正解域</h5><h6 id="upload，选择文件"><a href="#upload，选择文件" class="headerlink" title="upload，选择文件"></a>upload，选择文件</h6><p>附1：host.com.txt</p>
+<figure class="highlight plain"><figcaption><span>host.com.txt</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">$ORIGIN .</span><br><span class="line">$TTL 600	; 10 minutes</span><br><span class="line">host.com			IN SOA	dns-manager.od.com. 87527941.qq.com. (</span><br><span class="line">				2019013106 ; serial</span><br><span class="line">				10800      ; refresh (3 hours)</span><br><span class="line">				900        ; retry (15 minutes)</span><br><span class="line">				604800     ; expire (1 week)</span><br><span class="line">				86400      ; minimum (1 day)</span><br><span class="line">				)</span><br><span class="line">$ORIGIN host.com.</span><br><span class="line">$TTL 60	; 1 minute</span><br><span class="line">HDSS7-11                   A	10.4.7.11</span><br><span class="line">HDSS7-12                   A    10.4.7.12</span><br></pre></td></tr></table></figure>
+
+<p><strong>注意</strong>：这里可以不用给NS记录和对应的A记录了，会默认生成</p>
+<h6 id="Save-Changes-3"><a href="#Save-Changes-3" class="headerlink" title="Save Changes"></a>Save Changes</h6><p>点保存进入下一个配置页面</p>
+<h6 id="Domain-Details-1"><a href="#Domain-Details-1" class="headerlink" title="Domain Details"></a>Domain Details</h6><p>这里可以配置域的信息和描述，我们这里先配一个<code>Standard Domain</code>（正解域）</p>
+<h6 id="Start-of-Authority-Record-1"><a href="#Start-of-Authority-Record-1" class="headerlink" title="Start of Authority Record"></a>Start of Authority Record</h6><p>这里注意SOA记录的最后一个选项<code>Default Record TTL *</code></p>
+<h6 id="Domain-Records"><a href="#Domain-Records" class="headerlink" title="Domain Records"></a>Domain Records</h6><p>检查一下和导入文件里的记录是否一致</p>
+<h6 id="Save-Changes-4"><a href="#Save-Changes-4" class="headerlink" title="Save Changes"></a>Save Changes</h6><p>先点一次保存</p>
+<h6 id="Domain-Details-2"><a href="#Domain-Details-2" class="headerlink" title="Domain Details"></a>Domain Details</h6><p>检查一遍域信息和描述</p>
+<h6 id="Domain-Server-Groups-1"><a href="#Domain-Server-Groups-1" class="headerlink" title="Domain Server Groups"></a>Domain Server Groups</h6><p><strong>注意</strong>：这里一定要勾选服务器组（上个页面没有，这里新出来的选项）</p>
+<h6 id="Start-of-Authority-Record-2"><a href="#Start-of-Authority-Record-2" class="headerlink" title="Start of Authority Record"></a>Start of Authority Record</h6><p>检查一遍SOA记录</p>
+<h6 id="Save-Changes-5"><a href="#Save-Changes-5" class="headerlink" title="Save Changes"></a>Save Changes</h6><p>最后点一下保存，导入成功</p>
+<h5 id="导入一个反解域"><a href="#导入一个反解域" class="headerlink" title="导入一个反解域"></a>导入一个反解域</h5><h6 id="upload，选择文件-1"><a href="#upload，选择文件-1" class="headerlink" title="upload，选择文件"></a>upload，选择文件</h6><p>附2：7.4.10.in-addr.arpa.txt</p>
+<figure class="highlight plain"><figcaption><span>7.4.10.in-addr.arpa.txt</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">$TTL 600	; 10 minutes</span><br><span class="line">@	     		IN SOA	dns-manager.od.com. 87527941.qq.com. (</span><br><span class="line">				2018121603 ; serial</span><br><span class="line">				10800      ; refresh (3 hours)</span><br><span class="line">				900       ; retry (15 minutes)</span><br><span class="line">				604800     ; expire (1 week)</span><br><span class="line">				86400      ; minimum (1 day)</span><br><span class="line">				)</span><br><span class="line">$ORIGIN 7.4.10.in-addr.arpa.</span><br><span class="line">$TTL 60	; 1 minute</span><br><span class="line">11			PTR		 HDSS7-11.host.com.</span><br><span class="line">12			PTR		 HDSS7-12.host.com.</span><br></pre></td></tr></table></figure>
+
+<p><strong>注意</strong>：这里可以不用给NS记录和对应的A记录了，会默认生成</p>
+<h6 id="Save-Changes-6"><a href="#Save-Changes-6" class="headerlink" title="Save Changes"></a>Save Changes</h6><p>点保存进入下一个配置页面</p>
+<h6 id="Domain-Details-3"><a href="#Domain-Details-3" class="headerlink" title="Domain Details"></a>Domain Details</h6><p><strong>注意：</strong></p>
+<ul>
+<li><code>Domain Type *</code>应为<code>Reverse Domain (IPv4)</code></li>
+<li><code>IPv4 Network Address *</code>应为<code>10.4.7.0</code>/24</li>
+</ul>
+<h6 id="Start-of-Authority-Record-3"><a href="#Start-of-Authority-Record-3" class="headerlink" title="Start of Authority Record"></a>Start of Authority Record</h6><p>配置SOA记录</p>
+<h6 id="Domain-Records-1"><a href="#Domain-Records-1" class="headerlink" title="Domain Records"></a>Domain Records</h6><p>检查一下和导入文件里的记录是否一致</p>
+<h6 id="Save-Changes-7"><a href="#Save-Changes-7" class="headerlink" title="Save Changes"></a>Save Changes</h6><p>先点一次保存</p>
+<h6 id="Domain-Details-4"><a href="#Domain-Details-4" class="headerlink" title="Domain Details"></a>Domain Details</h6><p>检查一遍域信息和描述</p>
+<h6 id="Domain-Server-Groups-2"><a href="#Domain-Server-Groups-2" class="headerlink" title="Domain Server Groups"></a>Domain Server Groups</h6><p><strong>注意</strong>：这里一定要勾选服务器组（上个页面没有，这里新出来的选项）</p>
+<h6 id="Start-of-Authority-Record-4"><a href="#Start-of-Authority-Record-4" class="headerlink" title="Start of Authority Record"></a>Start of Authority Record</h6><p>检查一遍SOA记录</p>
+<h6 id="Save-Changes-8"><a href="#Save-Changes-8" class="headerlink" title="Save Changes"></a>Save Changes</h6><p>最后点一下保存，导入成功</p>
+<h3 id="在对应的Zone里操作资源记录（增、删、改）"><a href="#在对应的Zone里操作资源记录（增、删、改）" class="headerlink" title="在对应的Zone里操作资源记录（增、删、改）"></a>在对应的Zone里操作资源记录（增、删、改）</h3><h4 id="View-Domains选项卡"><a href="#View-Domains选项卡" class="headerlink" title="View Domains选项卡"></a>View Domains选项卡</h4><h5 id="details-按钮"><a href="#details-按钮" class="headerlink" title="details 按钮"></a>details 按钮</h5><p>维护domain的基本配置，略</p>
+<h5 id="delete-按钮"><a href="#delete-按钮" class="headerlink" title="delete 按钮"></a>delete 按钮</h5><p>删除domain，略</p>
+<h5 id="domain-record-od-com"><a href="#domain-record-od-com" class="headerlink" title="domain record(od.com)"></a>domain record(od.com)</h5><h6 id="配置页面"><a href="#配置页面" class="headerlink" title="配置页面"></a>配置页面</h6><ul>
+<li>Domain Details<blockquote>
+<p>Domain od.com selected for adjustment</p>
+</blockquote>
+</li>
+<li>Nameserver Configuration<blockquote>
+<p>这里是配置NS记录的配置区，默认会生成一条</p>
+</blockquote>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>TTL</th>
+<th>Name/Origin</th>
+<th>Content</th>
+<th>-</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>NS</td>
+<td>120</td>
+<td>od.com</td>
+<td>dns-manager.od.com</td>
+<td>-</td>
+</tr>
+</tbody></table>
+<ul>
+<li>Mailserver Configuration<blockquote>
+<p>略，暂不配置MX记录</p>
+</blockquote>
+</li>
+<li>Host Records Configuration<blockquote>
+<p>这里是配置重点，A记录、CNAME记录、TXT记录等都在这个里配置<br>这里增加两条A记录解析，增加一条CNAME解析</p>
+</blockquote>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>TTL</th>
+<th>Name</th>
+<th>Content</th>
+<th>ReversePTR</th>
+<th>-</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A</td>
+<td>60</td>
+<td>dns-manager</td>
+<td>10.4.7.11</td>
+<td>no</td>
+<td><a href="">delete</a></td>
+</tr>
+<tr>
+<td>A</td>
+<td>60</td>
+<td>www</td>
+<td>10.4.7.11</td>
+<td>no</td>
+<td><a href="">delete</a></td>
+</tr>
+<tr>
+<td>CNAME</td>
+<td>60</td>
+<td>eshop</td>
+<td><a href="http://www.od.com" target="_blank" rel="noopener">www.od.com</a></td>
+<td>no</td>
+<td><a href="">delete</a></td>
+</tr>
+</tbody></table>
+<h6 id="Save-Changes-9"><a href="#Save-Changes-9" class="headerlink" title="Save Changes"></a>Save Changes</h6><h5 id="domain-record-host-com"><a href="#domain-record-host-com" class="headerlink" title="domain record(host.com)"></a>domain record(host.com)</h5><h6 id="配置页面-1"><a href="#配置页面-1" class="headerlink" title="配置页面"></a>配置页面</h6><ul>
+<li>Domain Details<blockquote>
+<p>Domain host.com selected for adjustment</p>
+</blockquote>
+</li>
+<li>Nameserver Configuration<blockquote>
+<p>这里是配置NS记录的配置区，默认会生成一条</p>
+</blockquote>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>TTL</th>
+<th>Name/Origin</th>
+<th>Content</th>
+<th>-</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>NS</td>
+<td>120</td>
+<td>host.com</td>
+<td>dns-manager.od.com</td>
+<td>-</td>
+</tr>
+</tbody></table>
+<ul>
+<li>Mailserver Configuration<blockquote>
+<p>略，暂不配置MX记录</p>
+</blockquote>
+</li>
+<li>Host Records Configuration<blockquote>
+<p>这里是配置重点，A记录、CNAME记录、TXT记录等都在这个里配置<br>因为是从文件导入的域，默认会有记录</p>
+</blockquote>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>TTL</th>
+<th>Name</th>
+<th>Content</th>
+<th>ReversePTR</th>
+<th>-</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A</td>
+<td>60</td>
+<td>HDSS7-11</td>
+<td>10.4.7.11</td>
+<td>√</td>
+<td><a href="">delete</a></td>
+</tr>
+<tr>
+<td>A</td>
+<td>60</td>
+<td>HDSS7-12</td>
+<td>10.4.7.12</td>
+<td>√</td>
+<td><a href="">delete</a></td>
+</tr>
+</tbody></table>
+<h6 id="Save-Changes-10"><a href="#Save-Changes-10" class="headerlink" title="Save Changes"></a>Save Changes</h6><h5 id="domain-record-7-4-10-in-addr-arpa"><a href="#domain-record-7-4-10-in-addr-arpa" class="headerlink" title="domain record(7.4.10.in-addr.arpa)"></a>domain record(7.4.10.in-addr.arpa)</h5><h6 id="配置页面-2"><a href="#配置页面-2" class="headerlink" title="配置页面"></a>配置页面</h6><ul>
+<li>Domain Details<blockquote>
+<p>Domain 7.4.10.in-addr.arpa selected for adjustment</p>
+</blockquote>
+</li>
+<li>Nameserver Configuration<blockquote>
+<p>这里是配置NS记录的配置区，默认会生成一条</p>
+</blockquote>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>TTL</th>
+<th>Name/Origin</th>
+<th>Content</th>
+<th>-</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>NS</td>
+<td>120</td>
+<td>7.4.10.in-addr.arpa</td>
+<td>dns-manager.od.com</td>
+<td>-</td>
+</tr>
+</tbody></table>
+<ul>
+<li>Mailserver Configuration<blockquote>
+<p>略，暂不配置MX记录</p>
+</blockquote>
+</li>
+<li>Host Records Configuration<blockquote>
+<p>这里是配置重点，A记录、CNAME记录、TXT记录等都在这个里配置<br>因为是从文件导入的域，默认会有记录</p>
+</blockquote>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>TTL</th>
+<th>Name</th>
+<th>Content</th>
+<th>-</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PTR</td>
+<td>60</td>
+<td>11</td>
+<td>HDSS7-11.host.com</td>
+<td><a href="">delete</a></td>
+</tr>
+<tr>
+<td>PTR</td>
+<td>60</td>
+<td>12</td>
+<td>HDSS7-12.host.com</td>
+<td><a href="">delete</a></td>
+</tr>
+</tbody></table>
+<h6 id="Save-Changes-11"><a href="#Save-Changes-11" class="headerlink" title="Save Changes"></a>Save Changes</h6><h2 id="返回Name-Servers选项卡"><a href="#返回Name-Servers选项卡" class="headerlink" title="返回Name Servers选项卡"></a>返回Name Servers选项卡</h2><h3 id="查看页面DNS服务器状态"><a href="#查看页面DNS服务器状态" class="headerlink" title="查看页面DNS服务器状态"></a>查看页面DNS服务器状态</h3><ul>
+<li>Logging Status<blockquote>
+<span class="label success">status_synced</span></blockquote>
+</li>
+<li>Zonefile Status<blockquote>
+<span class="label success">status_synced</span>
+</blockquote>
+</li>
+</ul>
+<p>全部变绿且为<code>status_synced</code>即为正常</p>
+<h2 id="查看服务器上配置文件（都是由namedmanager服务自动生成的）"><a href="#查看服务器上配置文件（都是由namedmanager服务自动生成的）" class="headerlink" title="查看服务器上配置文件（都是由namedmanager服务自动生成的）"></a>查看服务器上配置文件（都是由namedmanager服务自动生成的）</h2><h3 id="named-namedmanager-conf"><a href="#named-namedmanager-conf" class="headerlink" title="named.namedmanager.conf"></a>named.namedmanager.conf</h3><figure class="highlight plain"><figcaption><span>/etc/named.namedmanager.conf</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">//</span><br><span class="line">// NamedManager Configuration</span><br><span class="line">//</span><br><span class="line">// This file is automatically generated any manual changes will be lost.</span><br><span class="line">//</span><br><span class="line">zone &quot;od.com&quot; IN &#123;</span><br><span class="line">	type master;</span><br><span class="line">	file &quot;od.com.zone&quot;;</span><br><span class="line">	allow-update &#123; none; &#125;;</span><br><span class="line">&#125;;</span><br><span class="line">zone &quot;host.com&quot; IN &#123;</span><br><span class="line">	type master;</span><br><span class="line">	file &quot;host.com.zone&quot;;</span><br><span class="line">	allow-update &#123; none; &#125;;</span><br><span class="line">&#125;;</span><br><span class="line">zone &quot;7.4.10.in-addr.arpa&quot; IN &#123;</span><br><span class="line">	type master;</span><br><span class="line">	file &quot;7.4.10.in-addr.arpa.zone&quot;;</span><br><span class="line">	allow-update &#123; none; &#125;;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>这里生成了三个zone，两个正解域，一个反解域，依次检查三个域的区域数据库文件：</p>
+<h3 id="od-com-zone"><a href="#od-com-zone" class="headerlink" title="od.com.zone"></a>od.com.zone</h3><figure class="highlight plain"><figcaption><span>/var/named/od.com.zone</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">$ORIGIN od.com.</span><br><span class="line">$TTL 60</span><br><span class="line">@		IN SOA dns-manager.od.com. 87527941.qq.com. (</span><br><span class="line">			2018121610 ; serial</span><br><span class="line">			21600 ; refresh</span><br><span class="line">			3600 ; retry</span><br><span class="line">			604800 ; expiry</span><br><span class="line">			60 ; minimum ttl</span><br><span class="line">		)</span><br><span class="line"></span><br><span class="line">; Nameservers</span><br><span class="line"></span><br><span class="line">od.com.	120 IN NS dns-manager.od.com.</span><br><span class="line"></span><br><span class="line">; Mailservers</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">; Reverse DNS Records (PTR)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">; CNAME</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">; HOST RECORDS</span><br><span class="line"></span><br><span class="line">dns-manager	60 IN A 10.4.7.11</span><br><span class="line">www	60 IN A 10.4.7.11</span><br><span class="line">eshop 60 IN CNAME www.od.com.</span><br></pre></td></tr></table></figure>
+
+<h3 id="host-com-zone"><a href="#host-com-zone" class="headerlink" title="host.com.zone"></a>host.com.zone</h3><figure class="highlight plain"><figcaption><span>/var/named/host.com.zone</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">$ORIGIN host.com.</span><br><span class="line">$TTL 60</span><br><span class="line">@		IN SOA dns-manager.od.com. 87527941.qq.com. (</span><br><span class="line">			2018121604 ; serial</span><br><span class="line">			10800 ; refresh</span><br><span class="line">			900 ; retry</span><br><span class="line">			604800 ; expiry</span><br><span class="line">			60 ; minimum ttl</span><br><span class="line">		)</span><br><span class="line"></span><br><span class="line">; Nameservers</span><br><span class="line"></span><br><span class="line">host.com.	120 IN NS dns-manager.od.com.</span><br><span class="line"></span><br><span class="line">; Mailservers</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">; Reverse DNS Records (PTR)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">; CNAME</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">; HOST RECORDS</span><br><span class="line"></span><br><span class="line">HDSS7-11	60 IN A 10.4.7.11</span><br><span class="line">HDSS7-12	60 IN A 10.4.7.12</span><br></pre></td></tr></table></figure>
+
+<h3 id="7-4-10-in-addr-arpa-zone"><a href="#7-4-10-in-addr-arpa-zone" class="headerlink" title="7.4.10.in-addr.arpa.zone"></a>7.4.10.in-addr.arpa.zone</h3><figure class="highlight plain"><figcaption><span>/var/named/7.4.10.in-addr.arpa.zone</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">$ORIGIN 7.4.10.in-addr.arpa.</span><br><span class="line">$TTL 60</span><br><span class="line">@		IN SOA dns-manager.od.com. 87527941.qq.com. (</span><br><span class="line">			2018121603 ; serial</span><br><span class="line">			10800 ; refresh</span><br><span class="line">			900 ; retry</span><br><span class="line">			604800 ; expiry</span><br><span class="line">			60 ; minimum ttl</span><br><span class="line">		)</span><br><span class="line"></span><br><span class="line">; Nameservers</span><br><span class="line"></span><br><span class="line">7.4.10.in-addr.arpa.	120 IN NS dns-manager.od.com.</span><br><span class="line"></span><br><span class="line">; Mailservers</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">; Reverse DNS Records (PTR)</span><br><span class="line"></span><br><span class="line">11	60 IN PTR HDSS7-11.host.com.</span><br><span class="line">12	60 IN PTR HDSS7-12.host.com.</span><br><span class="line"></span><br><span class="line">; CNAME</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">; HOST RECORDS</span><br></pre></td></tr></table></figure>
+
+<h2 id="检查资源记录解析是否生效"><a href="#检查资源记录解析是否生效" class="headerlink" title="检查资源记录解析是否生效"></a>检查资源记录解析是否生效</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># dig -t A www.od.com @10.4.7.11 +short</span><br><span class="line">10.4.7.11</span><br><span class="line"></span><br><span class="line">#dig -t A HDSS7-12.host.com @10.4.7.11 +short</span><br><span class="line">10.4.7.12</span><br><span class="line"></span><br><span class="line">#dig -x 10.4.7.11 @10.4.7.11 +short</span><br><span class="line">HDSS7-11.host.com.</span><br></pre></td></tr></table></figure>
+
+<h2 id="验证页面增、删、改是否均生效"><a href="#验证页面增、删、改是否均生效" class="headerlink" title="验证页面增、删、改是否均生效"></a>验证页面增、删、改是否均生效</h2><p><strong>注意：</strong></p>
+<ul>
+<li>增、删、改资源记录时，对应域的SOA记录的serial序列号会自动滚动，非常方便</li>
+<li>这里在页面上操作资源记录，会先写mysql，再由php脚本定期刷到磁盘文件上，所以大概需要1分钟的时间生效</li>
+<li>在维护主机域时，添加正解记录，并勾选后面的reverse选项，将同时生成一条反解记录，简化了操作</li>
+<li>由于服务器上的区域数据库文件是由php进程定期更新的（根据mysql数据库里的数据），所以手动在服务器上修改资源记录是无法生效的，应该严格禁止</li>
+</ul>
+<h2 id="配置DNS主辅同步"><a href="#配置DNS主辅同步" class="headerlink" title="配置DNS主辅同步"></a>配置DNS主辅同步</h2><p>略</p>
+<h2 id="配置客户端的DNS服务器"><a href="#配置客户端的DNS服务器" class="headerlink" title="配置客户端的DNS服务器"></a>配置客户端的DNS服务器</h2><figure class="highlight plain"><figcaption><span>/etc/resolv.conf</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># Generated by NetworkManager</span><br><span class="line">search od.com host.com</span><br><span class="line">nameserver 10.4.7.11</span><br><span class="line">nameserver 10.4.7.12</span><br></pre></td></tr></table></figure>
+
+<p>把所有客户端绑定的临时hosts删除</p>
+<figure class="highlight plain"><figcaption><span>/etc/hosts</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">#10.4.7.11   dns-manager.od.com</span><br></pre></td></tr></table></figure>
+
+<p><a href="https://www.jianshu.com/p/2c1c081cc521" target="_blank" rel="noopener">配置客户端DNS服务器的小技巧</a></p>
+<h1 id="用户系统及操作审计功能"><a href="#用户系统及操作审计功能" class="headerlink" title="用户系统及操作审计功能"></a>用户系统及操作审计功能</h1><h2 id="用户系统"><a href="#用户系统" class="headerlink" title="用户系统"></a>用户系统</h2><p>可以创建不同的管理员用户</p>
+<h3 id="User-Management选项卡"><a href="#User-Management选项卡" class="headerlink" title="User Management选项卡"></a>User Management选项卡</h3><p>该页面下可以查看所有的系统用户，并可以进行用户管理</p>
+<h3 id="Create-a-new-User-Account-增加用户"><a href="#Create-a-new-User-Account-增加用户" class="headerlink" title="Create a new User Account 增加用户"></a>Create a new User Account 增加用户</h3><h4 id="User-Details"><a href="#User-Details" class="headerlink" title="User Details"></a>User Details</h4><ul>
+<li>Username *<blockquote>
+<p>wangdao</p>
+</blockquote>
+</li>
+<li>Real Name *<blockquote>
+<p>StanleyWang</p>
+</blockquote>
+</li>
+<li>Contact Email *<blockquote>
+<p><a href="mailto:stanley.wang.m@qq.com" target="_blank" rel="noopener">stanley.wang.m@qq.com</a></p>
+</blockquote>
+</li>
+</ul>
+<h4 id="User-Password"><a href="#User-Password" class="headerlink" title="User Password"></a>User Password</h4><ul>
+<li>password *<blockquote>
+<p>123456</p>
+</blockquote>
+</li>
+<li>password_confirm *<blockquote>
+<p>123456</p>
+</blockquote>
+</li>
+</ul>
+<h4 id="Save-Changes-12"><a href="#Save-Changes-12" class="headerlink" title="Save Changes"></a>Save Changes</h4><h3 id="User-Permissions-用户权限"><a href="#User-Permissions-用户权限" class="headerlink" title="User Permissions 用户权限"></a>User Permissions 用户权限</h3><ul>
+<li>disabled<blockquote>
+<p>勾上，用户不生效<br>不勾，用户生效<br>这里不勾</p>
+</blockquote>
+</li>
+<li>admin（超级管理员）<blockquote>
+<p>勾上，可以创建用户管理用户权限<br>不勾，不可以创建用户管理用户权限<br>这里不勾</p>
+</blockquote>
+</li>
+<li>namedadmins（管理员）<blockquote>
+<p>勾上，dns管理员，可以管理zone和资源记录<br>不勾，不可以管理zone和资源记录<br>这里勾选</p>
+</blockquote>
+</li>
+</ul>
+<h4 id="Save-Changes-13"><a href="#Save-Changes-13" class="headerlink" title="Save Changes"></a>Save Changes</h4><h3 id="delete"><a href="#delete" class="headerlink" title="delete"></a>delete</h3><p>删除用户，略</p>
+<h3 id="details"><a href="#details" class="headerlink" title="details"></a>details</h3><p>这里可以配置用户的基本信息</p>
+<h4 id="User-Password-1"><a href="#User-Password-1" class="headerlink" title="User Password"></a>User Password</h4><p>超级管理员可以帮助用户修改密码</p>
+<h4 id="User-Options"><a href="#User-Options" class="headerlink" title="User Options"></a>User Options</h4><ul>
+<li>option_shrink_tableoptions<blockquote>
+<p>Automatically hide the options table when using defaults<br>默认勾选，高级查询框显示与否</p>
+</blockquote>
+</li>
+<li>option_debug<blockquote>
+<p>Enable debug logging - this will impact performance a bit but will show a full trail of all functions and SQL queries made<br>默认不勾，勾选上可以在页面显示debug日志，建议部署时使用，投产后关闭</p>
+</blockquote>
+</li>
+<li>option_concurrent_logins<blockquote>
+<p>Permit this user to make multiple simultaneous logins<br>默认不勾，允许该用户在多点同时登录，应该严格禁止（审计）</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="使用wangdao用户登录"><a href="#使用wangdao用户登录" class="headerlink" title="使用wangdao用户登录"></a>使用wangdao用户登录</h3><p>可以进行DNS服务管理，但无法管理用户</p>
+<h2 id="审计"><a href="#审计" class="headerlink" title="审计"></a>审计</h2><h3 id="使用wangdao用户在页面增加一条资源记录"><a href="#使用wangdao用户在页面增加一条资源记录" class="headerlink" title="使用wangdao用户在页面增加一条资源记录"></a>使用wangdao用户在页面增加一条资源记录</h3><p>操作过程略</p>
+<h3 id="Changelog选项卡"><a href="#Changelog选项卡" class="headerlink" title="Changelog选项卡"></a>Changelog选项卡</h3><p>可以看到所有用户的操作记录，实现审计功能，做到操作可溯</p>
+<h3 id="Tips"><a href="#Tips" class="headerlink" title="Tips"></a>Tips</h3><ul>
+<li>生产上强烈建议新生成一个超级管理员用户并将setup用户删除！</li>
+<li>超级管理员用户应只有一个且不要轻易外泄，可以创建多个管理员账户。（一般根据业务而定，每个管理员负责一个子域）</li>
+<li>管理员账户创建好后，应由各人自行登录修改密码。</li>
+<li>超级管理员用户密码的复杂度要足够高，定期更换超级管理员用户密码。</li>
+</ul>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById(&quot;QR&quot;); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechat.png" alt="Stanley Wang 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.2yuan.png" alt="Stanley Wang 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/01/11/Markdown语法范例/" rel="next" title="Markdown语法范例">
+                <i class="fa fa-chevron-left"></i> Markdown语法范例
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/12/16/实验文档7：bind-chroot和dnssec技术实战/" rel="prev" title="实验文档7：bind-chroot和dnssec技术实战">
+                实验文档7：bind-chroot和dnssec技术实战 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.jpg" alt="Stanley Wang">
+            
+              <p class="site-author-name" itemprop="name">Stanley Wang</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">19</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://gitee.com/stanleywang" title="GitHub &rarr; https://gitee.com/stanleywang" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="mailto:stanley.wang.m@qq.com" title="E-Mail &rarr; mailto:stanley.wang.m@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#系统环境"><span class="nav-number">1.</span> <span class="nav-text">系统环境</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#安装部署namedmanager"><span class="nav-number">2.</span> <span class="nav-text">安装部署namedmanager</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#准备rpm包"><span class="nav-number">2.1.</span> <span class="nav-text">准备rpm包</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#下载最新版"><span class="nav-number">2.2.</span> <span class="nav-text">下载最新版</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#安装"><span class="nav-number">2.3.</span> <span class="nav-text">安装</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#先配mysql"><span class="nav-number">2.4.</span> <span class="nav-text">先配mysql</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#启动mysql"><span class="nav-number">2.4.1.</span> <span class="nav-text">启动mysql</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#开机自启动"><span class="nav-number">2.4.2.</span> <span class="nav-text">开机自启动</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#配mysql的root密码"><span class="nav-number">2.4.3.</span> <span class="nav-text">配mysql的root密码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#导入namedmanager的数据库脚本"><span class="nav-number">2.4.4.</span> <span class="nav-text">导入namedmanager的数据库脚本</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#配置namedmanager"><span class="nav-number">2.5.</span> <span class="nav-text">配置namedmanager</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#config-php，增加一条配置"><span class="nav-number">2.5.1.</span> <span class="nav-text">config.php，增加一条配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#config-bind-php，修改以下三条配置"><span class="nav-number">2.5.2.</span> <span class="nav-text">config-bind.php，修改以下三条配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#php-ini，修改一条配置"><span class="nav-number">2.5.3.</span> <span class="nav-text">php.ini，修改一条配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#绑host（临时）"><span class="nav-number">2.5.4.</span> <span class="nav-text">绑host（临时）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#配apache"><span class="nav-number">2.5.5.</span> <span class="nav-text">配apache</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#配nginx"><span class="nav-number">2.5.6.</span> <span class="nav-text">配nginx</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#启动apache和nginx"><span class="nav-number">2.6.</span> <span class="nav-text">启动apache和nginx</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#继续改namedmanager的配置"><span class="nav-number">2.7.</span> <span class="nav-text">继续改namedmanager的配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#改namedmanager-bind-configwriter-php"><span class="nav-number">2.7.1.</span> <span class="nav-text">改namedmanager_bind_configwriter.php</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#启动namedmanager-logpush-rcsysinit"><span class="nav-number">2.7.2.</span> <span class="nav-text">启动namedmanager_logpush.rcsysinit</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#加执行权限"><span class="nav-number">2.7.2.1.</span> <span class="nav-text">加执行权限</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#启动该脚本"><span class="nav-number">2.7.2.2.</span> <span class="nav-text">启动该脚本</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#检查是否启动"><span class="nav-number">2.7.2.3.</span> <span class="nav-text">检查是否启动</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#用supervisor管理起来"><span class="nav-number">2.7.2.4.</span> <span class="nav-text">用supervisor管理起来</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#先安装supervisor软件"><span class="nav-number">2.7.2.4.1.</span> <span class="nav-text">先安装supervisor软件</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#创建脚本启动的配置文件"><span class="nav-number">2.7.2.4.2.</span> <span class="nav-text">创建脚本启动的配置文件</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#启动supservisord服务"><span class="nav-number">2.7.2.4.3.</span> <span class="nav-text">启动supservisord服务</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#开机自启"><span class="nav-number">2.7.2.4.4.</span> <span class="nav-text">开机自启</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#查看脚本启动情况"><span class="nav-number">2.7.2.5.</span> <span class="nav-text">查看脚本启动情况</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#检查日志"><span class="nav-number">2.7.2.6.</span> <span class="nav-text">检查日志</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#改inc-soap-api-php"><span class="nav-number">2.7.3.</span> <span class="nav-text">改inc_soap_api.php</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#重启namedmanager-logpush-rcsysinit"><span class="nav-number">2.7.4.</span> <span class="nav-text">重启namedmanager_logpush.rcsysinit</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#配置BIND9"><span class="nav-number">3.</span> <span class="nav-text">配置BIND9</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#先配rndc"><span class="nav-number">3.1.</span> <span class="nav-text">先配rndc</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#rndc-key"><span class="nav-number">3.1.1.</span> <span class="nav-text">rndc.key</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#配rndc-conf"><span class="nav-number">3.1.2.</span> <span class="nav-text">配rndc.conf</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#删除rndc-key"><span class="nav-number">3.1.3.</span> <span class="nav-text">删除rndc.key</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BIND9主配置文件"><span class="nav-number">3.2.</span> <span class="nav-text">BIND9主配置文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#改named-namedmanager-conf文件属性"><span class="nav-number">3.3.</span> <span class="nav-text">改named.namedmanager.conf文件属性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#检查配置并启动BIND9"><span class="nav-number">3.4.</span> <span class="nav-text">检查配置并启动BIND9</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#检查配置"><span class="nav-number">3.4.1.</span> <span class="nav-text">检查配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#启动BIND9"><span class="nav-number">3.4.2.</span> <span class="nav-text">启动BIND9</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#开机自启动-1"><span class="nav-number">3.4.3.</span> <span class="nav-text">开机自启动</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#检查启动情况"><span class="nav-number">3.4.4.</span> <span class="nav-text">检查启动情况</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#配置NamedManager页面"><span class="nav-number">4.</span> <span class="nav-text">配置NamedManager页面</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#配置Configuration选项卡"><span class="nav-number">4.1.</span> <span class="nav-text">配置Configuration选项卡</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Zone-Configuration-Defaults"><span class="nav-number">4.1.1.</span> <span class="nav-text">Zone Configuration Defaults</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#API-Configuration"><span class="nav-number">4.1.2.</span> <span class="nav-text">API Configuration</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Date-and-Time-Configuration"><span class="nav-number">4.1.3.</span> <span class="nav-text">Date and Time Configuration</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Save-Changes"><span class="nav-number">4.1.4.</span> <span class="nav-text">Save Changes</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#配置New-Servers选项卡"><span class="nav-number">4.2.</span> <span class="nav-text">配置New Servers选项卡</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Add-NewServer"><span class="nav-number">4.2.1.</span> <span class="nav-text">Add NewServer</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Server-Details"><span class="nav-number">4.2.1.1.</span> <span class="nav-text">Server Details</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Server-Type"><span class="nav-number">4.2.1.2.</span> <span class="nav-text">Server Type</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Server-Domain-Settings"><span class="nav-number">4.2.1.3.</span> <span class="nav-text">Server Domain Settings</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Save-Changes-1"><span class="nav-number">4.2.1.4.</span> <span class="nav-text">Save Changes</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#配置Domain-Zones选项卡"><span class="nav-number">4.3.</span> <span class="nav-text">配置Domain/Zones选项卡</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#添加Domain-Zone"><span class="nav-number">4.3.1.</span> <span class="nav-text">添加Domain/Zone</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Add-Domain（手动添加）"><span class="nav-number">4.3.1.1.</span> <span class="nav-text">Add Domain（手动添加）</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Domain-Details"><span class="nav-number">4.3.1.1.1.</span> <span class="nav-text">Domain Details</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Domain-Server-Groups"><span class="nav-number">4.3.1.1.2.</span> <span class="nav-text">Domain Server Groups</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Start-of-Authority-Record"><span class="nav-number">4.3.1.1.3.</span> <span class="nav-text">Start of Authority Record</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Save-Changes-2"><span class="nav-number">4.3.1.1.4.</span> <span class="nav-text">Save Changes</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Import-Domain（自动导入）"><span class="nav-number">4.3.1.2.</span> <span class="nav-text">Import Domain（自动导入）</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#导入一个正解域"><span class="nav-number">4.3.1.2.1.</span> <span class="nav-text">导入一个正解域</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#upload，选择文件"><span class="nav-number">4.3.1.2.1.1.</span> <span class="nav-text">upload，选择文件</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Save-Changes-3"><span class="nav-number">4.3.1.2.1.2.</span> <span class="nav-text">Save Changes</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Domain-Details-1"><span class="nav-number">4.3.1.2.1.3.</span> <span class="nav-text">Domain Details</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Start-of-Authority-Record-1"><span class="nav-number">4.3.1.2.1.4.</span> <span class="nav-text">Start of Authority Record</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Domain-Records"><span class="nav-number">4.3.1.2.1.5.</span> <span class="nav-text">Domain Records</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Save-Changes-4"><span class="nav-number">4.3.1.2.1.6.</span> <span class="nav-text">Save Changes</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Domain-Details-2"><span class="nav-number">4.3.1.2.1.7.</span> <span class="nav-text">Domain Details</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Domain-Server-Groups-1"><span class="nav-number">4.3.1.2.1.8.</span> <span class="nav-text">Domain Server Groups</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Start-of-Authority-Record-2"><span class="nav-number">4.3.1.2.1.9.</span> <span class="nav-text">Start of Authority Record</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Save-Changes-5"><span class="nav-number">4.3.1.2.1.10.</span> <span class="nav-text">Save Changes</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#导入一个反解域"><span class="nav-number">4.3.1.2.2.</span> <span class="nav-text">导入一个反解域</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#upload，选择文件-1"><span class="nav-number">4.3.1.2.2.1.</span> <span class="nav-text">upload，选择文件</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Save-Changes-6"><span class="nav-number">4.3.1.2.2.2.</span> <span class="nav-text">Save Changes</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Domain-Details-3"><span class="nav-number">4.3.1.2.2.3.</span> <span class="nav-text">Domain Details</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Start-of-Authority-Record-3"><span class="nav-number">4.3.1.2.2.4.</span> <span class="nav-text">Start of Authority Record</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Domain-Records-1"><span class="nav-number">4.3.1.2.2.5.</span> <span class="nav-text">Domain Records</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Save-Changes-7"><span class="nav-number">4.3.1.2.2.6.</span> <span class="nav-text">Save Changes</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Domain-Details-4"><span class="nav-number">4.3.1.2.2.7.</span> <span class="nav-text">Domain Details</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Domain-Server-Groups-2"><span class="nav-number">4.3.1.2.2.8.</span> <span class="nav-text">Domain Server Groups</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Start-of-Authority-Record-4"><span class="nav-number">4.3.1.2.2.9.</span> <span class="nav-text">Start of Authority Record</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Save-Changes-8"><span class="nav-number">4.3.1.2.2.10.</span> <span class="nav-text">Save Changes</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#在对应的Zone里操作资源记录（增、删、改）"><span class="nav-number">4.3.2.</span> <span class="nav-text">在对应的Zone里操作资源记录（增、删、改）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#View-Domains选项卡"><span class="nav-number">4.3.2.1.</span> <span class="nav-text">View Domains选项卡</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#details-按钮"><span class="nav-number">4.3.2.1.1.</span> <span class="nav-text">details 按钮</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#delete-按钮"><span class="nav-number">4.3.2.1.2.</span> <span class="nav-text">delete 按钮</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#domain-record-od-com"><span class="nav-number">4.3.2.1.3.</span> <span class="nav-text">domain record(od.com)</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#配置页面"><span class="nav-number">4.3.2.1.3.1.</span> <span class="nav-text">配置页面</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Save-Changes-9"><span class="nav-number">4.3.2.1.3.2.</span> <span class="nav-text">Save Changes</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#domain-record-host-com"><span class="nav-number">4.3.2.1.4.</span> <span class="nav-text">domain record(host.com)</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#配置页面-1"><span class="nav-number">4.3.2.1.4.1.</span> <span class="nav-text">配置页面</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Save-Changes-10"><span class="nav-number">4.3.2.1.4.2.</span> <span class="nav-text">Save Changes</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#domain-record-7-4-10-in-addr-arpa"><span class="nav-number">4.3.2.1.5.</span> <span class="nav-text">domain record(7.4.10.in-addr.arpa)</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#配置页面-2"><span class="nav-number">4.3.2.1.5.1.</span> <span class="nav-text">配置页面</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Save-Changes-11"><span class="nav-number">4.3.2.1.5.2.</span> <span class="nav-text">Save Changes</span></a></li></ol></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#返回Name-Servers选项卡"><span class="nav-number">4.4.</span> <span class="nav-text">返回Name Servers选项卡</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#查看页面DNS服务器状态"><span class="nav-number">4.4.1.</span> <span class="nav-text">查看页面DNS服务器状态</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#查看服务器上配置文件（都是由namedmanager服务自动生成的）"><span class="nav-number">4.5.</span> <span class="nav-text">查看服务器上配置文件（都是由namedmanager服务自动生成的）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#named-namedmanager-conf"><span class="nav-number">4.5.1.</span> <span class="nav-text">named.namedmanager.conf</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#od-com-zone"><span class="nav-number">4.5.2.</span> <span class="nav-text">od.com.zone</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#host-com-zone"><span class="nav-number">4.5.3.</span> <span class="nav-text">host.com.zone</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-4-10-in-addr-arpa-zone"><span class="nav-number">4.5.4.</span> <span class="nav-text">7.4.10.in-addr.arpa.zone</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#检查资源记录解析是否生效"><span class="nav-number">4.6.</span> <span class="nav-text">检查资源记录解析是否生效</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#验证页面增、删、改是否均生效"><span class="nav-number">4.7.</span> <span class="nav-text">验证页面增、删、改是否均生效</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#配置DNS主辅同步"><span class="nav-number">4.8.</span> <span class="nav-text">配置DNS主辅同步</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#配置客户端的DNS服务器"><span class="nav-number">4.9.</span> <span class="nav-text">配置客户端的DNS服务器</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#用户系统及操作审计功能"><span class="nav-number">5.</span> <span class="nav-text">用户系统及操作审计功能</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#用户系统"><span class="nav-number">5.1.</span> <span class="nav-text">用户系统</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#User-Management选项卡"><span class="nav-number">5.1.1.</span> <span class="nav-text">User Management选项卡</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Create-a-new-User-Account-增加用户"><span class="nav-number">5.1.2.</span> <span class="nav-text">Create a new User Account 增加用户</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#User-Details"><span class="nav-number">5.1.2.1.</span> <span class="nav-text">User Details</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#User-Password"><span class="nav-number">5.1.2.2.</span> <span class="nav-text">User Password</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Save-Changes-12"><span class="nav-number">5.1.2.3.</span> <span class="nav-text">Save Changes</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#User-Permissions-用户权限"><span class="nav-number">5.1.3.</span> <span class="nav-text">User Permissions 用户权限</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Save-Changes-13"><span class="nav-number">5.1.3.1.</span> <span class="nav-text">Save Changes</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#delete"><span class="nav-number">5.1.4.</span> <span class="nav-text">delete</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#details"><span class="nav-number">5.1.5.</span> <span class="nav-text">details</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#User-Password-1"><span class="nav-number">5.1.5.1.</span> <span class="nav-text">User Password</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#User-Options"><span class="nav-number">5.1.5.2.</span> <span class="nav-text">User Options</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用wangdao用户登录"><span class="nav-number">5.1.6.</span> <span class="nav-text">使用wangdao用户登录</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#审计"><span class="nav-number">5.2.</span> <span class="nav-text">审计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#使用wangdao用户在页面增加一条资源记录"><span class="nav-number">5.2.1.</span> <span class="nav-text">使用wangdao用户在页面增加一条资源记录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Changelog选项卡"><span class="nav-number">5.2.2.</span> <span class="nav-text">Changelog选项卡</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Tips"><span class="nav-number">5.2.3.</span> <span class="nav-text">Tips</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Stanley Wang</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+    <span title="站点总字数">278k</span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    
+    <span title="站点阅读时长">4:13</span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+    
+    
+  
+  <script color="0,0,255" opacity="0.5" zindex="-1" count="99" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/src/utils.js?v=7.0.0"></script>
+
+  <script src="/js/src/motion.js?v=7.0.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/src/schemes/muse.js?v=7.0.0"></script>
+
+
+
+
+  
+  <script src="/js/src/scrollspy.js?v=7.0.0"></script>
+<script src="/js/src/post-details.js?v=7.0.0"></script>
+
+
+
+  
+
+
+  <script src="/js/src/bootstrap.js?v=7.0.0"></script>
+
+
+
+  
+
+
+  
+
+
+  
+  <script>
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url).replace(/\/{2,}/g, '/');
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x"></i></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x"></i></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+  
+
+  
+  
+
+  
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  <style>
+    .copy-btn {
+      display: inline-block;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 20px;
+      color: #333;
+      white-space: nowrap;
+      vertical-align: middle;
+      cursor: pointer;
+      background-color: #eee;
+      background-image: linear-gradient(#fcfcfc, #eee);
+      border: 1px solid #d5d5d5;
+      border-radius: 3px;
+      user-select: none;
+      outline: 0;
+    }
+
+    .highlight-wrap .copy-btn {
+      transition: opacity .3s ease-in-out;
+      opacity: 0;
+      padding: 2px 6px;
+      position: absolute;
+      right: 4px;
+      top: 8px;
+    }
+
+    .highlight-wrap:hover .copy-btn,
+    .highlight-wrap .copy-btn:focus {
+      opacity: 1
+    }
+
+    .highlight-wrap {
+      position: relative;
+    }
+  </style>
+  <script>
+    $('.highlight').each(function(i, e) {
+      var $wrap = $('<div>').addClass('highlight-wrap');
+      $(e).after($wrap);
+      $wrap.append($('<button>').addClass('copy-btn').append('复制').on('click', function(e) {
+        var code = $(this).parent().find('.code').find('.line').map(function(i, e) {
+          return $(e).text();
+        }).toArray().join('\n');
+        var ta = document.createElement('textarea');
+        var range = document.createRange(); //For Chrome
+        var sel = window.getSelection(); //For Chrome
+        var yPosition = window.pageYOffset || document.documentElement.scrollTop;
+        ta.style.top = yPosition + 'px'; //Prevent page scroll
+        ta.style.position = 'absolute';
+        ta.style.opacity = '0';
+        ta.value = code;
+        ta.textContent = code; //For FireFox
+        ta.contentEditable = true;
+        ta.readOnly = false;
+        document.body.appendChild(ta);
+        range.selectNode(ta);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        ta.setSelectionRange(0, code.length);
+        var result = document.execCommand('copy');
+        
+          if (result) $(this).text('复制成功');
+          else $(this).text('复制失败');
+        
+        ta.blur(); //For iOS
+        $(this).blur();
+      })).on('mouseleave', function(e) {
+        var $b = $(this).find('.copy-btn');
+        setTimeout(function() {
+          $b.text('复制');
+        }, 300);
+      }).append(e);
+    })
+  </script>
+
+
+</body>
+</html>

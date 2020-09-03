@@ -1,0 +1,1910 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+  
+  
+    
+    
+  <script src="/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css?v=1.0.2">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.0.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon32.ico?v=7.0.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon16.ico?v=7.0.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.0.0" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '7.0.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="欢迎加入王导的VIP学习qq群：==&amp;gt;932194668&amp;lt;==   部署kube-state-metrics运维主机HDSS7-200.host.com 准备kube-state-metrics镜像kube-state-metrics官方quay.io地址 12345678910111213[root@hdss7-200 ~]# docker pull quay.io/coreos/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Day5：实战新一代容器云监控Prometheus+Grafana">
+<meta property="og:url" content="https://StanleyWang-GitHub.github.io/2019/10/18/Day5：实战新一代容器云监控Prometheus+Grafana/index.html">
+<meta property="og:site_name" content="Stanley&#39;s Blog">
+<meta property="og:description" content="欢迎加入王导的VIP学习qq群：==&amp;gt;932194668&amp;lt;==   部署kube-state-metrics运维主机HDSS7-200.host.com 准备kube-state-metrics镜像kube-state-metrics官方quay.io地址 12345678910111213[root@hdss7-200 ~]# docker pull quay.io/coreos/">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://stanleywang-github.github.io/images/blackbox.png">
+<meta property="og:image" content="https://stanleywang-github.github.io/images/grafana-password.png">
+<meta property="og:image" content="https://stanleywang-github.github.io/images/grafana-datasource.png">
+<meta property="og:image" content="https://stanleywang-github.github.io/images/grafana-cluster.png">
+<meta property="og:image" content="https://stanleywang-github.github.io/images/grafana-k8snode.png">
+<meta property="og:image" content="https://stanleywang-github.github.io/images/grafana-deployment.png">
+<meta property="og:image" content="https://stanleywang-github.github.io/images/grafana-container.png">
+<meta property="og:image" content="https://stanleywang-github.github.io/images/grafana-generic.png">
+<meta property="og:image" content="https://stanleywang-github.github.io/images/grafana-etcd.png">
+<meta property="og:image" content="https://stanleywang-github.github.io/images/grafana-traefik.png">
+<meta property="og:image" content="https://stanleywang-github.github.io/images/grafana-jmx.png">
+<meta property="og:image" content="https://stanleywang-github.github.io/images/grafana-blackbox.png">
+<meta property="og:updated_time" content="2020-09-03T08:33:09.882Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Day5：实战新一代容器云监控Prometheus+Grafana">
+<meta name="twitter:description" content="欢迎加入王导的VIP学习qq群：==&amp;gt;932194668&amp;lt;==   部署kube-state-metrics运维主机HDSS7-200.host.com 准备kube-state-metrics镜像kube-state-metrics官方quay.io地址 12345678910111213[root@hdss7-200 ~]# docker pull quay.io/coreos/">
+<meta name="twitter:image" content="https://stanleywang-github.github.io/images/blackbox.png">
+
+
+
+
+
+
+  <link rel="canonical" href="https://StanleyWang-GitHub.github.io/2019/10/18/Day5：实战新一代容器云监控Prometheus+Grafana/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Day5：实战新一代容器云监控Prometheus+Grafana | Stanley's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Stanley's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://StanleyWang-GitHub.github.io/2019/10/18/Day5：实战新一代容器云监控Prometheus+Grafana/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Stanley Wang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Stanley's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Day5：实战新一代容器云监控Prometheus+Grafana
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-10-18 18:12:56" itemprop="dateCreated datePublished" datetime="2019-10-18T18:12:56+08:00">2019-10-18</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-09-03 16:33:09" itemprop="dateModified" datetime="2020-09-03T16:33:09+08:00">2020-09-03</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-symbolscount">
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">本文字数：</span>
+                
+                <span title="本文字数">49k</span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">45 分钟</span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <hr>
+<blockquote class="blockquote-center"><p>欢迎加入王导的VIP学习qq群：==&gt;<a href="http://shang.qq.com/wpa/qunwpa?idkey=78869fddc5a661acb0639315eb52997c108de6625df5f0ee2f0372f176a032a6" target="_blank" rel="noopener"><font color="FF7F50">932194668</font></a>&lt;==</p>
+</blockquote>
+<hr>
+<h1 id="部署kube-state-metrics"><a href="#部署kube-state-metrics" class="headerlink" title="部署kube-state-metrics"></a>部署kube-state-metrics</h1><p>运维主机<code>HDSS7-200.host.com</code></p>
+<h2 id="准备kube-state-metrics镜像"><a href="#准备kube-state-metrics镜像" class="headerlink" title="准备kube-state-metrics镜像"></a>准备kube-state-metrics镜像</h2><p><a href="https://quay.io/repository/coreos/kube-state-metrics?tab=info" target="_blank" rel="noopener">kube-state-metrics官方quay.io地址</a></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-200 ~]# docker pull quay.io/coreos/kube-state-metrics:v1.5.0</span><br><span class="line">v1.5.0: Pulling from coreos/kube-state-metrics</span><br><span class="line">cd784148e348: Pull complete </span><br><span class="line">f622528a393e: Pull complete </span><br><span class="line">Digest: sha256:b7a3143bd1eb7130759c9259073b9f239d0eeda09f5210f1cd31f1a530599ea1</span><br><span class="line">Status: Downloaded newer image for quay.io/coreos/kube-state-metrics:v1.5.0</span><br><span class="line">[root@hdss7-200 ~]# docker tag 91599517197a harbor.od.com/public/kube-state-metrics:v1.5.0</span><br><span class="line">[root@hdss7-200 ~]# docker push harbor.od.com/public/kube-state-metrics:v1.5.0</span><br><span class="line">docker push harbor.od.com/public/kube-state-metrics:v1.5.0</span><br><span class="line">The push refers to a repository [harbor.od.com/public/kube-state-metrics]</span><br><span class="line">5b3c36501a0a: Pushed </span><br><span class="line">7bff100f35cb: Pushed </span><br><span class="line">v1.5.0: digest: sha256:0d9bea882f25586543254d9ceeb54703eb6f8f94c0dd88875df216b6a0f60589 size: 739</span><br></pre></td></tr></table></figure>
+
+<h2 id="准备资源配置清单"><a href="#准备资源配置清单" class="headerlink" title="准备资源配置清单"></a>准备资源配置清单</h2><div class="tabs" id="kube-state-metrics"><ul class="nav-tabs"><li class="tab active"><a href="#kube-state-metrics-1">RBAC</a></li><li class="tab"><a href="#kube-state-metrics-2">Deployment</a></li></ul><div class="tab-content"><div class="tab-pane active" id="kube-state-metrics-1"><p>vi /data/k8s-yaml/kube-state-metrics/rbac.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: ServiceAccount</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    addonmanager.kubernetes.io/mode: Reconcile</span><br><span class="line">    kubernetes.io/cluster-service: &quot;true&quot;</span><br><span class="line">  name: kube-state-metrics</span><br><span class="line">  namespace: kube-system</span><br><span class="line">---</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">kind: ClusterRole</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    addonmanager.kubernetes.io/mode: Reconcile</span><br><span class="line">    kubernetes.io/cluster-service: &quot;true&quot;</span><br><span class="line">  name: kube-state-metrics</span><br><span class="line">rules:</span><br><span class="line">- apiGroups:</span><br><span class="line">  - &quot;&quot;</span><br><span class="line">  resources:</span><br><span class="line">  - configmaps</span><br><span class="line">  - secrets</span><br><span class="line">  - nodes</span><br><span class="line">  - pods</span><br><span class="line">  - services</span><br><span class="line">  - resourcequotas</span><br><span class="line">  - replicationcontrollers</span><br><span class="line">  - limitranges</span><br><span class="line">  - persistentvolumeclaims</span><br><span class="line">  - persistentvolumes</span><br><span class="line">  - namespaces</span><br><span class="line">  - endpoints</span><br><span class="line">  verbs:</span><br><span class="line">  - list</span><br><span class="line">  - watch</span><br><span class="line">- apiGroups:</span><br><span class="line">  - policy</span><br><span class="line">  resources:</span><br><span class="line">  - poddisruptionbudgets</span><br><span class="line">  verbs:</span><br><span class="line">  - list</span><br><span class="line">  - watch</span><br><span class="line">- apiGroups:</span><br><span class="line">  - extensions</span><br><span class="line">  resources:</span><br><span class="line">  - daemonsets</span><br><span class="line">  - deployments</span><br><span class="line">  - replicasets</span><br><span class="line">  verbs:</span><br><span class="line">  - list</span><br><span class="line">  - watch</span><br><span class="line">- apiGroups:</span><br><span class="line">  - apps</span><br><span class="line">  resources:</span><br><span class="line">  - statefulsets</span><br><span class="line">  verbs:</span><br><span class="line">  - list</span><br><span class="line">  - watch</span><br><span class="line">- apiGroups:</span><br><span class="line">  - batch</span><br><span class="line">  resources:</span><br><span class="line">  - cronjobs</span><br><span class="line">  - jobs</span><br><span class="line">  verbs:</span><br><span class="line">  - list</span><br><span class="line">  - watch</span><br><span class="line">- apiGroups:</span><br><span class="line">  - autoscaling</span><br><span class="line">  resources:</span><br><span class="line">  - horizontalpodautoscalers</span><br><span class="line">  verbs:</span><br><span class="line">  - list</span><br><span class="line">  - watch</span><br><span class="line">---</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">kind: ClusterRoleBinding</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    addonmanager.kubernetes.io/mode: Reconcile</span><br><span class="line">    kubernetes.io/cluster-service: &quot;true&quot;</span><br><span class="line">  name: kube-state-metrics</span><br><span class="line">roleRef:</span><br><span class="line">  apiGroup: rbac.authorization.k8s.io</span><br><span class="line">  kind: ClusterRole</span><br><span class="line">  name: kube-state-metrics</span><br><span class="line">subjects:</span><br><span class="line">- kind: ServiceAccount</span><br><span class="line">  name: kube-state-metrics</span><br><span class="line">  namespace: kube-system</span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="kube-state-metrics-2"><p>vi /data/k8s-yaml/kube-state-metrics/dp.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: extensions/v1beta1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  annotations:</span><br><span class="line">    deployment.kubernetes.io/revision: &quot;2&quot;</span><br><span class="line">  labels:</span><br><span class="line">    grafanak8sapp: &quot;true&quot;</span><br><span class="line">    app: kube-state-metrics</span><br><span class="line">  name: kube-state-metrics</span><br><span class="line">  namespace: kube-system</span><br><span class="line">spec:</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      grafanak8sapp: &quot;true&quot;</span><br><span class="line">      app: kube-state-metrics</span><br><span class="line">  strategy:</span><br><span class="line">    rollingUpdate:</span><br><span class="line">      maxSurge: 25%</span><br><span class="line">      maxUnavailable: 25%</span><br><span class="line">    type: RollingUpdate</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        grafanak8sapp: &quot;true&quot;</span><br><span class="line">        app: kube-state-metrics</span><br><span class="line">    spec:</span><br><span class="line">      containers:</span><br><span class="line">      - name: kube-state-metrics</span><br><span class="line">        image: harbor.od.com/public/kube-state-metrics:v1.5.0</span><br><span class="line">        imagePullPolicy: IfNotPresent</span><br><span class="line">        ports:</span><br><span class="line">        - containerPort: 8080</span><br><span class="line">          name: http-metrics</span><br><span class="line">          protocol: TCP</span><br><span class="line">        readinessProbe:</span><br><span class="line">          failureThreshold: 3</span><br><span class="line">          httpGet:</span><br><span class="line">            path: /healthz</span><br><span class="line">            port: 8080</span><br><span class="line">            scheme: HTTP</span><br><span class="line">          initialDelaySeconds: 5</span><br><span class="line">          periodSeconds: 10</span><br><span class="line">          successThreshold: 1</span><br><span class="line">          timeoutSeconds: 5</span><br><span class="line">      serviceAccountName: kube-state-metrics</span><br></pre></td></tr></table></figure></div></div></div>
+
+<h2 id="应用资源配置清单"><a href="#应用资源配置清单" class="headerlink" title="应用资源配置清单"></a>应用资源配置清单</h2><p>任意一台运算节点上：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/kube-state-metrics/rbac.yaml </span><br><span class="line">serviceaccount/kube-state-metrics created</span><br><span class="line">clusterrole.rbac.authorization.k8s.io/kube-state-metrics created</span><br><span class="line">clusterrolebinding.rbac.authorization.k8s.io/kube-state-metrics created</span><br><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/kube-state-metrics/dp.yaml </span><br><span class="line">deployment.extensions/kube-state-metrics created</span><br></pre></td></tr></table></figure>
+
+<h2 id="检查启动情况"><a href="#检查启动情况" class="headerlink" title="检查启动情况"></a>检查启动情况</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl get pods -n kube-system|grep kube-state-metrics</span><br><span class="line">kube-state-metrics-645bd94c55-wdtqh      1/1     Running   0          94s</span><br></pre></td></tr></table></figure>
+
+<h1 id="部署node-exporter"><a href="#部署node-exporter" class="headerlink" title="部署node-exporter"></a>部署node-exporter</h1><p>运维主机<code>HDSS7-200.host.com</code>上：</p>
+<h2 id="准备node-exporter镜像"><a href="#准备node-exporter镜像" class="headerlink" title="准备node-exporter镜像"></a>准备node-exporter镜像</h2><p><a href="https://hub.docker.com/r/prom/node-exporter" target="_blank" rel="noopener">node-exporter官方dockerhub地址</a><br><a href="https://github.com/prometheus/node_exporter" target="_blank" rel="noopener">node-expoerer官方github地址</a></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-200 ~]# docker pull prom/node-exporter:v0.15.0</span><br><span class="line">v0.15.0: Pulling from prom/node-exporter</span><br><span class="line">0de338cf4258: Pull complete </span><br><span class="line">f508012419d8: Pull complete </span><br><span class="line">d764f7880123: Pull complete </span><br><span class="line">Digest: sha256:c390c8fea4cd362a28ad5070aedd6515aacdfdffd21de6db42ead05e332be5a9</span><br><span class="line">Status: Downloaded newer image for prom/node-exporter:v0.15.0</span><br><span class="line">[root@hdss7-200 ~]# docker tag b3e7f67a1480 harbor.od.com/public/node-exporter:v0.15.0</span><br><span class="line">[root@hdss7-200 ~]# docker push harbor.od.com/public/node-exporter:v0.15.0</span><br><span class="line">docker push harbor.od.com/public/node-exporter:v0.15.0</span><br><span class="line">The push refers to a repository [harbor.od.com/public/node-exporter]</span><br><span class="line">0bf893ee7433: Pushed </span><br><span class="line">17ab2671f87e: Pushed </span><br><span class="line">b8873621dfbc: Pushed </span><br><span class="line">v0.15.0: digest: sha256:4e13dd75f00a6114675ea3e62e61dbd79dcb2205e8f3bbe1f8f8ef2fd3e28113 size: 949</span><br></pre></td></tr></table></figure>
+
+<h2 id="准备资源配置清单-1"><a href="#准备资源配置清单-1" class="headerlink" title="准备资源配置清单"></a>准备资源配置清单</h2><figure class="highlight plain"><figcaption><span>/data/k8s-yaml/node-exporter/ds.yaml</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">kind: DaemonSet</span><br><span class="line">apiVersion: extensions/v1beta1</span><br><span class="line">metadata:</span><br><span class="line">  name: node-exporter</span><br><span class="line">  namespace: kube-system</span><br><span class="line">  labels:</span><br><span class="line">    daemon: &quot;node-exporter&quot;</span><br><span class="line">    grafanak8sapp: &quot;true&quot;</span><br><span class="line">spec:</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      daemon: &quot;node-exporter&quot;</span><br><span class="line">      grafanak8sapp: &quot;true&quot;</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      name: node-exporter</span><br><span class="line">      labels:</span><br><span class="line">        daemon: &quot;node-exporter&quot;</span><br><span class="line">        grafanak8sapp: &quot;true&quot;</span><br><span class="line">    spec:</span><br><span class="line">      volumes:</span><br><span class="line">      - name: proc</span><br><span class="line">        hostPath: </span><br><span class="line">          path: /proc</span><br><span class="line">          type: &quot;&quot;</span><br><span class="line">      - name: sys</span><br><span class="line">        hostPath:</span><br><span class="line">          path: /sys</span><br><span class="line">          type: &quot;&quot;</span><br><span class="line">      containers:</span><br><span class="line">      - name: node-exporter</span><br><span class="line">        image: harbor.od.com/public/node-exporter:v0.15.0</span><br><span class="line">        imagePullPolicy: IfNotPresent</span><br><span class="line">        args:</span><br><span class="line">        - --path.procfs=/host_proc</span><br><span class="line">        - --path.sysfs=/host_sys</span><br><span class="line">        ports:</span><br><span class="line">        - name: node-exporter</span><br><span class="line">          hostPort: 9100</span><br><span class="line">          containerPort: 9100</span><br><span class="line">          protocol: TCP</span><br><span class="line">        volumeMounts:</span><br><span class="line">        - name: sys</span><br><span class="line">          readOnly: true</span><br><span class="line">          mountPath: /host_sys</span><br><span class="line">        - name: proc</span><br><span class="line">          readOnly: true</span><br><span class="line">          mountPath: /host_proc</span><br><span class="line">      hostNetwork: true</span><br></pre></td></tr></table></figure>
+
+<h2 id="应用资源配置清单-1"><a href="#应用资源配置清单-1" class="headerlink" title="应用资源配置清单"></a>应用资源配置清单</h2><p>任意运算节点上：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/node-exporter/ds.yaml</span><br><span class="line">daemonset.extensions/node-exporter created</span><br></pre></td></tr></table></figure>
+
+<h1 id="部署cadvisor"><a href="#部署cadvisor" class="headerlink" title="部署cadvisor"></a>部署cadvisor</h1><p>运维主机<code>HDSS7-200.host.com</code>上：</p>
+<h2 id="准备cadvisor镜像"><a href="#准备cadvisor镜像" class="headerlink" title="准备cadvisor镜像"></a>准备cadvisor镜像</h2><p><a href="https://hub.docker.com/r/google/cadvisor" target="_blank" rel="noopener">cadvisor官方dockerhub地址</a><br><a href="https://github.com/google/cadvisor" target="_blank" rel="noopener">cadvisor官方github地址</a></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-200 ~]# docker pull google/cadvisor:v0.28.3</span><br><span class="line">v0.28.3: Pulling from google/cadvisor</span><br><span class="line">49388a8c9c86: Pull complete </span><br><span class="line">21c698e54ae5: Pull complete </span><br><span class="line">fafc7cbc1edf: Pull complete </span><br><span class="line">Digest: sha256:09c8d73c9b799d30777763b7029cfd8624b8a1bd33af652ec3b51a6b827d492a</span><br><span class="line">Status: Downloaded newer image for google/cadvisor:v0.28.3</span><br><span class="line">[root@hdss7-200 ~]# docker tag d60fd8aeb74c harbor.od.com/public/cadvisor:v0.28.3</span><br><span class="line">[root@hdss7-200 ~]# docker push !$</span><br><span class="line">docker push harbor.od.com/public/cadvisor:v0.28.3</span><br><span class="line">The push refers to a repository [harbor.od.com/public/cadvisor]</span><br><span class="line">daab541dbbf0: Pushed </span><br><span class="line">ba67c95cca3d: Pushed </span><br><span class="line">ef763da74d91: Pushed </span><br><span class="line">v0.28.3: digest: sha256:319812db86e7677767bf6a51ea63b5bdb17dc18ffa576eb6c8a667e899d1329d size: 951</span><br></pre></td></tr></table></figure>
+
+<h2 id="准备资源配置清单-2"><a href="#准备资源配置清单-2" class="headerlink" title="准备资源配置清单"></a>准备资源配置清单</h2><div class="tabs" id="cadvisor"><ul class="nav-tabs"><li class="tab active"><a href="#cadvisor-1">DaemonSet</a></li></ul><div class="tab-content"><div class="tab-pane active" id="cadvisor-1"><p>vi /data/k8s-yaml/cadvisor/ds.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: DaemonSet</span><br><span class="line">metadata:</span><br><span class="line">  name: cadvisor</span><br><span class="line">  namespace: kube-system</span><br><span class="line">  labels:</span><br><span class="line">    app: cadvisor</span><br><span class="line">spec:</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      name: cadvisor</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        name: cadvisor</span><br><span class="line">    spec:</span><br><span class="line">      hostNetwork: true</span><br><span class="line">      tolerations:</span><br><span class="line">      - key: node-role.kubernetes.io/master</span><br><span class="line">        effect: NoSchedule</span><br><span class="line">      containers:</span><br><span class="line">      - name: cadvisor</span><br><span class="line">        image: harbor.od.com/public/cadvisor:v0.28.3</span><br><span class="line">        imagePullPolicy: IfNotPresent</span><br><span class="line">        volumeMounts:</span><br><span class="line">        - name: rootfs</span><br><span class="line">          mountPath: /rootfs</span><br><span class="line">          readOnly: true</span><br><span class="line">        - name: var-run</span><br><span class="line">          mountPath: /var/run</span><br><span class="line">        - name: sys</span><br><span class="line">          mountPath: /sys</span><br><span class="line">          readOnly: true</span><br><span class="line">        - name: docker</span><br><span class="line">          mountPath: /var/lib/docker</span><br><span class="line">          readOnly: true</span><br><span class="line">        ports:</span><br><span class="line">          - name: http</span><br><span class="line">            containerPort: 4194</span><br><span class="line">            protocol: TCP</span><br><span class="line">        readinessProbe:</span><br><span class="line">          tcpSocket:</span><br><span class="line">            port: 4194</span><br><span class="line">          initialDelaySeconds: 5</span><br><span class="line">          periodSeconds: 10</span><br><span class="line">        args:</span><br><span class="line">          - --housekeeping_interval=10s</span><br><span class="line">          - --port=4194</span><br><span class="line">      terminationGracePeriodSeconds: 30</span><br><span class="line">      volumes:</span><br><span class="line">      - name: rootfs</span><br><span class="line">        hostPath:</span><br><span class="line">          path: /</span><br><span class="line">      - name: var-run</span><br><span class="line">        hostPath:</span><br><span class="line">          path: /var/run</span><br><span class="line">      - name: sys</span><br><span class="line">        hostPath:</span><br><span class="line">          path: /sys</span><br><span class="line">      - name: docker</span><br><span class="line">        hostPath:</span><br><span class="line">          path: /data/docker</span><br></pre></td></tr></table></figure></div></div></div>
+
+<h2 id="修改运算节点软连接"><a href="#修改运算节点软连接" class="headerlink" title="修改运算节点软连接"></a>修改运算节点软连接</h2><p>所有运算节点上：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# mount -o remount,rw /sys/fs/cgroup/</span><br><span class="line">[root@hdss7-21 ~]# ln -s /sys/fs/cgroup/cpu,cpuacct/ /sys/fs/cgroup/cpuacct,cpu</span><br><span class="line">[root@hdss7-21 ~]# ll /sys/fs/cgroup/ | grep cpu</span><br><span class="line">total 0</span><br><span class="line">lrwxrwxrwx 1 root root 11 Jan 28 22:41 cpu -&gt; cpu,cpuacct</span><br><span class="line">lrwxrwxrwx 1 root root 11 Jan 28 22:41 cpuacct -&gt; cpu,cpuacct</span><br><span class="line">lrwxrwxrwx 1 root root 27 May  5 11:15 cpuacct,cpu -&gt; /sys/fs/cgroup/cpu,cpuacct/</span><br><span class="line">drwxr-xr-x 8 root root  0 Apr 26 11:06 cpu,cpuacct</span><br><span class="line">drwxr-xr-x 7 root root  0 Jan 28 22:41 cpuset</span><br></pre></td></tr></table></figure>
+
+<h2 id="应用资源配置清单-2"><a href="#应用资源配置清单-2" class="headerlink" title="应用资源配置清单"></a>应用资源配置清单</h2><p>任意运算节点上：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/cadvisor/ds.yaml</span><br><span class="line">daemonset.apps/cadvisor created</span><br><span class="line">[root@hdss7-21 ~]# netstat -luntp|grep 4194</span><br><span class="line">tcp6       0      0 :::4194                 :::*                    LISTEN      49153/cadvisor</span><br></pre></td></tr></table></figure>
+
+<h1 id="部署blackbox-exporter"><a href="#部署blackbox-exporter" class="headerlink" title="部署blackbox-exporter"></a>部署blackbox-exporter</h1><p>运维主机<code>HDSS7-200.host.com</code>上：</p>
+<h2 id="准备blackbox-exporter镜像"><a href="#准备blackbox-exporter镜像" class="headerlink" title="准备blackbox-exporter镜像"></a>准备blackbox-exporter镜像</h2><p><a href="https://hub.docker.com/r/prom/blackbox-exporter" target="_blank" rel="noopener">blackbox-exporter官方dockerhub地址</a><br><a href="https://github.com/prometheus/blackbox_exporter" target="_blank" rel="noopener">blackbox-exporter官方github地址</a></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-200 ~]# docker pull prom/blackbox-exporter:v0.15.1</span><br><span class="line">v0.15.1: Pulling from prom/blackbox-exporter</span><br><span class="line">697743189b6d: Pull complete </span><br><span class="line">f1989cfd335b: Pull complete </span><br><span class="line">8918f7b8f34f: Pull complete </span><br><span class="line">a128dce6256a: Pull complete </span><br><span class="line">Digest: sha256:c20445e0cc628fa4b227fe2f694c22a314beb43fd8297095b6ee6cbc67161336</span><br><span class="line">Status: Downloaded newer image for prom/blackbox-exporter:v0.15.1</span><br><span class="line">[root@hdss7-200 ~]# docker tag d3a00aea3a01 harbor.od.com/public/blackbox-exporter:v0.15.1</span><br><span class="line">[root@hdss7-200 ~]# docker push harbor.od.com/public/blackbox-exporter:v0.15.1</span><br><span class="line">docker push harbor.od.com/public/blackbox-exporter:v0.15.1</span><br><span class="line">The push refers to a repository [harbor.od.com/public/blackbox-exporter]</span><br><span class="line">256c4aa8ebe5: Pushed </span><br><span class="line">4b6cc55de649: Pushed </span><br><span class="line">986894c42222: Mounted from infra/prometheus </span><br><span class="line">adab5d09ba79: Mounted from infra/prometheus </span><br><span class="line">v0.15.1: digest: sha256:b127897cf0f67c47496d5cbb7ecb86c001312bddd04192f6319d09292e880a5f size: 1155</span><br></pre></td></tr></table></figure>
+
+<h2 id="准备资源配置清单-3"><a href="#准备资源配置清单-3" class="headerlink" title="准备资源配置清单"></a>准备资源配置清单</h2><div class="tabs" id="blackbox-exporter"><ul class="nav-tabs"><li class="tab active"><a href="#blackbox-exporter-1">ConfigMap</a></li><li class="tab"><a href="#blackbox-exporter-2">Deployment</a></li><li class="tab"><a href="#blackbox-exporter-3">Service</a></li><li class="tab"><a href="#blackbox-exporter-4">Ingress</a></li></ul><div class="tab-content"><div class="tab-pane active" id="blackbox-exporter-1"><p>vi /data/k8s-yaml/blackbox-exporter/cm.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: ConfigMap</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    app: blackbox-exporter</span><br><span class="line">  name: blackbox-exporter</span><br><span class="line">  namespace: kube-system</span><br><span class="line">data:</span><br><span class="line">  blackbox.yml: |-</span><br><span class="line">    modules:</span><br><span class="line">      http_2xx:</span><br><span class="line">        prober: http</span><br><span class="line">        timeout: 2s</span><br><span class="line">        http:</span><br><span class="line">          valid_http_versions: [&quot;HTTP/1.1&quot;, &quot;HTTP/2&quot;]</span><br><span class="line">          valid_status_codes: [200,301,302]</span><br><span class="line">          method: GET</span><br><span class="line">          preferred_ip_protocol: &quot;ip4&quot;</span><br><span class="line">      tcp_connect:</span><br><span class="line">        prober: tcp</span><br><span class="line">        timeout: 2s</span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="blackbox-exporter-2"><p>vi /data/k8s-yaml/blackbox-exporter/dp.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">kind: Deployment</span><br><span class="line">apiVersion: extensions/v1beta1</span><br><span class="line">metadata:</span><br><span class="line">  name: blackbox-exporter</span><br><span class="line">  namespace: kube-system</span><br><span class="line">  labels:</span><br><span class="line">    app: blackbox-exporter</span><br><span class="line">  annotations:</span><br><span class="line">    deployment.kubernetes.io/revision: 1</span><br><span class="line">spec:</span><br><span class="line">  replicas: 1</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      app: blackbox-exporter</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        app: blackbox-exporter</span><br><span class="line">    spec:</span><br><span class="line">      volumes:</span><br><span class="line">      - name: config</span><br><span class="line">        configMap:</span><br><span class="line">          name: blackbox-exporter</span><br><span class="line">          defaultMode: 420</span><br><span class="line">      containers:</span><br><span class="line">      - name: blackbox-exporter</span><br><span class="line">        image: harbor.od.com/public/blackbox-exporter:v0.15.1</span><br><span class="line">        imagePullPolicy: IfNotPresent</span><br><span class="line">        args:</span><br><span class="line">        - --config.file=/etc/blackbox_exporter/blackbox.yml</span><br><span class="line">        - --log.level=info</span><br><span class="line">        - --web.listen-address=:9115</span><br><span class="line">        ports:</span><br><span class="line">        - name: blackbox-port</span><br><span class="line">          containerPort: 9115</span><br><span class="line">          protocol: TCP</span><br><span class="line">        resources:</span><br><span class="line">          limits:</span><br><span class="line">            cpu: 200m</span><br><span class="line">            memory: 256Mi</span><br><span class="line">          requests:</span><br><span class="line">            cpu: 100m</span><br><span class="line">            memory: 50Mi</span><br><span class="line">        volumeMounts:</span><br><span class="line">        - name: config</span><br><span class="line">          mountPath: /etc/blackbox_exporter</span><br><span class="line">        readinessProbe:</span><br><span class="line">          tcpSocket:</span><br><span class="line">            port: 9115</span><br><span class="line">          initialDelaySeconds: 5</span><br><span class="line">          timeoutSeconds: 5</span><br><span class="line">          periodSeconds: 10</span><br><span class="line">          successThreshold: 1</span><br><span class="line">          failureThreshold: 3</span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="blackbox-exporter-3"><p>vi /data/k8s-yaml/blackbox-exporter/svc.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">kind: Service</span><br><span class="line">apiVersion: v1</span><br><span class="line">metadata:</span><br><span class="line">  name: blackbox-exporter</span><br><span class="line">  namespace: kube-system</span><br><span class="line">spec:</span><br><span class="line">  selector:</span><br><span class="line">    app: blackbox-exporter</span><br><span class="line">  ports:</span><br><span class="line">    - name: blackbox-port</span><br><span class="line">      protocol: TCP</span><br><span class="line">      port: 9115</span><br><span class="line"></span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="blackbox-exporter-4"><p>vi /data/k8s-yaml/blackbox-exporter/ingress.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: extensions/v1beta1</span><br><span class="line">kind: Ingress</span><br><span class="line">metadata:</span><br><span class="line">  name: blackbox-exporter</span><br><span class="line">  namespace: kube-system</span><br><span class="line">spec:</span><br><span class="line">  rules:</span><br><span class="line">  - host: blackbox.od.com</span><br><span class="line">    http:</span><br><span class="line">      paths:</span><br><span class="line">      - path: /</span><br><span class="line">        backend:</span><br><span class="line">          serviceName: blackbox-exporter</span><br><span class="line">          servicePort: blackbox-port</span><br></pre></td></tr></table></figure></div></div></div>
+
+<h2 id="解析域名"><a href="#解析域名" class="headerlink" title="解析域名"></a>解析域名</h2><p><code>HDSS7-11.host.com</code>上</p>
+<figure class="highlight plain"><figcaption><span>/var/named/od.com.zone</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">blackbox           A    10.4.7.10</span><br></pre></td></tr></table></figure>
+
+<h2 id="应用资源配置清单-3"><a href="#应用资源配置清单-3" class="headerlink" title="应用资源配置清单"></a>应用资源配置清单</h2><p>任意运算节点上：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/blackbox-exporter/cm.yaml</span><br><span class="line">configmap/blackbox-exporter created</span><br><span class="line">[root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/blackbox-exporter/dp.yaml</span><br><span class="line">deployment.extensions/blackbox-exporter created</span><br><span class="line">[root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/blackbox-exporter/svc.yaml</span><br><span class="line">service/blackbox-exporter created</span><br><span class="line">[root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/blackbox-exporter/ingress.yaml</span><br><span class="line">ingress.extensions/blackbox-exporter created</span><br></pre></td></tr></table></figure>
+
+<h2 id="浏览器访问"><a href="#浏览器访问" class="headerlink" title="浏览器访问"></a>浏览器访问</h2><p><a href="http://blackbox.od.com" target="_blank" rel="noopener">http://blackbox.od.com</a></p>
+<p><img src="/images/blackbox.png" alt="blackbox-exporter" title="blackbox-exporter"></p>
+<h1 id="部署Prometheus"><a href="#部署Prometheus" class="headerlink" title="部署Prometheus"></a>部署Prometheus</h1><p>运维主机<code>HDSS7-200.host.com</code>上：</p>
+<h2 id="准备prometheus镜像"><a href="#准备prometheus镜像" class="headerlink" title="准备prometheus镜像"></a>准备prometheus镜像</h2><p><a href="https://hub.docker.com/r/prom/prometheus" target="_blank" rel="noopener">prometheus官方dockerhub地址</a><br><a href="https://github.com/prometheus/prometheus" target="_blank" rel="noopener">prometheus官方github地址</a></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-200 ~]# docker pull prom/prometheus:v2.12.0</span><br><span class="line">v2.12.0: Pulling from prom/prometheus</span><br><span class="line">697743189b6d: Pull complete </span><br><span class="line">f1989cfd335b: Pull complete </span><br><span class="line">b60c2f039ea7: Pull complete </span><br><span class="line">6a189f2c500c: Pull complete </span><br><span class="line">bd6be4aea906: Pull complete </span><br><span class="line">81b69caae2b5: Pull complete </span><br><span class="line">5e7226eda004: Pull complete </span><br><span class="line">564568254ec8: Pull complete </span><br><span class="line">9bd07902fc4b: Pull complete </span><br><span class="line">Digest: sha256:e02bb3dec47631b4d31cede2d35ff901d892b57f33144406ee7994e8c94fb2d7</span><br><span class="line">Status: Downloaded newer image for prom/prometheus:v2.12.0</span><br><span class="line">[root@hdss7-200 ~]# docker tag 4737a2d79d1a harbor.od.com/infra/prometheus:v2.12.0</span><br><span class="line">[root@hdss7-200 ~]# docker push harbor.od.com/infra/prometheus:v2.12.0</span><br><span class="line">The push refers to a repository [harbor.od.com/infra/prometheus]</span><br><span class="line">a67e5326fa35: Pushed </span><br><span class="line">02c0c0b3065f: Pushed </span><br><span class="line">b7b1f5015c12: Pushed </span><br><span class="line">38be466f60e1: Pushed </span><br><span class="line">9c3fb6c27da7: Pushed </span><br><span class="line">a06c616e78e9: Pushed </span><br><span class="line">05c0d5c2ae72: Pushed </span><br><span class="line">986894c42222: Pushed </span><br><span class="line">adab5d09ba79: Pushed </span><br><span class="line">v2.12.0: digest: sha256:2357e59541f5596dd90d9f4218deddecd9b4880c1e417a42592b00b30b47b0a9 size: 2198</span><br></pre></td></tr></table></figure>
+
+<h2 id="准备资源配置清单-4"><a href="#准备资源配置清单-4" class="headerlink" title="准备资源配置清单"></a>准备资源配置清单</h2><p>运维主机<code>HDSS7-200.host.com</code>上：</p>
+<figure class="highlight plain"><figcaption><span>/data/k8s-yaml</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-200 k8s-yaml]# mkdir /data/k8s-yaml/prometheus &amp;&amp; cd /data/k8s-yaml/prometheus</span><br></pre></td></tr></table></figure>
+
+<div class="tabs" id="prometheus"><ul class="nav-tabs"><li class="tab active"><a href="#prometheus-1">RBAC</a></li><li class="tab"><a href="#prometheus-2">Deployment</a></li><li class="tab"><a href="#prometheus-3">Service</a></li><li class="tab"><a href="#prometheus-4">Ingress</a></li></ul><div class="tab-content"><div class="tab-pane active" id="prometheus-1"><p>vi /data/k8s-yaml/prometheus/rbac.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: ServiceAccount</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    addonmanager.kubernetes.io/mode: Reconcile</span><br><span class="line">    kubernetes.io/cluster-service: &quot;true&quot;</span><br><span class="line">  name: prometheus</span><br><span class="line">  namespace: infra</span><br><span class="line">---</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">kind: ClusterRole</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    addonmanager.kubernetes.io/mode: Reconcile</span><br><span class="line">    kubernetes.io/cluster-service: &quot;true&quot;</span><br><span class="line">  name: prometheus</span><br><span class="line">rules:</span><br><span class="line">- apiGroups:</span><br><span class="line">  - &quot;&quot;</span><br><span class="line">  resources:</span><br><span class="line">  - nodes</span><br><span class="line">  - nodes/metrics</span><br><span class="line">  - services</span><br><span class="line">  - endpoints</span><br><span class="line">  - pods</span><br><span class="line">  verbs:</span><br><span class="line">  - get</span><br><span class="line">  - list</span><br><span class="line">  - watch</span><br><span class="line">- apiGroups:</span><br><span class="line">  - &quot;&quot;</span><br><span class="line">  resources:</span><br><span class="line">  - configmaps</span><br><span class="line">  verbs:</span><br><span class="line">  - get</span><br><span class="line">- nonResourceURLs:</span><br><span class="line">  - /metrics</span><br><span class="line">  verbs:</span><br><span class="line">  - get</span><br><span class="line">---</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">kind: ClusterRoleBinding</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    addonmanager.kubernetes.io/mode: Reconcile</span><br><span class="line">    kubernetes.io/cluster-service: &quot;true&quot;</span><br><span class="line">  name: prometheus</span><br><span class="line">roleRef:</span><br><span class="line">  apiGroup: rbac.authorization.k8s.io</span><br><span class="line">  kind: ClusterRole</span><br><span class="line">  name: prometheus</span><br><span class="line">subjects:</span><br><span class="line">- kind: ServiceAccount</span><br><span class="line">  name: prometheus</span><br><span class="line">  namespace: infra</span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="prometheus-2"><p>vi /data/k8s-yaml/prometheus/dp.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: extensions/v1beta1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  annotations:</span><br><span class="line">    deployment.kubernetes.io/revision: &quot;5&quot;</span><br><span class="line">  labels:</span><br><span class="line">    name: prometheus</span><br><span class="line">  name: prometheus</span><br><span class="line">  namespace: infra</span><br><span class="line">spec:</span><br><span class="line">  progressDeadlineSeconds: 600</span><br><span class="line">  replicas: 1</span><br><span class="line">  revisionHistoryLimit: 7</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      app: prometheus</span><br><span class="line">  strategy:</span><br><span class="line">    rollingUpdate:</span><br><span class="line">      maxSurge: 1</span><br><span class="line">      maxUnavailable: 1</span><br><span class="line">    type: RollingUpdate</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        app: prometheus</span><br><span class="line">    spec:</span><br><span class="line">      containers:</span><br><span class="line">      - name: prometheus</span><br><span class="line">        image: harbor.od.com/infra/prometheus:v2.12.0</span><br><span class="line">        imagePullPolicy: IfNotPresent</span><br><span class="line">        command:</span><br><span class="line">        - /bin/prometheus</span><br><span class="line">        args:</span><br><span class="line">        - --config.file=/data/etc/prometheus.yml</span><br><span class="line">        - --storage.tsdb.path=/data/prom-db</span><br><span class="line">        - --storage.tsdb.min-block-duration=10m</span><br><span class="line">        - --storage.tsdb.retention=72h</span><br><span class="line">        ports:</span><br><span class="line">        - containerPort: 9090</span><br><span class="line">          protocol: TCP</span><br><span class="line">        volumeMounts:</span><br><span class="line">        - mountPath: /data</span><br><span class="line">          name: data</span><br><span class="line">        resources:</span><br><span class="line">          requests:</span><br><span class="line">            cpu: &quot;1000m&quot;</span><br><span class="line">            memory: &quot;1.5Gi&quot;</span><br><span class="line">          limits:</span><br><span class="line">            cpu: &quot;2000m&quot;</span><br><span class="line">            memory: &quot;3Gi&quot;</span><br><span class="line">      imagePullSecrets:</span><br><span class="line">      - name: harbor</span><br><span class="line">      securityContext:</span><br><span class="line">        runAsUser: 0</span><br><span class="line">      serviceAccountName: prometheus</span><br><span class="line">      volumes:</span><br><span class="line">      - name: data</span><br><span class="line">        nfs:</span><br><span class="line">          server: hdss7-200</span><br><span class="line">          path: /data/nfs-volume/prometheus</span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="prometheus-3"><p>vi /data/k8s-yaml/prometheus/svc.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  name: prometheus</span><br><span class="line">  namespace: infra</span><br><span class="line">spec:</span><br><span class="line">  ports:</span><br><span class="line">  - port: 9090</span><br><span class="line">    protocol: TCP</span><br><span class="line">    targetPort: 9090</span><br><span class="line">  selector:</span><br><span class="line">    app: prometheus</span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="prometheus-4"><p>vi /data/k8s-yaml/prometheus/ingress.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: extensions/v1beta1</span><br><span class="line">kind: Ingress</span><br><span class="line">metadata:</span><br><span class="line">  annotations:</span><br><span class="line">    kubernetes.io/ingress.class: traefik</span><br><span class="line">  name: prometheus</span><br><span class="line">  namespace: infra</span><br><span class="line">spec:</span><br><span class="line">  rules:</span><br><span class="line">  - host: prometheus.od.com</span><br><span class="line">    http:</span><br><span class="line">      paths:</span><br><span class="line">      - path: /</span><br><span class="line">        backend:</span><br><span class="line">          serviceName: prometheus</span><br><span class="line">          servicePort: 9090</span><br></pre></td></tr></table></figure></div></div></div>
+
+<h2 id="准备prometheus的配置文件"><a href="#准备prometheus的配置文件" class="headerlink" title="准备prometheus的配置文件"></a>准备prometheus的配置文件</h2><p>运维主机<code>HDSS7-200.host.com</code>上：</p>
+<ul>
+<li>拷贝证书</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-200 ~]# mkdir -pv /data/nfs-volume/prometheus/&#123;etc,prom-db&#125;</span><br><span class="line">mkdir: created directory ‘/data/nfs-volume/prometheus/etc’</span><br><span class="line">mkdir: created directory ‘/data/nfs-volume/prometheus/prom-db’</span><br><span class="line">[root@hdss7-200 ~]# cd /data/nfs-volume/prometheus/etc</span><br><span class="line">[root@hdss7-200 etc]# cp /opt/certs/ca.pem .</span><br><span class="line">[root@hdss7-200 etc]# cp /opt/certs/client.pem .</span><br><span class="line">[root@hdss7-200 etc]# cp /opt/certs/client-key.pem .</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>准备配置</li>
+</ul>
+<figure class="highlight plain"><figcaption><span>/data/nfs-volume/prometheus/etc/prometheus.yml</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br></pre></td><td class="code"><pre><span class="line">global:</span><br><span class="line">  scrape_interval:     15s</span><br><span class="line">  evaluation_interval: 15s</span><br><span class="line">scrape_configs:</span><br><span class="line">- job_name: &apos;etcd&apos;</span><br><span class="line">  tls_config:</span><br><span class="line">    ca_file: /data/etc/ca.pem</span><br><span class="line">    cert_file: /data/etc/client.pem</span><br><span class="line">    key_file: /data/etc/client-key.pem</span><br><span class="line">  scheme: https</span><br><span class="line">  static_configs:</span><br><span class="line">  - targets:</span><br><span class="line">    - &apos;10.4.7.12:2379&apos;</span><br><span class="line">    - &apos;10.4.7.21:2379&apos;</span><br><span class="line">    - &apos;10.4.7.22:2379&apos;</span><br><span class="line">- job_name: &apos;kubernetes-apiservers&apos;</span><br><span class="line">  kubernetes_sd_configs:</span><br><span class="line">  - role: endpoints</span><br><span class="line">  scheme: https</span><br><span class="line">  tls_config:</span><br><span class="line">    ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt</span><br><span class="line">  bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token</span><br><span class="line">  relabel_configs:</span><br><span class="line">  - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]</span><br><span class="line">    action: keep</span><br><span class="line">    regex: default;kubernetes;https</span><br><span class="line">- job_name: &apos;kubernetes-pods&apos;</span><br><span class="line">  kubernetes_sd_configs:</span><br><span class="line">  - role: pod</span><br><span class="line">  relabel_configs:</span><br><span class="line">  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]</span><br><span class="line">    action: keep</span><br><span class="line">    regex: true</span><br><span class="line">  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]</span><br><span class="line">    action: replace</span><br><span class="line">    target_label: __metrics_path__</span><br><span class="line">    regex: (.+)</span><br><span class="line">  - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]</span><br><span class="line">    action: replace</span><br><span class="line">    regex: ([^:]+)(?::\d+)?;(\d+)</span><br><span class="line">    replacement: $1:$2</span><br><span class="line">    target_label: __address__</span><br><span class="line">  - action: labelmap</span><br><span class="line">    regex: __meta_kubernetes_pod_label_(.+)</span><br><span class="line">  - source_labels: [__meta_kubernetes_namespace]</span><br><span class="line">    action: replace</span><br><span class="line">    target_label: kubernetes_namespace</span><br><span class="line">  - source_labels: [__meta_kubernetes_pod_name]</span><br><span class="line">    action: replace</span><br><span class="line">    target_label: kubernetes_pod_name</span><br><span class="line">- job_name: &apos;kubernetes-kubelet&apos;</span><br><span class="line">  kubernetes_sd_configs:</span><br><span class="line">  - role: node</span><br><span class="line">  relabel_configs:</span><br><span class="line">  - action: labelmap</span><br><span class="line">    regex: __meta_kubernetes_node_label_(.+)</span><br><span class="line">  - source_labels: [__meta_kubernetes_node_name]</span><br><span class="line">    regex: (.+)</span><br><span class="line">    target_label: __address__</span><br><span class="line">    replacement: $&#123;1&#125;:10255</span><br><span class="line">- job_name: &apos;kubernetes-cadvisor&apos;</span><br><span class="line">  kubernetes_sd_configs:</span><br><span class="line">  - role: node</span><br><span class="line">  relabel_configs:</span><br><span class="line">  - action: labelmap</span><br><span class="line">    regex: __meta_kubernetes_node_label_(.+)</span><br><span class="line">  - source_labels: [__meta_kubernetes_node_name]</span><br><span class="line">    regex: (.+)</span><br><span class="line">    target_label: __address__</span><br><span class="line">    replacement: $&#123;1&#125;:4194</span><br><span class="line">- job_name: &apos;kubernetes-kube-state&apos;</span><br><span class="line">  kubernetes_sd_configs:</span><br><span class="line">  - role: pod</span><br><span class="line">  relabel_configs:</span><br><span class="line">  - action: labelmap</span><br><span class="line">    regex: __meta_kubernetes_pod_label_(.+)</span><br><span class="line">  - source_labels: [__meta_kubernetes_namespace]</span><br><span class="line">    action: replace</span><br><span class="line">    target_label: kubernetes_namespace</span><br><span class="line">  - source_labels: [__meta_kubernetes_pod_name]</span><br><span class="line">    action: replace</span><br><span class="line">    target_label: kubernetes_pod_name</span><br><span class="line">  - source_labels: [__meta_kubernetes_pod_label_grafanak8sapp]</span><br><span class="line">    regex: .*true.*</span><br><span class="line">    action: keep</span><br><span class="line">  - source_labels: [&apos;__meta_kubernetes_pod_label_daemon&apos;, &apos;__meta_kubernetes_pod_node_name&apos;]</span><br><span class="line">    regex: &apos;node-exporter;(.*)&apos;</span><br><span class="line">    action: replace</span><br><span class="line">    target_label: nodename</span><br><span class="line">- job_name: &apos;blackbox_http_pod_probe&apos;</span><br><span class="line">  metrics_path: /probe</span><br><span class="line">  kubernetes_sd_configs:</span><br><span class="line">  - role: pod</span><br><span class="line">  params:</span><br><span class="line">    module: [http_2xx]</span><br><span class="line">  relabel_configs:</span><br><span class="line">  - source_labels: [__meta_kubernetes_pod_annotation_blackbox_scheme]</span><br><span class="line">    action: keep</span><br><span class="line">    regex: http</span><br><span class="line">  - source_labels: [__address__, __meta_kubernetes_pod_annotation_blackbox_port,  __meta_kubernetes_pod_annotation_blackbox_path]</span><br><span class="line">    action: replace</span><br><span class="line">    regex: ([^:]+)(?::\d+)?;(\d+);(.+)</span><br><span class="line">    replacement: $1:$2$3</span><br><span class="line">    target_label: __param_target</span><br><span class="line">  - action: replace</span><br><span class="line">    target_label: __address__</span><br><span class="line">    replacement: blackbox-exporter.kube-system:9115</span><br><span class="line">  - source_labels: [__param_target]</span><br><span class="line">    target_label: instance</span><br><span class="line">  - action: labelmap</span><br><span class="line">    regex: __meta_kubernetes_pod_label_(.+)</span><br><span class="line">  - source_labels: [__meta_kubernetes_namespace]</span><br><span class="line">    action: replace</span><br><span class="line">    target_label: kubernetes_namespace</span><br><span class="line">  - source_labels: [__meta_kubernetes_pod_name]</span><br><span class="line">    action: replace</span><br><span class="line">    target_label: kubernetes_pod_name</span><br><span class="line">- job_name: &apos;blackbox_tcp_pod_probe&apos;</span><br><span class="line">  metrics_path: /probe</span><br><span class="line">  kubernetes_sd_configs:</span><br><span class="line">  - role: pod</span><br><span class="line">  params:</span><br><span class="line">    module: [tcp_connect]</span><br><span class="line">  relabel_configs:</span><br><span class="line">  - source_labels: [__meta_kubernetes_pod_annotation_blackbox_scheme]</span><br><span class="line">    action: keep</span><br><span class="line">    regex: tcp</span><br><span class="line">  - source_labels: [__address__, __meta_kubernetes_pod_annotation_blackbox_port]</span><br><span class="line">    action: replace</span><br><span class="line">    regex: ([^:]+)(?::\d+)?;(\d+)</span><br><span class="line">    replacement: $1:$2</span><br><span class="line">    target_label: __param_target</span><br><span class="line">  - action: replace</span><br><span class="line">    target_label: __address__</span><br><span class="line">    replacement: blackbox-exporter.kube-system:9115</span><br><span class="line">  - source_labels: [__param_target]</span><br><span class="line">    target_label: instance</span><br><span class="line">  - action: labelmap</span><br><span class="line">    regex: __meta_kubernetes_pod_label_(.+)</span><br><span class="line">  - source_labels: [__meta_kubernetes_namespace]</span><br><span class="line">    action: replace</span><br><span class="line">    target_label: kubernetes_namespace</span><br><span class="line">  - source_labels: [__meta_kubernetes_pod_name]</span><br><span class="line">    action: replace</span><br><span class="line">    target_label: kubernetes_pod_name</span><br><span class="line">- job_name: &apos;traefik&apos;</span><br><span class="line">  kubernetes_sd_configs:</span><br><span class="line">  - role: pod</span><br><span class="line">  relabel_configs:</span><br><span class="line">  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scheme]</span><br><span class="line">    action: keep</span><br><span class="line">    regex: traefik</span><br><span class="line">  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]</span><br><span class="line">    action: replace</span><br><span class="line">    target_label: __metrics_path__</span><br><span class="line">    regex: (.+)</span><br><span class="line">  - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]</span><br><span class="line">    action: replace</span><br><span class="line">    regex: ([^:]+)(?::\d+)?;(\d+)</span><br><span class="line">    replacement: $1:$2</span><br><span class="line">    target_label: __address__</span><br><span class="line">  - action: labelmap</span><br><span class="line">    regex: __meta_kubernetes_pod_label_(.+)</span><br><span class="line">  - source_labels: [__meta_kubernetes_namespace]</span><br><span class="line">    action: replace</span><br><span class="line">    target_label: kubernetes_namespace</span><br><span class="line">  - source_labels: [__meta_kubernetes_pod_name]</span><br><span class="line">    action: replace</span><br><span class="line">    target_label: kubernetes_pod_name</span><br></pre></td></tr></table></figure>
+
+<h2 id="应用资源配置清单-4"><a href="#应用资源配置清单-4" class="headerlink" title="应用资源配置清单"></a>应用资源配置清单</h2><p>任意运算节点上：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/prometheus/rbac.yaml</span><br><span class="line">serviceaccount/prometheus created</span><br><span class="line">clusterrole.rbac.authorization.k8s.io/prometheus created</span><br><span class="line">clusterrolebinding.rbac.authorization.k8s.io/prometheus created</span><br><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/prometheus/dp.yaml</span><br><span class="line">deployment.extensions/prometheus created</span><br><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/prometheus/svc.yaml</span><br><span class="line">service/prometheus created</span><br><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/prometheus/ingress.yaml</span><br><span class="line">ingress.extensions/prometheus created</span><br></pre></td></tr></table></figure>
+
+<h2 id="解析域名-1"><a href="#解析域名-1" class="headerlink" title="解析域名"></a>解析域名</h2><p><code>HDSS7-11.host.com</code>上</p>
+<figure class="highlight plain"><figcaption><span>/var/named/od.com.zone</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">prometheus         A    10.4.7.10</span><br></pre></td></tr></table></figure>
+
+<h2 id="浏览器访问-1"><a href="#浏览器访问-1" class="headerlink" title="浏览器访问"></a>浏览器访问</h2><p><a href="http://prometheus.od.com" target="_blank" rel="noopener">http://prometheus.od.com</a></p>
+<h2 id="Prometheus监控内容"><a href="#Prometheus监控内容" class="headerlink" title="Prometheus监控内容"></a>Prometheus监控内容</h2><p>Targets（jobs）</p>
+<h3 id="etcd"><a href="#etcd" class="headerlink" title="etcd"></a>etcd</h3><blockquote>
+<p>监控etcd服务</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>key</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>etcd_server_has_leader</td>
+<td>1</td>
+</tr>
+<tr>
+<td>etcd_http_failed_total</td>
+<td>1</td>
+</tr>
+<tr>
+<td>…</td>
+<td>…</td>
+</tr>
+</tbody></table>
+<h3 id="kubernetes-apiserver"><a href="#kubernetes-apiserver" class="headerlink" title="kubernetes-apiserver"></a>kubernetes-apiserver</h3><blockquote>
+<p>监控apiserver服务</p>
+</blockquote>
+<h3 id="kubernetes-kubelet"><a href="#kubernetes-kubelet" class="headerlink" title="kubernetes-kubelet"></a>kubernetes-kubelet</h3><blockquote>
+<p>监控kubelet服务</p>
+</blockquote>
+<h3 id="kubernetes-kube-state"><a href="#kubernetes-kube-state" class="headerlink" title="kubernetes-kube-state"></a>kubernetes-kube-state</h3><p>监控基本信息</p>
+<ul>
+<li><p>node-exporter</p>
+<blockquote>
+<p>监控Node节点信息</p>
+</blockquote>
+</li>
+<li><p>kube-state-metrics</p>
+<blockquote>
+<p>监控pod信息</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="traefik"><a href="#traefik" class="headerlink" title="traefik"></a>traefik</h3><blockquote>
+<p>监控traefik-ingress-controller</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>key</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>traefik_entrypoint_requests_total{code=”200”,entrypoint=”http”,method=”PUT”,protocol=”http”}</td>
+<td>138</td>
+</tr>
+<tr>
+<td>traefik_entrypoint_requests_total{code=”200”,entrypoint=”http”,method=”GET”,protocol=”http”}</td>
+<td>285</td>
+</tr>
+<tr>
+<td>traefik_entrypoint_open_connections{entrypoint=”http”,method=”PUT”,protocol=”http”}</td>
+<td>1</td>
+</tr>
+<tr>
+<td>…</td>
+<td>…</td>
+</tr>
+</tbody></table>
+<p><strong>注意：在traefik的pod控制器上加annotations，并重启pod，监控生效</strong><br>配置范例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&quot;annotations&quot;: &#123;</span><br><span class="line">  &quot;prometheus_io_scheme&quot;: &quot;traefik&quot;,</span><br><span class="line">  &quot;prometheus_io_path&quot;: &quot;/metrics&quot;,</span><br><span class="line">  &quot;prometheus_io_port&quot;: &quot;8080&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="blackbox"><a href="#blackbox" class="headerlink" title="blackbox*"></a>blackbox*</h3><p>监控服务是否存活</p>
+<ul>
+<li>blackbox_tcp_pod_porbe<blockquote>
+<p>监控tcp协议服务是否存活</p>
+</blockquote>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>key</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>probe_success</td>
+<td>1</td>
+</tr>
+<tr>
+<td>probe_ip_protocol</td>
+<td>4</td>
+</tr>
+<tr>
+<td>probe_failed_due_to_regex</td>
+<td>0</td>
+</tr>
+<tr>
+<td>probe_duration_seconds</td>
+<td>0.000597546</td>
+</tr>
+<tr>
+<td>probe_dns_lookup_time_seconds</td>
+<td>0.00010898</td>
+</tr>
+</tbody></table>
+<p><strong>注意：在pod控制器上加annotations，并重启pod，监控生效</strong><br>配置范例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&quot;annotations&quot;: &#123;</span><br><span class="line">  &quot;blackbox_port&quot;: &quot;20880&quot;,</span><br><span class="line">  &quot;blackbox_scheme&quot;: &quot;tcp&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>blackbox_http_pod_probe<blockquote>
+<p>监控http协议服务是否存活</p>
+</blockquote>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>key</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>probe_success</td>
+<td>1</td>
+</tr>
+<tr>
+<td>probe_ip_protocol</td>
+<td>4</td>
+</tr>
+<tr>
+<td>probe_http_version</td>
+<td>1.1</td>
+</tr>
+<tr>
+<td>probe_http_status_code</td>
+<td>200</td>
+</tr>
+<tr>
+<td>probe_http_ssl</td>
+<td>0</td>
+</tr>
+<tr>
+<td>probe_http_redirects</td>
+<td>1</td>
+</tr>
+<tr>
+<td>probe_http_last_modified_timestamp_seconds</td>
+<td>1.553861888e+09</td>
+</tr>
+<tr>
+<td>probe_http_duration_seconds{phase=”transfer”}</td>
+<td>0.000238343</td>
+</tr>
+<tr>
+<td>probe_http_duration_seconds{phase=”tls”}</td>
+<td>0</td>
+</tr>
+<tr>
+<td>probe_http_duration_seconds{phase=”resolve”}</td>
+<td>5.4095e-05</td>
+</tr>
+<tr>
+<td>probe_http_duration_seconds{phase=”processing”}</td>
+<td>0.000966104</td>
+</tr>
+<tr>
+<td>probe_http_duration_seconds{phase=”connect”}</td>
+<td>0.000520821</td>
+</tr>
+<tr>
+<td>probe_http_content_length</td>
+<td>716</td>
+</tr>
+<tr>
+<td>probe_failed_due_to_regex</td>
+<td>0</td>
+</tr>
+<tr>
+<td>probe_duration_seconds</td>
+<td>0.00272609</td>
+</tr>
+<tr>
+<td>probe_dns_lookup_time_seconds</td>
+<td>5.4095e-05</td>
+</tr>
+</tbody></table>
+<p><strong>注意：在pod控制器上加annotations，并重启pod，监控生效</strong><br>配置范例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&quot;annotations&quot;: &#123;</span><br><span class="line">  &quot;blackbox_path&quot;: &quot;/&quot;,</span><br><span class="line">  &quot;blackbox_port&quot;: &quot;8080&quot;,</span><br><span class="line">  &quot;blackbox_scheme&quot;: &quot;http&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="kubernetes-pods"><a href="#kubernetes-pods" class="headerlink" title="kubernetes-pods*"></a>kubernetes-pods*</h3><blockquote>
+<p>监控JVM信息</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>key</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>jvm_info{version=”1.7.0_80-b15”,vendor=”Oracle Corporation”,runtime=”Java(TM) SE Runtime Environment”,}</td>
+<td>1.0</td>
+</tr>
+<tr>
+<td>jmx_config_reload_success_total</td>
+<td>0.0</td>
+</tr>
+<tr>
+<td>process_resident_memory_bytes</td>
+<td>4.693897216E9</td>
+</tr>
+<tr>
+<td>process_virtual_memory_bytes</td>
+<td>1.2138840064E10</td>
+</tr>
+<tr>
+<td>process_max_fds</td>
+<td>65536.0</td>
+</tr>
+<tr>
+<td>process_open_fds</td>
+<td>123.0</td>
+</tr>
+<tr>
+<td>process_start_time_seconds</td>
+<td>1.54331073249E9</td>
+</tr>
+<tr>
+<td>process_cpu_seconds_total</td>
+<td>196465.74</td>
+</tr>
+<tr>
+<td>jvm_buffer_pool_used_buffers{pool=”mapped”,}</td>
+<td>0.0</td>
+</tr>
+<tr>
+<td>jvm_buffer_pool_used_buffers{pool=”direct”,}</td>
+<td>150.0</td>
+</tr>
+<tr>
+<td>jvm_buffer_pool_capacity_bytes{pool=”mapped”,}</td>
+<td>0.0</td>
+</tr>
+<tr>
+<td>jvm_buffer_pool_capacity_bytes{pool=”direct”,}</td>
+<td>6216688.0</td>
+</tr>
+<tr>
+<td>jvm_buffer_pool_used_bytes{pool=”mapped”,}</td>
+<td>0.0</td>
+</tr>
+<tr>
+<td>jvm_buffer_pool_used_bytes{pool=”direct”,}</td>
+<td>6216688.0</td>
+</tr>
+<tr>
+<td>jvm_gc_collection_seconds_sum{gc=”PS MarkSweep”,}</td>
+<td>1.867</td>
+</tr>
+<tr>
+<td>…</td>
+<td>…</td>
+</tr>
+</tbody></table>
+<p><strong>注意：在pod控制器上加annotations，并重启pod，监控生效</strong><br>配置范例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&quot;annotations&quot;: &#123;</span><br><span class="line">  &quot;prometheus_io_scrape&quot;: &quot;true&quot;,</span><br><span class="line">  &quot;prometheus_io_port&quot;: &quot;12346&quot;,</span><br><span class="line">  &quot;prometheus_io_path&quot;: &quot;/&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="修改traefik服务接入prometheus监控"><a href="#修改traefik服务接入prometheus监控" class="headerlink" title="修改traefik服务接入prometheus监控"></a>修改traefik服务接入prometheus监控</h2><p><code>dashboard</code>上：<br>kube-system名称空间-&gt;daemonset-&gt;traefik-ingress-controller-&gt;spec-&gt;template-&gt;metadata下，添加</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&quot;annotations&quot;: &#123;</span><br><span class="line">  &quot;prometheus_io_scheme&quot;: &quot;traefik&quot;,</span><br><span class="line">  &quot;prometheus_io_path&quot;: &quot;/metrics&quot;,</span><br><span class="line">  &quot;prometheus_io_port&quot;: &quot;8080&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>删除pod，重启traefik，观察监控</p>
+<p>继续添加blackbox监控配置项</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&quot;annotations&quot;: &#123;</span><br><span class="line">  &quot;prometheus_io_scheme&quot;: &quot;traefik&quot;,</span><br><span class="line">  &quot;prometheus_io_path&quot;: &quot;/metrics&quot;,</span><br><span class="line">  &quot;prometheus_io_port&quot;: &quot;8080&quot;,</span><br><span class="line">  &quot;blackbox_path&quot;: &quot;/&quot;,</span><br><span class="line">  &quot;blackbox_port&quot;: &quot;8080&quot;,</span><br><span class="line">  &quot;blackbox_scheme&quot;: &quot;http&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="修改dubbo-service服务接入prometheus监控"><a href="#修改dubbo-service服务接入prometheus监控" class="headerlink" title="修改dubbo-service服务接入prometheus监控"></a>修改dubbo-service服务接入prometheus监控</h2><p><code>dashboard</code>上：<br>app名称空间-&gt;deployment-&gt;dubbo-demo-service-&gt;spec-&gt;template=&gt;metadata下，添加</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&quot;annotations&quot;: &#123;</span><br><span class="line">  &quot;prometheus_io_scrape&quot;: &quot;true&quot;,</span><br><span class="line">  &quot;prometheus_io_path&quot;: &quot;/&quot;,</span><br><span class="line">  &quot;prometheus_io_port&quot;: &quot;12346&quot;,</span><br><span class="line">  &quot;blackbox_port&quot;: &quot;20880&quot;,</span><br><span class="line">  &quot;blackbox_scheme&quot;: &quot;tcp&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>删除pod，重启traefik，观察监控</p>
+<h2 id="修改dubbo-consumer服务接入prometheus监控"><a href="#修改dubbo-consumer服务接入prometheus监控" class="headerlink" title="修改dubbo-consumer服务接入prometheus监控"></a>修改dubbo-consumer服务接入prometheus监控</h2><p>app名称空间-&gt;deployment-&gt;dubbo-demo-consumer-&gt;spec-&gt;template-&gt;metadata下，添加</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&quot;annotations&quot;: &#123;</span><br><span class="line">  &quot;prometheus_io_scrape&quot;: &quot;true&quot;,</span><br><span class="line">  &quot;prometheus_io_path&quot;: &quot;/&quot;,</span><br><span class="line">  &quot;prometheus_io_port&quot;: &quot;12346&quot;,</span><br><span class="line">  &quot;blackbox_path&quot;: &quot;/hello&quot;,</span><br><span class="line">  &quot;blackbox_port&quot;: &quot;8080&quot;,</span><br><span class="line">  &quot;blackbox_scheme&quot;: &quot;http&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>删除pod，重启traefik，观察监控</p>
+<h1 id="部署Grafana"><a href="#部署Grafana" class="headerlink" title="部署Grafana"></a>部署Grafana</h1><p>运维主机<code>HDSS7-200.host.com</code>上：</p>
+<h2 id="准备grafana镜像"><a href="#准备grafana镜像" class="headerlink" title="准备grafana镜像"></a>准备grafana镜像</h2><p><a href="https://hub.docker.com/r/grafana/grafana" target="_blank" rel="noopener">grafana官方dockerhub地址</a><br><a href="https://github.com/grafana/grafana" target="_blank" rel="noopener">grafana官方github地址</a><br><a href="https://grafana.com/" target="_blank" rel="noopener">grafana官网</a></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-200 ~]# docker pull grafana/grafana:5.4.2</span><br><span class="line">5.4.2: Pulling from grafana/grafana</span><br><span class="line">27833a3ba0a5: Pull complete </span><br><span class="line">9412d126b236: Pull complete </span><br><span class="line">1b7d6aaa6217: Pull complete </span><br><span class="line">530d1110a8c8: Pull complete </span><br><span class="line">fdcf73917f64: Pull complete </span><br><span class="line">f5009e3ea28a: Pull complete </span><br><span class="line">Digest: sha256:c2100550937e7aa0f3e33c2fc46a8c9668c3b5f2f71a8885e304d35de9fea009</span><br><span class="line">Status: Downloaded newer image for grafana/grafana:5.4.2</span><br><span class="line">[root@hdss7-200 ~]# docker tag d9bdb6044027 harbor.od.com/infra/grafana:v5.4.2</span><br><span class="line">[root@hdss7-200 ~]# docker push harbor.od.com/infra/grafana:v5.4.2</span><br><span class="line">docker push harbor.od.com/infra/grafana:v5.4.2</span><br><span class="line">The push refers to a repository [harbor.od.com/infra/grafana]</span><br><span class="line">b57e9e94fc2d: Pushed </span><br><span class="line">3d4e16e25cba: Pushed </span><br><span class="line">9642e67d431a: Pushed </span><br><span class="line">af52591a894f: Pushed </span><br><span class="line">0a8c2d04bf65: Pushed </span><br><span class="line">5dacd731af1b: Pushed </span><br><span class="line">v5.4.2: digest: sha256:db87ab263f90bdae66be744ac7935f6980c4bbd30c9756308e7382e00d4eeae8 size: 1576</span><br><span class="line"></span><br><span class="line">[root@hdss7-200 ~]# mkdir /data/nfs-volume/grafana</span><br></pre></td></tr></table></figure>
+
+<h2 id="准备资源配置清单-5"><a href="#准备资源配置清单-5" class="headerlink" title="准备资源配置清单"></a>准备资源配置清单</h2><div class="tabs" id="grafana"><ul class="nav-tabs"><li class="tab active"><a href="#grafana-1">RBAC</a></li><li class="tab"><a href="#grafana-2">Deployment</a></li><li class="tab"><a href="#grafana-3">Service</a></li><li class="tab"><a href="#grafana-4">Ingress</a></li></ul><div class="tab-content"><div class="tab-pane active" id="grafana-1"><p>vi /data/k8s-yaml/grafana/rbac.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">kind: ClusterRole</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    addonmanager.kubernetes.io/mode: Reconcile</span><br><span class="line">    kubernetes.io/cluster-service: &quot;true&quot;</span><br><span class="line">  name: grafana</span><br><span class="line">rules:</span><br><span class="line">- apiGroups:</span><br><span class="line">  - &quot;*&quot;</span><br><span class="line">  resources:</span><br><span class="line">  - namespaces</span><br><span class="line">  - deployments</span><br><span class="line">  - pods</span><br><span class="line">  verbs:</span><br><span class="line">  - get</span><br><span class="line">  - list</span><br><span class="line">  - watch</span><br><span class="line">---</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">kind: ClusterRoleBinding</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    addonmanager.kubernetes.io/mode: Reconcile</span><br><span class="line">    kubernetes.io/cluster-service: &quot;true&quot;</span><br><span class="line">  name: grafana</span><br><span class="line">roleRef:</span><br><span class="line">  apiGroup: rbac.authorization.k8s.io</span><br><span class="line">  kind: ClusterRole</span><br><span class="line">  name: grafana</span><br><span class="line">subjects:</span><br><span class="line">- kind: User</span><br><span class="line">  name: k8s-node</span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="grafana-2"><p>vi /data/k8s-yaml/grafana/dp.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: extensions/v1beta1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    app: grafana</span><br><span class="line">    name: grafana</span><br><span class="line">  name: grafana</span><br><span class="line">  namespace: infra</span><br><span class="line">spec:</span><br><span class="line">  progressDeadlineSeconds: 600</span><br><span class="line">  replicas: 1</span><br><span class="line">  revisionHistoryLimit: 7</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      name: grafana</span><br><span class="line">  strategy:</span><br><span class="line">    rollingUpdate:</span><br><span class="line">      maxSurge: 1</span><br><span class="line">      maxUnavailable: 1</span><br><span class="line">    type: RollingUpdate</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        app: grafana</span><br><span class="line">        name: grafana</span><br><span class="line">    spec:</span><br><span class="line">      containers:</span><br><span class="line">      - name: grafana</span><br><span class="line">        image: harbor.od.com/infra/grafana:v5.4.2</span><br><span class="line">        imagePullPolicy: IfNotPresent</span><br><span class="line">        ports:</span><br><span class="line">        - containerPort: 3000</span><br><span class="line">          protocol: TCP</span><br><span class="line">        volumeMounts:</span><br><span class="line">        - mountPath: /var/lib/grafana</span><br><span class="line">          name: data</span><br><span class="line">      imagePullSecrets:</span><br><span class="line">      - name: harbor</span><br><span class="line">      securityContext:</span><br><span class="line">        runAsUser: 0</span><br><span class="line">      volumes:</span><br><span class="line">      - nfs:</span><br><span class="line">          server: hdss7-200</span><br><span class="line">          path: /data/nfs-volume/grafana</span><br><span class="line">        name: data</span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="grafana-3"><p>vi /data/k8s-yaml/grafana/svc.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  name: grafana</span><br><span class="line">  namespace: infra</span><br><span class="line">spec:</span><br><span class="line">  ports:</span><br><span class="line">  - port: 3000</span><br><span class="line">    protocol: TCP</span><br><span class="line">    targetPort: 3000</span><br><span class="line">  selector:</span><br><span class="line">    app: grafana</span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="grafana-4"><p>vi /data/k8s-yaml/grafana/ingress.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: extensions/v1beta1</span><br><span class="line">kind: Ingress</span><br><span class="line">metadata:</span><br><span class="line">  name: grafana</span><br><span class="line">  namespace: infra</span><br><span class="line">spec:</span><br><span class="line">  rules:</span><br><span class="line">  - host: grafana.od.com</span><br><span class="line">    http:</span><br><span class="line">      paths:</span><br><span class="line">      - path: /</span><br><span class="line">        backend:</span><br><span class="line">          serviceName: grafana</span><br><span class="line">          servicePort: 3000</span><br></pre></td></tr></table></figure></div></div></div>
+
+<h2 id="应用资源配置清单-5"><a href="#应用资源配置清单-5" class="headerlink" title="应用资源配置清单"></a>应用资源配置清单</h2><p>任意运算节点上：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/grafana/rbac.yaml </span><br><span class="line">clusterrole.rbac.authorization.k8s.io/grafana created</span><br><span class="line">clusterrolebinding.rbac.authorization.k8s.io/grafana created</span><br><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/grafana/dp.yaml </span><br><span class="line">deployment.extensions/grafana created</span><br><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/grafana/svc.yaml </span><br><span class="line">service/grafana created</span><br><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/grafana/ingress.yaml </span><br><span class="line">ingress.extensions/grafana created</span><br></pre></td></tr></table></figure>
+
+<h2 id="解析域名-2"><a href="#解析域名-2" class="headerlink" title="解析域名"></a>解析域名</h2><p><code>HDSS7-11.host.com</code>上</p>
+<figure class="highlight plain"><figcaption><span>/var/named/od.com.zone</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">grafana            A    10.4.7.10</span><br></pre></td></tr></table></figure>
+
+<h2 id="浏览器访问-2"><a href="#浏览器访问-2" class="headerlink" title="浏览器访问"></a>浏览器访问</h2><p><a href="http://grafana.od.com" target="_blank" rel="noopener">http://grafana.od.com</a></p>
+<ul>
+<li>用户名：admin</li>
+<li>密  码：admin</li>
+</ul>
+<p>登录后需要修改管理员密码<br><img src="/images/grafana-password.png" alt="grafana首次登录" title="修改管理员密码"></p>
+<h2 id="配置grafana页面"><a href="#配置grafana页面" class="headerlink" title="配置grafana页面"></a>配置grafana页面</h2><h3 id="外观"><a href="#外观" class="headerlink" title="外观"></a>外观</h3><p>Configuration -&gt; Preferences</p>
+<ul>
+<li><p>UI Theme</p>
+<blockquote>
+<p>Light</p>
+</blockquote>
+</li>
+<li><p>Home Dashboard</p>
+<blockquote>
+<p>Default</p>
+</blockquote>
+</li>
+<li><p>Timezone</p>
+<blockquote>
+<p>Local browser time</p>
+</blockquote>
+</li>
+</ul>
+<p>save</p>
+<h3 id="插件"><a href="#插件" class="headerlink" title="插件"></a>插件</h3><p>Configuration -&gt; Plugins</p>
+<ul>
+<li>Kubernetes App</li>
+</ul>
+<p>安装方法一：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">grafana-cli plugins install grafana-kubernetes-app</span><br></pre></td></tr></table></figure>
+
+<p>安装方法二：<br><a href="https://grafana.com/api/plugins/grafana-kubernetes-app/versions/1.0.1/download" target="_blank" rel="noopener">下载地址</a></p>
+<figure class="highlight plain"><figcaption><span>/data/nfs-volume/grafana/plugins</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 plugins]# wget https://grafana.com/api/plugins/grafana-kubernetes-app/versions/1.0.1/download -O grafana-kubernetes-app.zip</span><br><span class="line">--2019-04-28 16:15:33--  https://grafana.com/api/plugins/grafana-kubernetes-app/versions/1.0.1/download</span><br><span class="line">Resolving grafana.com (grafana.com)... 35.241.23.245</span><br><span class="line">Connecting to grafana.com (grafana.com)|35.241.23.245|:443... connected.</span><br><span class="line">HTTP request sent, awaiting response... 302 Found</span><br><span class="line">Location: https://codeload.github.com/grafana/kubernetes-app/legacy.zip/31da38addc1d0ce5dfb154737c9da56e3b6692fc [following]</span><br><span class="line">--2019-04-28 16:15:37--  https://codeload.github.com/grafana/kubernetes-app/legacy.zip/31da38addc1d0ce5dfb154737c9da56e3b6692fc</span><br><span class="line">Resolving codeload.github.com (codeload.github.com)... 13.229.189.0, 13.250.162.133, 54.251.140.56</span><br><span class="line">Connecting to codeload.github.com (codeload.github.com)|13.229.189.0|:443... connected.</span><br><span class="line">HTTP request sent, awaiting response... 200 OK</span><br><span class="line">Length: 3084524 (2.9M) [application/zip]</span><br><span class="line">Saving to: ‘grafana-kubernetes-app.zip’</span><br><span class="line"></span><br><span class="line">100%[===================================================================================================================&gt;] 3,084,524    116KB/s   in 12s    </span><br><span class="line"></span><br><span class="line">2019-04-28 16:15:51 (250 KB/s) - ‘grafana-kubernetes-app.zip’ saved [3084524/3084524]</span><br><span class="line">[root@hdss7-200 plugins]# unzip grafana-kubernetes-app.zip</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>Clock Pannel</li>
+</ul>
+<p>安装方法一：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">grafana-cli plugins install grafana-clock-panel</span><br></pre></td></tr></table></figure>
+
+<p>安装方法二：<br><a href="https://grafana.com/api/plugins/grafana-clock-panel/versions/1.0.2/download" target="_blank" rel="noopener">下载地址</a></p>
+<ul>
+<li>Pie Chart</li>
+</ul>
+<p>安装方法一：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">grafana-cli plugins install grafana-piechart-panel</span><br></pre></td></tr></table></figure>
+
+<p>安装方法二：<br><a href="https://grafana.com/api/plugins/grafana-piechart-panel/versions/1.3.6/download" target="_blank" rel="noopener">下载地址</a></p>
+<ul>
+<li>D3 Gauge</li>
+</ul>
+<p>安装方法一：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">grafana-cli plugins install briangann-gauge-panel</span><br></pre></td></tr></table></figure>
+
+<p>安装方法二：<br><a href="https://grafana.com/api/plugins/briangann-gauge-panel/versions/0.0.6/download" target="_blank" rel="noopener">下载地址</a></p>
+<ul>
+<li>Discrete</li>
+</ul>
+<p>安装方法一：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">grafana-cli plugins install natel-discrete-panel</span><br></pre></td></tr></table></figure>
+
+<p>安装方法二：<br><a href="https://grafana.com/api/plugins/natel-discrete-panel/versions/0.0.9/download" target="_blank" rel="noopener">下载地址</a></p>
+<ul>
+<li><p>重启grafana的pod</p>
+</li>
+<li><p>依次enable插件</p>
+</li>
+</ul>
+<h2 id="配置grafana数据源"><a href="#配置grafana数据源" class="headerlink" title="配置grafana数据源"></a>配置grafana数据源</h2><p>Configuration -&gt; Data Sources<br>选择prometheus</p>
+<ul>
+<li>HTTP</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>key</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>URL</td>
+<td><a href="http://prometheus.od.com" target="_blank" rel="noopener">http://prometheus.od.com</a></td>
+</tr>
+<tr>
+<td>Access</td>
+<td>Server(Default)</td>
+</tr>
+</tbody></table>
+<ul>
+<li>Save &amp; Test</li>
+</ul>
+<p><img src="/images/grafana-datasource.png" alt="Grafana数据源" title="grafana数据源"></p>
+<h2 id="配置Kubernetes集群Dashboard"><a href="#配置Kubernetes集群Dashboard" class="headerlink" title="配置Kubernetes集群Dashboard"></a>配置Kubernetes集群Dashboard</h2><p>kubernetes -&gt; +New Cluster</p>
+<ul>
+<li>Add a new cluster</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>key</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Name</td>
+<td>myk8s</td>
+</tr>
+</tbody></table>
+<ul>
+<li>HTTP</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>key</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>URL</td>
+<td><a href="https://10.4.7.10:7443" target="_blank" rel="noopener">https://10.4.7.10:7443</a></td>
+</tr>
+<tr>
+<td>Access</td>
+<td>Server(Default)</td>
+</tr>
+</tbody></table>
+<ul>
+<li>Auth</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>key</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>TLS Client Auth</td>
+<td>勾选</td>
+</tr>
+<tr>
+<td>With Ca Cert</td>
+<td>勾选</td>
+</tr>
+</tbody></table>
+<p>将ca.pem、client.pem和client-key.pem粘贴至文本框内</p>
+<ul>
+<li>Prometheus Read</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>key</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Datasource</td>
+<td>Prometheus</td>
+</tr>
+</tbody></table>
+<ul>
+<li>Save</li>
+</ul>
+<p><strong>注意：</strong></p>
+<ul>
+<li>K8S Container中，所有Pannel的<blockquote>
+<p>pod_name -&gt; container_label_io_kubernetes_pod_name</p>
+</blockquote>
+</li>
+</ul>
+<div class="tabs" id="k8s-dashboard"><ul class="nav-tabs"><li class="tab active"><a href="#k8s-dashboard-1">K8S-Cluster</a></li><li class="tab"><a href="#k8s-dashboard-2">K8S-Node</a></li><li class="tab"><a href="#k8s-dashboard-3">K8S-Deployment</a></li><li class="tab"><a href="#k8s-dashboard-4">K8S-Container</a></li></ul><div class="tab-content"><div class="tab-pane active" id="k8s-dashboard-1"><p><img src="/images/grafana-cluster.png" alt="k8s-cluster" title="k8s-cluster"></p></div><div class="tab-pane" id="k8s-dashboard-2"><p><img src="/images/grafana-k8snode.png" alt="k8s-node" title="k8s-node"></p></div><div class="tab-pane" id="k8s-dashboard-3"><p><img src="/images/grafana-deployment.png" alt="k8s-deployment" title="k8s-deployment"></p></div><div class="tab-pane" id="k8s-dashboard-4"><p><img src="/images/grafana-container.png" alt="k8s-container" title="k8s-container"></p></div></div></div>
+
+<h2 id="配置自定义dashboard"><a href="#配置自定义dashboard" class="headerlink" title="配置自定义dashboard"></a>配置自定义dashboard</h2><p>根据Prometheus数据源里的数据，配置如下dashboard：</p>
+<ul>
+<li>generic dashboard</li>
+<li>etcd dashboard</li>
+<li>traefik dashboard</li>
+<li>JMX dashboard</li>
+<li>blackbox dashboard</li>
+</ul>
+<div class="tabs" id="grafana-dashboard"><ul class="nav-tabs"><li class="tab active"><a href="#grafana-dashboard-1">Generic</a></li><li class="tab"><a href="#grafana-dashboard-2">Etcd</a></li><li class="tab"><a href="#grafana-dashboard-3">Traefik</a></li><li class="tab"><a href="#grafana-dashboard-4">JMX</a></li><li class="tab"><a href="#grafana-dashboard-5">BlackBox</a></li></ul><div class="tab-content"><div class="tab-pane active" id="grafana-dashboard-1"><p><img src="/images/grafana-generic.png" alt="generic" title="generic"></p></div><div class="tab-pane" id="grafana-dashboard-2"><p><img src="/images/grafana-etcd.png" alt="Etcd" title="Etcd"></p></div><div class="tab-pane" id="grafana-dashboard-3"><p><img src="/images/grafana-traefik.png" alt="Traefik" title="Traefik"></p></div><div class="tab-pane" id="grafana-dashboard-4"><p><img src="/images/grafana-jmx.png" alt="jvm监控" title="jvm监控"></p></div><div class="tab-pane" id="grafana-dashboard-5"><p><img src="/images/grafana-blackbox.png" alt="BlackBox" title="BlackBox"></p></div></div></div>
+
+<h1 id="部署Alertmanager"><a href="#部署Alertmanager" class="headerlink" title="部署Alertmanager"></a>部署Alertmanager</h1><h2 id="准备Alertmanager镜像"><a href="#准备Alertmanager镜像" class="headerlink" title="准备Alertmanager镜像"></a>准备Alertmanager镜像</h2><p>运维主机<code>HDSS7-200.host.com</code>上：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-200 ~]# docker pull docker.io/prom/alertmanager:v0.14.0</span><br><span class="line">v0.14.0: Pulling from prom/alertmanager</span><br><span class="line">8e674ad76dce: Already exists </span><br><span class="line">e77d2419d1c2: Already exists </span><br><span class="line">fc0b06cce5a2: Pull complete </span><br><span class="line">1cc6eb76696f: Pull complete </span><br><span class="line">c4b97307695d: Pull complete </span><br><span class="line">d49e70084386: Pull complete </span><br><span class="line">Digest: sha256:7dbf4949a317a056d11ed8f379826b04d0665fad5b9334e1d69b23e946056cd3</span><br><span class="line">Status: Downloaded newer image for prom/alertmanager:v0.14.0</span><br><span class="line">docker.io/prom/alertmanager:v0.14.0</span><br><span class="line">[root@hdss7-200 ~]# docker tag 30594e96cbe8 harbor.od.com/infra/alertmanager:v0.14.0</span><br><span class="line">[root@hdss7-200 ~]# docker push harbor.od.com/infra/alertmanager:v0.14.0</span><br><span class="line">The push refers to repository [harbor.od.com/infra/alertmanager]</span><br><span class="line">bb7386721ef9: Pushed </span><br><span class="line">13b4609b0c95: Pushed </span><br><span class="line">ba550e698377: Pushed </span><br><span class="line">fa5b6d2332d5: Pushed </span><br><span class="line">3163e6173fcc: Pushed </span><br><span class="line">6194458b07fc: Pushed </span><br><span class="line">v0.14.0: digest: sha256:8088fac0a74480912fbb76088247d0c4e934f1dd2bd199b52c40c1e9dba69917 size: 1575</span><br></pre></td></tr></table></figure>
+
+<h2 id="准备资源配置清单-6"><a href="#准备资源配置清单-6" class="headerlink" title="准备资源配置清单"></a>准备资源配置清单</h2><p>运维主机<code>HDSS7-200.host.com</code>上：</p>
+<figure class="highlight plain"><figcaption><span>/data/k8s-yaml</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-200 k8s-yaml]# mkdir /data/k8s-yaml/alertmanager &amp;&amp; cd /data/k8s-yaml/alertmanager</span><br></pre></td></tr></table></figure>
+
+<div class="tabs" id="alertmanager"><ul class="nav-tabs"><li class="tab active"><a href="#alertmanager-1">ConfigMap</a></li><li class="tab"><a href="#alertmanager-2">Deployment</a></li><li class="tab"><a href="#alertmanager-3">Service</a></li></ul><div class="tab-content"><div class="tab-pane active" id="alertmanager-1"><p>vi /data/k8s-yaml/alertmanager/cm.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: ConfigMap</span><br><span class="line">metadata:</span><br><span class="line">  name: alertmanager-config</span><br><span class="line">  namespace: infra</span><br><span class="line">data:</span><br><span class="line">  config.yml: |-</span><br><span class="line">    global:</span><br><span class="line">      # 在没有报警的情况下声明为已解决的时间</span><br><span class="line">      resolve_timeout: 5m</span><br><span class="line">      # 配置邮件发送信息</span><br><span class="line">      smtp_smarthost: &apos;smtp.163.com:25&apos;</span><br><span class="line">      smtp_from: &apos;ws2319@163.com&apos;</span><br><span class="line">      smtp_auth_username: &apos;ws2319@163.com&apos;</span><br><span class="line">      smtp_auth_password: &apos;xxxxxx&apos;</span><br><span class="line">      smtp_require_tls: false</span><br><span class="line">    # 所有报警信息进入后的根路由，用来设置报警的分发策略</span><br><span class="line">    route:</span><br><span class="line">      # 这里的标签列表是接收到报警信息后的重新分组标签，例如，接收到的报警信息里面有许多具有 cluster=A 和 alertname=LatncyHigh 这样的标签的报警信息将会批量被聚合到一个分组里面</span><br><span class="line">      group_by: [&apos;alertname&apos;, &apos;cluster&apos;]</span><br><span class="line">      # 当一个新的报警分组被创建后，需要等待至少group_wait时间来初始化通知，这种方式可以确保您能有足够的时间为同一分组来获取多个警报，然后一起触发这个报警信息。</span><br><span class="line">      group_wait: 30s</span><br><span class="line"></span><br><span class="line">      # 当第一个报警发送后，等待&apos;group_interval&apos;时间来发送新的一组报警信息。</span><br><span class="line">      group_interval: 5m</span><br><span class="line"></span><br><span class="line">      # 如果一个报警信息已经发送成功了，等待&apos;repeat_interval&apos;时间来重新发送他们</span><br><span class="line">      repeat_interval: 5m</span><br><span class="line"></span><br><span class="line">      # 默认的receiver：如果一个报警没有被一个route匹配，则发送给默认的接收器</span><br><span class="line">      receiver: default</span><br><span class="line"></span><br><span class="line">    receivers:</span><br><span class="line">    - name: &apos;default&apos;</span><br><span class="line">      email_configs:</span><br><span class="line">      - to: &apos;87527941@qq.com&apos;</span><br><span class="line">        send_resolved: true</span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="alertmanager-2"><p>vi /data/k8s-yaml/alertmanager/dp.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: extensions/v1beta1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  name: alertmanager</span><br><span class="line">  namespace: infra</span><br><span class="line">spec:</span><br><span class="line">  replicas: 1</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      app: alertmanager</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        app: alertmanager</span><br><span class="line">    spec:</span><br><span class="line">      containers:</span><br><span class="line">      - name: alertmanager</span><br><span class="line">        image: harbor.od.com/infra/alertmanager:v0.14.0</span><br><span class="line">        args:</span><br><span class="line">          - &quot;--config.file=/etc/alertmanager/config.yml&quot;</span><br><span class="line">          - &quot;--storage.path=/alertmanager&quot;</span><br><span class="line">        ports:</span><br><span class="line">        - name: alertmanager</span><br><span class="line">          containerPort: 9093</span><br><span class="line">        volumeMounts:</span><br><span class="line">        - name: alertmanager-cm</span><br><span class="line">          mountPath: /etc/alertmanager</span><br><span class="line">      volumes:</span><br><span class="line">      - name: alertmanager-cm</span><br><span class="line">        configMap:</span><br><span class="line">          name: alertmanager-config</span><br><span class="line">      imagePullSecrets:</span><br><span class="line">      - name: harbor</span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="alertmanager-3"><p>vi /data/k8s-yaml/alertmanager/svc.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  name: alertmanager</span><br><span class="line">  namespace: infra</span><br><span class="line">spec:</span><br><span class="line">  selector: </span><br><span class="line">    app: alertmanager</span><br><span class="line">  ports:</span><br><span class="line">    - port: 80</span><br><span class="line">      targetPort: 9093</span><br></pre></td></tr></table></figure></div></div></div>
+
+<h2 id="应用资源配置清单-6"><a href="#应用资源配置清单-6" class="headerlink" title="应用资源配置清单"></a>应用资源配置清单</h2><p>任意运算节点上：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/alertmanager/cm.yaml</span><br><span class="line">configmap/alertmanager-config created</span><br><span class="line">[root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/alertmanager/dp.yaml</span><br><span class="line">deployment.extensions/alertmanager created</span><br><span class="line">[root@hdss7-21 ~]# kubectl -f http://k8s-yaml.od.com/alertmanager/svc.yaml</span><br><span class="line">service/alertmanager created</span><br></pre></td></tr></table></figure>
+
+<h2 id="准备alertmanger告警规则配置"><a href="#准备alertmanger告警规则配置" class="headerlink" title="准备alertmanger告警规则配置"></a>准备alertmanger告警规则配置</h2><figure class="highlight plain"><figcaption><span>/data/nfs-volume/prometheus/etc/rules.yml</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br></pre></td><td class="code"><pre><span class="line">groups:</span><br><span class="line">- name: hostStatsAlert</span><br><span class="line">  rules:</span><br><span class="line">  - alert: hostCpuUsageAlert</span><br><span class="line">    expr: sum(avg without (cpu)(irate(node_cpu&#123;mode!=&apos;idle&apos;&#125;[5m]))) by (instance) &gt; 0.85</span><br><span class="line">    for: 5m</span><br><span class="line">    labels:</span><br><span class="line">      severity: warning</span><br><span class="line">    annotations:</span><br><span class="line">      summary: &quot;&#123;&#123; $labels.instance &#125;&#125; CPU usage above 85% (current value: &#123;&#123; $value &#125;&#125;%)&quot;</span><br><span class="line">  - alert: hostMemUsageAlert</span><br><span class="line">    expr: (node_memory_MemTotal - node_memory_MemAvailable)/node_memory_MemTotal &gt; 0.85</span><br><span class="line">    for: 5m</span><br><span class="line">    labels:</span><br><span class="line">      severity: warning</span><br><span class="line">    annotations:</span><br><span class="line">      summary: &quot;&#123;&#123; $labels.instance &#125;&#125; MEM usage above 85% (current value: &#123;&#123; $value &#125;&#125;%)&quot;</span><br><span class="line">  - alert: OutOfInodes</span><br><span class="line">    expr: node_filesystem_free&#123;fstype=&quot;overlay&quot;,mountpoint =&quot;/&quot;&#125; / node_filesystem_size&#123;fstype=&quot;overlay&quot;,mountpoint =&quot;/&quot;&#125; * 100 &lt; 10</span><br><span class="line">    for: 5m</span><br><span class="line">    labels:</span><br><span class="line">      severity: warning</span><br><span class="line">    annotations:</span><br><span class="line">      summary: &quot;Out of inodes (instance &#123;&#123; $labels.instance &#125;&#125;)&quot;</span><br><span class="line">      description: &quot;Disk is almost running out of available inodes (&lt; 10% left) (current value: &#123;&#123; $value &#125;&#125;)&quot;</span><br><span class="line">  - alert: OutOfDiskSpace</span><br><span class="line">    expr: node_filesystem_free&#123;fstype=&quot;overlay&quot;,mountpoint =&quot;/rootfs&quot;&#125; / node_filesystem_size&#123;fstype=&quot;overlay&quot;,mountpoint =&quot;/rootfs&quot;&#125; * 100 &lt; 10</span><br><span class="line">    for: 5m</span><br><span class="line">    labels:</span><br><span class="line">      severity: warning</span><br><span class="line">    annotations:</span><br><span class="line">      summary: &quot;Out of disk space (instance &#123;&#123; $labels.instance &#125;&#125;)&quot;</span><br><span class="line">      description: &quot;Disk is almost full (&lt; 10% left) (current value: &#123;&#123; $value &#125;&#125;)&quot;</span><br><span class="line">  - alert: UnusualNetworkThroughputIn</span><br><span class="line">    expr: sum by (instance) (irate(node_network_receive_bytes[2m])) / 1024 / 1024 &gt; 100</span><br><span class="line">    for: 5m</span><br><span class="line">    labels:</span><br><span class="line">      severity: warning</span><br><span class="line">    annotations:</span><br><span class="line">      summary: &quot;Unusual network throughput in (instance &#123;&#123; $labels.instance &#125;&#125;)&quot;</span><br><span class="line">      description: &quot;Host network interfaces are probably receiving too much data (&gt; 100 MB/s) (current value: &#123;&#123; $value &#125;&#125;)&quot;</span><br><span class="line">  - alert: UnusualNetworkThroughputOut</span><br><span class="line">    expr: sum by (instance) (irate(node_network_transmit_bytes[2m])) / 1024 / 1024 &gt; 100</span><br><span class="line">    for: 5m</span><br><span class="line">    labels:</span><br><span class="line">      severity: warning</span><br><span class="line">    annotations:</span><br><span class="line">      summary: &quot;Unusual network throughput out (instance &#123;&#123; $labels.instance &#125;&#125;)&quot;</span><br><span class="line">      description: &quot;Host network interfaces are probably sending too much data (&gt; 100 MB/s) (current value: &#123;&#123; $value &#125;&#125;)&quot;</span><br><span class="line">  - alert: UnusualDiskReadRate</span><br><span class="line">    expr: sum by (instance) (irate(node_disk_bytes_read[2m])) / 1024 / 1024 &gt; 50</span><br><span class="line">    for: 5m</span><br><span class="line">    labels:</span><br><span class="line">      severity: warning</span><br><span class="line">    annotations:</span><br><span class="line">      summary: &quot;Unusual disk read rate (instance &#123;&#123; $labels.instance &#125;&#125;)&quot;</span><br><span class="line">      description: &quot;Disk is probably reading too much data (&gt; 50 MB/s) (current value: &#123;&#123; $value &#125;&#125;)&quot;</span><br><span class="line">  - alert: UnusualDiskWriteRate</span><br><span class="line">    expr: sum by (instance) (irate(node_disk_bytes_written[2m])) / 1024 / 1024 &gt; 50</span><br><span class="line">    for: 5m</span><br><span class="line">    labels:</span><br><span class="line">      severity: warning</span><br><span class="line">    annotations:</span><br><span class="line">      summary: &quot;Unusual disk write rate (instance &#123;&#123; $labels.instance &#125;&#125;)&quot;</span><br><span class="line">      description: &quot;Disk is probably writing too much data (&gt; 50 MB/s) (current value: &#123;&#123; $value &#125;&#125;)&quot;</span><br><span class="line">  - alert: UnusualDiskReadLatency</span><br><span class="line">    expr: rate(node_disk_read_time_ms[1m]) / rate(node_disk_reads_completed[1m]) &gt; 100</span><br><span class="line">    for: 5m</span><br><span class="line">    labels:</span><br><span class="line">      severity: warning</span><br><span class="line">    annotations:</span><br><span class="line">      summary: &quot;Unusual disk read latency (instance &#123;&#123; $labels.instance &#125;&#125;)&quot;</span><br><span class="line">      description: &quot;Disk latency is growing (read operations &gt; 100ms) (current value: &#123;&#123; $value &#125;&#125;)&quot;</span><br><span class="line">  - alert: UnusualDiskWriteLatency</span><br><span class="line">    expr: rate(node_disk_write_time_ms[1m]) / rate(node_disk_writes_completedl[1m]) &gt; 100</span><br><span class="line">    for: 5m</span><br><span class="line">    labels:</span><br><span class="line">      severity: warning</span><br><span class="line">    annotations:</span><br><span class="line">      summary: &quot;Unusual disk write latency (instance &#123;&#123; $labels.instance &#125;&#125;)&quot;</span><br><span class="line">      description: &quot;Disk latency is growing (write operations &gt; 100ms) (current value: &#123;&#123; $value &#125;&#125;)&quot;</span><br><span class="line">- name: http_status</span><br><span class="line">  rules:</span><br><span class="line">  - alert: ProbeFailed</span><br><span class="line">    expr: probe_success == 0</span><br><span class="line">    for: 1m</span><br><span class="line">    labels:</span><br><span class="line">      severity: error</span><br><span class="line">    annotations:</span><br><span class="line">      summary: &quot;Probe failed (instance &#123;&#123; $labels.instance &#125;&#125;)&quot;</span><br><span class="line">      description: &quot;Probe failed (current value: &#123;&#123; $value &#125;&#125;)&quot;</span><br><span class="line">  - alert: StatusCode</span><br><span class="line">    expr: probe_http_status_code &lt;= 199 OR probe_http_status_code &gt;= 400</span><br><span class="line">    for: 1m</span><br><span class="line">    labels:</span><br><span class="line">      severity: error</span><br><span class="line">    annotations:</span><br><span class="line">      summary: &quot;Status Code (instance &#123;&#123; $labels.instance &#125;&#125;)&quot;</span><br><span class="line">      description: &quot;HTTP status code is not 200-399 (current value: &#123;&#123; $value &#125;&#125;)&quot;</span><br><span class="line">  - alert: SslCertificateWillExpireSoon</span><br><span class="line">    expr: probe_ssl_earliest_cert_expiry - time() &lt; 86400 * 30</span><br><span class="line">    for: 5m</span><br><span class="line">    labels:</span><br><span class="line">      severity: warning</span><br><span class="line">    annotations:</span><br><span class="line">      summary: &quot;SSL certificate will expire soon (instance &#123;&#123; $labels.instance &#125;&#125;)&quot;</span><br><span class="line">      description: &quot;SSL certificate expires in 30 days (current value: &#123;&#123; $value &#125;&#125;)&quot;</span><br><span class="line">  - alert: SslCertificateHasExpired</span><br><span class="line">    expr: probe_ssl_earliest_cert_expiry - time()  &lt;= 0</span><br><span class="line">    for: 5m</span><br><span class="line">    labels:</span><br><span class="line">      severity: error</span><br><span class="line">    annotations:</span><br><span class="line">      summary: &quot;SSL certificate has expired (instance &#123;&#123; $labels.instance &#125;&#125;)&quot;</span><br><span class="line">      description: &quot;SSL certificate has expired already (current value: &#123;&#123; $value &#125;&#125;)&quot;</span><br><span class="line">  - alert: BlackboxSlowPing</span><br><span class="line">    expr: probe_icmp_duration_seconds &gt; 2</span><br><span class="line">    for: 5m</span><br><span class="line">    labels:</span><br><span class="line">      severity: warning</span><br><span class="line">    annotations:</span><br><span class="line">      summary: &quot;Blackbox slow ping (instance &#123;&#123; $labels.instance &#125;&#125;)&quot;</span><br><span class="line">      description: &quot;Blackbox ping took more than 2s (current value: &#123;&#123; $value &#125;&#125;)&quot;</span><br><span class="line">  - alert: BlackboxSlowRequests</span><br><span class="line">    expr: probe_http_duration_seconds &gt; 2 </span><br><span class="line">    for: 5m</span><br><span class="line">    labels:</span><br><span class="line">      severity: warning</span><br><span class="line">    annotations:</span><br><span class="line">      summary: &quot;Blackbox slow requests (instance &#123;&#123; $labels.instance &#125;&#125;)&quot;</span><br><span class="line">      description: &quot;Blackbox request took more than 2s (current value: &#123;&#123; $value &#125;&#125;)&quot;</span><br><span class="line">  - alert: PodCpuUsagePercent</span><br><span class="line">    expr: sum(sum(label_replace(irate(container_cpu_usage_seconds_total[1m]),&quot;pod&quot;,&quot;$1&quot;,&quot;container_label_io_kubernetes_pod_name&quot;, &quot;(.*)&quot;))by(pod) / on(pod) group_right kube_pod_container_resource_limits_cpu_cores *100 )by(container,namespace,node,pod,severity) &gt; 80</span><br><span class="line">    for: 5m</span><br><span class="line">    labels:</span><br><span class="line">      severity: warning</span><br><span class="line">    annotations:</span><br><span class="line">      summary: &quot;Pod cpu usage percent has exceeded 80% (current value: &#123;&#123; $value &#125;&#125;%)&quot;</span><br></pre></td></tr></table></figure>
+
+<h2 id="修改Prometheus配置"><a href="#修改Prometheus配置" class="headerlink" title="修改Prometheus配置"></a>修改Prometheus配置</h2><ul>
+<li>在Prometheus配置文件最后添加</li>
+</ul>
+<figure class="highlight plain"><figcaption><span>/data/nfs-volume/prometheus/etc/prometheus.yml</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">alerting:</span><br><span class="line">  alertmanagers:</span><br><span class="line">    - static_configs:</span><br><span class="line">        - targets: [&quot;alertmanager&quot;]</span><br><span class="line">rule_files:</span><br><span class="line"> - &quot;/data/etc/rules.yml&quot;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>重载Prometheus配置</li>
+</ul>
+<p>找到Prometheus运行的运算节点</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# ps -ef|grep prometheus</span><br><span class="line">root      3357  3030  0 21:12 pts/0    00:00:00 grep --color=auto prometheus</span><br><span class="line">root     16027 16008  5 Nov14 ?        1-14:55:02 /bin/prometheus --config.file=/data/etc/prometheus.yml --storage.tsdb.path=/data/prom-db --storage.tsdb.min-block-duration=10m --storage.tsdb.retention=72h</span><br><span class="line">root     41726 41706  0 Nov14 ?        02:47:00 /traefik --api --kubernetes --logLevel=INFO --insecureskipverify=true --kubernetes.endpoint=https://10.202.48.10:7443 --accesslog --accesslog.filepath=/var/log/traefik_access.log --traefiklog --traefiklog.filepath=/var/log/traefik.log --metrics.prometheus</span><br><span class="line"></span><br><span class="line">[root@hdss7-21 ~]# kill -SIGHUP 16027</span><br></pre></td></tr></table></figure>
+
+<h2 id="测试告警"><a href="#测试告警" class="headerlink" title="测试告警"></a>测试告警</h2>
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById(&quot;QR&quot;); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechat.png" alt="Stanley Wang 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.2yuan.png" alt="Stanley Wang 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/10/18/Day6：使用ELK Stack对K8S内的应用进行日志分析/" rel="next" title="Day6：使用ELK Stack对K8S内的应用进行日志分析">
+                <i class="fa fa-chevron-left"></i> Day6：使用ELK Stack对K8S内的应用进行日志分析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/10/18/Day4：在kubernetes集群里集成Apollo配置中心/" rel="prev" title="Day4：在kubernetes集群里集成Apollo配置中心">
+                Day4：在kubernetes集群里集成Apollo配置中心 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.jpg" alt="Stanley Wang">
+            
+              <p class="site-author-name" itemprop="name">Stanley Wang</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">29</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://gitee.com/stanleywang" title="GitHub &rarr; https://gitee.com/stanleywang" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="mailto:stanley.wang.m@qq.com" title="E-Mail &rarr; mailto:stanley.wang.m@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#部署kube-state-metrics"><span class="nav-number">1.</span> <span class="nav-text">部署kube-state-metrics</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#准备kube-state-metrics镜像"><span class="nav-number">1.1.</span> <span class="nav-text">准备kube-state-metrics镜像</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#准备资源配置清单"><span class="nav-number">1.2.</span> <span class="nav-text">准备资源配置清单</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#应用资源配置清单"><span class="nav-number">1.3.</span> <span class="nav-text">应用资源配置清单</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#检查启动情况"><span class="nav-number">1.4.</span> <span class="nav-text">检查启动情况</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#部署node-exporter"><span class="nav-number">2.</span> <span class="nav-text">部署node-exporter</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#准备node-exporter镜像"><span class="nav-number">2.1.</span> <span class="nav-text">准备node-exporter镜像</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#准备资源配置清单-1"><span class="nav-number">2.2.</span> <span class="nav-text">准备资源配置清单</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#应用资源配置清单-1"><span class="nav-number">2.3.</span> <span class="nav-text">应用资源配置清单</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#部署cadvisor"><span class="nav-number">3.</span> <span class="nav-text">部署cadvisor</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#准备cadvisor镜像"><span class="nav-number">3.1.</span> <span class="nav-text">准备cadvisor镜像</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#准备资源配置清单-2"><span class="nav-number">3.2.</span> <span class="nav-text">准备资源配置清单</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#修改运算节点软连接"><span class="nav-number">3.3.</span> <span class="nav-text">修改运算节点软连接</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#应用资源配置清单-2"><span class="nav-number">3.4.</span> <span class="nav-text">应用资源配置清单</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#部署blackbox-exporter"><span class="nav-number">4.</span> <span class="nav-text">部署blackbox-exporter</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#准备blackbox-exporter镜像"><span class="nav-number">4.1.</span> <span class="nav-text">准备blackbox-exporter镜像</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#准备资源配置清单-3"><span class="nav-number">4.2.</span> <span class="nav-text">准备资源配置清单</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#解析域名"><span class="nav-number">4.3.</span> <span class="nav-text">解析域名</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#应用资源配置清单-3"><span class="nav-number">4.4.</span> <span class="nav-text">应用资源配置清单</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#浏览器访问"><span class="nav-number">4.5.</span> <span class="nav-text">浏览器访问</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#部署Prometheus"><span class="nav-number">5.</span> <span class="nav-text">部署Prometheus</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#准备prometheus镜像"><span class="nav-number">5.1.</span> <span class="nav-text">准备prometheus镜像</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#准备资源配置清单-4"><span class="nav-number">5.2.</span> <span class="nav-text">准备资源配置清单</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#准备prometheus的配置文件"><span class="nav-number">5.3.</span> <span class="nav-text">准备prometheus的配置文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#应用资源配置清单-4"><span class="nav-number">5.4.</span> <span class="nav-text">应用资源配置清单</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#解析域名-1"><span class="nav-number">5.5.</span> <span class="nav-text">解析域名</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#浏览器访问-1"><span class="nav-number">5.6.</span> <span class="nav-text">浏览器访问</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Prometheus监控内容"><span class="nav-number">5.7.</span> <span class="nav-text">Prometheus监控内容</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#etcd"><span class="nav-number">5.7.1.</span> <span class="nav-text">etcd</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#kubernetes-apiserver"><span class="nav-number">5.7.2.</span> <span class="nav-text">kubernetes-apiserver</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#kubernetes-kubelet"><span class="nav-number">5.7.3.</span> <span class="nav-text">kubernetes-kubelet</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#kubernetes-kube-state"><span class="nav-number">5.7.4.</span> <span class="nav-text">kubernetes-kube-state</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#traefik"><span class="nav-number">5.7.5.</span> <span class="nav-text">traefik</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#blackbox"><span class="nav-number">5.7.6.</span> <span class="nav-text">blackbox*</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#kubernetes-pods"><span class="nav-number">5.7.7.</span> <span class="nav-text">kubernetes-pods*</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#修改traefik服务接入prometheus监控"><span class="nav-number">5.8.</span> <span class="nav-text">修改traefik服务接入prometheus监控</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#修改dubbo-service服务接入prometheus监控"><span class="nav-number">5.9.</span> <span class="nav-text">修改dubbo-service服务接入prometheus监控</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#修改dubbo-consumer服务接入prometheus监控"><span class="nav-number">5.10.</span> <span class="nav-text">修改dubbo-consumer服务接入prometheus监控</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#部署Grafana"><span class="nav-number">6.</span> <span class="nav-text">部署Grafana</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#准备grafana镜像"><span class="nav-number">6.1.</span> <span class="nav-text">准备grafana镜像</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#准备资源配置清单-5"><span class="nav-number">6.2.</span> <span class="nav-text">准备资源配置清单</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#应用资源配置清单-5"><span class="nav-number">6.3.</span> <span class="nav-text">应用资源配置清单</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#解析域名-2"><span class="nav-number">6.4.</span> <span class="nav-text">解析域名</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#浏览器访问-2"><span class="nav-number">6.5.</span> <span class="nav-text">浏览器访问</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#配置grafana页面"><span class="nav-number">6.6.</span> <span class="nav-text">配置grafana页面</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#外观"><span class="nav-number">6.6.1.</span> <span class="nav-text">外观</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#插件"><span class="nav-number">6.6.2.</span> <span class="nav-text">插件</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#配置grafana数据源"><span class="nav-number">6.7.</span> <span class="nav-text">配置grafana数据源</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#配置Kubernetes集群Dashboard"><span class="nav-number">6.8.</span> <span class="nav-text">配置Kubernetes集群Dashboard</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#配置自定义dashboard"><span class="nav-number">6.9.</span> <span class="nav-text">配置自定义dashboard</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#部署Alertmanager"><span class="nav-number">7.</span> <span class="nav-text">部署Alertmanager</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#准备Alertmanager镜像"><span class="nav-number">7.1.</span> <span class="nav-text">准备Alertmanager镜像</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#准备资源配置清单-6"><span class="nav-number">7.2.</span> <span class="nav-text">准备资源配置清单</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#应用资源配置清单-6"><span class="nav-number">7.3.</span> <span class="nav-text">应用资源配置清单</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#准备alertmanger告警规则配置"><span class="nav-number">7.4.</span> <span class="nav-text">准备alertmanger告警规则配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#修改Prometheus配置"><span class="nav-number">7.5.</span> <span class="nav-text">修改Prometheus配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#测试告警"><span class="nav-number">7.6.</span> <span class="nav-text">测试告警</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Stanley Wang</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+    <span title="站点总字数">890k</span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    
+    <span title="站点阅读时长">13:29</span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+    
+    
+  
+  <script color="0,0,255" opacity="0.5" zindex="-1" count="99" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/src/utils.js?v=7.0.0"></script>
+
+  <script src="/js/src/motion.js?v=7.0.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/src/schemes/muse.js?v=7.0.0"></script>
+
+
+
+
+  
+  <script src="/js/src/scrollspy.js?v=7.0.0"></script>
+<script src="/js/src/post-details.js?v=7.0.0"></script>
+
+
+
+  
+
+
+  <script src="/js/src/bootstrap.js?v=7.0.0"></script>
+
+
+
+  
+
+
+  
+
+
+  
+  <script>
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url).replace(/\/{2,}/g, '/');
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x"></i></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x"></i></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+  
+
+  
+  
+
+  
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  <style>
+    .copy-btn {
+      display: inline-block;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 20px;
+      color: #333;
+      white-space: nowrap;
+      vertical-align: middle;
+      cursor: pointer;
+      background-color: #eee;
+      background-image: linear-gradient(#fcfcfc, #eee);
+      border: 1px solid #d5d5d5;
+      border-radius: 3px;
+      user-select: none;
+      outline: 0;
+    }
+
+    .highlight-wrap .copy-btn {
+      transition: opacity .3s ease-in-out;
+      opacity: 0;
+      padding: 2px 6px;
+      position: absolute;
+      right: 4px;
+      top: 8px;
+    }
+
+    .highlight-wrap:hover .copy-btn,
+    .highlight-wrap .copy-btn:focus {
+      opacity: 1
+    }
+
+    .highlight-wrap {
+      position: relative;
+    }
+  </style>
+  <script>
+    $('.highlight').each(function(i, e) {
+      var $wrap = $('<div>').addClass('highlight-wrap');
+      $(e).after($wrap);
+      $wrap.append($('<button>').addClass('copy-btn').append('复制').on('click', function(e) {
+        var code = $(this).parent().find('.code').find('.line').map(function(i, e) {
+          return $(e).text();
+        }).toArray().join('\n');
+        var ta = document.createElement('textarea');
+        var range = document.createRange(); //For Chrome
+        var sel = window.getSelection(); //For Chrome
+        var yPosition = window.pageYOffset || document.documentElement.scrollTop;
+        ta.style.top = yPosition + 'px'; //Prevent page scroll
+        ta.style.position = 'absolute';
+        ta.style.opacity = '0';
+        ta.value = code;
+        ta.textContent = code; //For FireFox
+        ta.contentEditable = true;
+        ta.readOnly = false;
+        document.body.appendChild(ta);
+        range.selectNode(ta);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        ta.setSelectionRange(0, code.length);
+        var result = document.execCommand('copy');
+        
+          if (result) $(this).text('复制成功');
+          else $(this).text('复制失败');
+        
+        ta.blur(); //For iOS
+        $(this).blur();
+      })).on('mouseleave', function(e) {
+        var $b = $(this).find('.copy-btn');
+        setTimeout(function() {
+          $b.text('复制');
+        }, 300);
+      }).append(e);
+    })
+  </script>
+
+
+</body>
+</html>

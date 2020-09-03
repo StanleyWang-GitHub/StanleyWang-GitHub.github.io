@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+  
+  
+    
+    
+  <script src="/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css?v=1.0.2">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.0.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon32.ico?v=7.0.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon16.ico?v=7.0.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.0.0" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '7.0.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="欢迎加入王导的VIP学习qq群：==&amp;gt;932194668&amp;lt;==   安装部署bind-chroot系统环境服务器：腾讯云主机，有公网IPOS：CentOS Linux release 7.4.1708 (Core)bind-chroot：bind-chroot-9.9.4-73.el7_6.x86_64 yum 安装1234567891011121314151617181920212">
+<meta property="og:type" content="article">
+<meta property="og:title" content="实验文档7：bind-chroot和dnssec技术实战">
+<meta property="og:url" content="https://StanleyWang-GitHub.github.io/2018/12/16/实验文档7：bind-chroot和dnssec技术实战/index.html">
+<meta property="og:site_name" content="Stanley&#39;s Blog">
+<meta property="og:description" content="欢迎加入王导的VIP学习qq群：==&amp;gt;932194668&amp;lt;==   安装部署bind-chroot系统环境服务器：腾讯云主机，有公网IPOS：CentOS Linux release 7.4.1708 (Core)bind-chroot：bind-chroot-9.9.4-73.el7_6.x86_64 yum 安装1234567891011121314151617181920212">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2020-09-03T08:33:09.904Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="实验文档7：bind-chroot和dnssec技术实战">
+<meta name="twitter:description" content="欢迎加入王导的VIP学习qq群：==&amp;gt;932194668&amp;lt;==   安装部署bind-chroot系统环境服务器：腾讯云主机，有公网IPOS：CentOS Linux release 7.4.1708 (Core)bind-chroot：bind-chroot-9.9.4-73.el7_6.x86_64 yum 安装1234567891011121314151617181920212">
+
+
+
+
+
+
+  <link rel="canonical" href="https://StanleyWang-GitHub.github.io/2018/12/16/实验文档7：bind-chroot和dnssec技术实战/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>实验文档7：bind-chroot和dnssec技术实战 | Stanley's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Stanley's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://StanleyWang-GitHub.github.io/2018/12/16/实验文档7：bind-chroot和dnssec技术实战/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Stanley Wang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Stanley's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">实验文档7：bind-chroot和dnssec技术实战
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-12-16 08:12:56" itemprop="dateCreated datePublished" datetime="2018-12-16T08:12:56+08:00">2018-12-16</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-09-03 16:33:09" itemprop="dateModified" datetime="2020-09-03T16:33:09+08:00">2020-09-03</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/Web-DNS技术/" itemprop="url" rel="index"><span itemprop="name">Web DNS技术</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-symbolscount">
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">本文字数：</span>
+                
+                <span title="本文字数">17k</span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">15 分钟</span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <hr>
+<blockquote class="blockquote-center"><p>欢迎加入王导的VIP学习qq群：==&gt;<a href="http://shang.qq.com/wpa/qunwpa?idkey=78869fddc5a661acb0639315eb52997c108de6625df5f0ee2f0372f176a032a6" target="_blank" rel="noopener"><font color="FF7F50">932194668</font></a>&lt;==</p>
+</blockquote>
+<hr>
+<h1 id="安装部署bind-chroot"><a href="#安装部署bind-chroot" class="headerlink" title="安装部署bind-chroot"></a>安装部署bind-chroot</h1><h2 id="系统环境"><a href="#系统环境" class="headerlink" title="系统环境"></a>系统环境</h2><p>服务器：腾讯云主机，有公网IP<br>OS：CentOS Linux release 7.4.1708 (Core)<br>bind-chroot：bind-chroot-9.9.4-73.el7_6.x86_64</p>
+<h2 id="yum-安装"><a href="#yum-安装" class="headerlink" title="yum 安装"></a>yum 安装</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"># yum install bind-chroot -y</span><br><span class="line">=============================================================================================================================================================</span><br><span class="line"></span><br><span class="line"> Package                                 Arch                            Version                                      Repository                        Size</span><br><span class="line">=============================================================================================================================================================</span><br><span class="line"></span><br><span class="line">Installing:</span><br><span class="line"> bind-chroot                             x86_64                          32:9.9.4-73.el7_6                            updates                           88 k</span><br><span class="line">Installing for dependencies:</span><br><span class="line"> bind                                    x86_64                          32:9.9.4-73.el7_6                            updates                          1.8 M</span><br><span class="line">Updating for dependencies:</span><br><span class="line"> bind-libs                               x86_64                          32:9.9.4-73.el7_6                            updates                          1.0 M</span><br><span class="line"> bind-libs-lite                          x86_64                          32:9.9.4-73.el7_6                            updates                          741 k</span><br><span class="line"> bind-license                            noarch                          32:9.9.4-73.el7_6                            updates                           87 k</span><br><span class="line"> bind-utils                              x86_64                          32:9.9.4-73.el7_6                            updates                          206 k</span><br><span class="line"></span><br><span class="line">Transaction Summary</span><br><span class="line">=============================================================================================================================================================</span><br><span class="line"></span><br><span class="line">Install  1 Package  (+1 Dependent package)</span><br><span class="line">Upgrade             ( 4 Dependent packages)</span><br><span class="line"></span><br><span class="line">Installed:</span><br><span class="line">  bind-chroot.x86_64 32:9.9.4-73.el7_6                                                                                                                       </span><br><span class="line"></span><br><span class="line"></span><br><span class="line">Dependency Installed:</span><br><span class="line">  bind.x86_64 32:9.9.4-73.el7_6                                                                                                                              </span><br><span class="line"></span><br><span class="line"></span><br><span class="line">Dependency Updated:</span><br><span class="line">  bind-libs.x86_64 32:9.9.4-73.el7_6  bind-libs-lite.x86_64 32:9.9.4-73.el7_6  bind-license.noarch 32:9.9.4-73.el7_6  bind-utils.x86_64 32:9.9.4-73.el7_6 </span><br><span class="line"></span><br><span class="line">Complete!</span><br></pre></td></tr></table></figure>
+
+<h2 id="配置bind-chroot"><a href="#配置bind-chroot" class="headerlink" title="配置bind-chroot"></a>配置bind-chroot</h2><p>bind-chroot本质上是使用chroot方式给bind软件换了个“根”，这时bind软件的“根”在/var/named/chroot下，弄懂这一点，配置起来就跟BIND9没什么区别了<br>把yum安装的bind-chroot在/etc下的产生的配置文件硬链接到/var/named/chroot/etc下</p>
+<figure class="highlight plain"><figcaption><span>/var/named/chroot/etc/</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@VM_0_13_centos ~]# cd /var/named/chroot/etc/</span><br><span class="line">[root@VM_0_13_centos etc]# ls /etc/named</span><br><span class="line">named/               named.conf           named.iscdlv.key     named.rfc1912.zones  named.root.key       </span><br><span class="line">[root@VM_0_13_centos etc]# ln /etc/named.* .</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plain"><figcaption><span>/var/named/chroot/var/named</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">[root@VM_0_13_centos named]# ln /var/named/named.* .</span><br><span class="line">[root@VM_0_13_centos named]# mkdir data/ dynamic/ slaves/ dnssec-key/</span><br><span class="line">[root@VM_0_13_centos named]# chgrp -R named *</span><br><span class="line">[root@VM_0_13_centos named]# ll</span><br><span class="line">drwxrwx--- 2 root  named 4096 Feb 27 18:30 data</span><br><span class="line">drwxr-xr-x 3 root  named 4096 Feb 28 14:31 dnssec-key</span><br><span class="line">drwxrwx--- 2 root  named 4096 Feb 28 14:33 dynamic</span><br><span class="line">-rw-r----- 2 root  named 2281 May 22  2017 named.ca</span><br><span class="line">-rw-r----- 2 root  named  152 Dec 15  2009 named.empty</span><br><span class="line">-rw-r----- 2 root  named  152 Jun 21  2007 named.localhost</span><br><span class="line">-rw-r----- 2 root  named  168 Dec 15  2009 named.loopback</span><br><span class="line">drwxrwx--- 2 root  named 4096 Jan 30 01:23 slaves</span><br></pre></td></tr></table></figure>
+
+<h2 id="etc-named-conf主配置文件"><a href="#etc-named-conf主配置文件" class="headerlink" title="/etc/named.conf主配置文件"></a>/etc/named.conf主配置文件</h2><p>编辑主配置文件，这里把53端口开放到公网</p>
+<figure class="highlight plain"><figcaption><span>/etc/named.conf</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">options &#123;</span><br><span class="line">	listen-on port 53 &#123; any; &#125;;</span><br><span class="line">	directory 	&quot;/var/named&quot;;</span><br><span class="line">	dump-file 	&quot;/var/named/data/cache_dump.db&quot;;</span><br><span class="line">	statistics-file &quot;/var/named/data/named_stats.txt&quot;;</span><br><span class="line">	memstatistics-file &quot;/var/named/data/named_mem_stats.txt&quot;;</span><br><span class="line">	recursing-file  &quot;/var/named/data/named.recursing&quot;;</span><br><span class="line">	secroots-file   &quot;/var/named/data/named.secroots&quot;;</span><br><span class="line">	allow-query     &#123; any; &#125;;</span><br><span class="line"></span><br><span class="line">	/* </span><br><span class="line">	 - If you are building an AUTHORITATIVE DNS server, do NOT enable recursion.</span><br><span class="line">	 - If you are building a RECURSIVE (caching) DNS server, you need to enable </span><br><span class="line">	   recursion. </span><br><span class="line">	 - If your recursive DNS server has a public IP address, you MUST enable access </span><br><span class="line">	   control to limit queries to your legitimate users. Failing to do so will</span><br><span class="line">	   cause your server to become part of large scale DNS amplification </span><br><span class="line">	   attacks. Implementing BCP38 within your network would greatly</span><br><span class="line">	   reduce such attack surface </span><br><span class="line">	*/</span><br><span class="line">	recursion no;</span><br><span class="line"></span><br><span class="line">	dnssec-enable yes;</span><br><span class="line">	dnssec-validation yes;</span><br><span class="line">	dnssec-lookaside auto;</span><br><span class="line"></span><br><span class="line">	/* Path to ISC DLV key */</span><br><span class="line">	bindkeys-file &quot;/etc/named.iscdlv.key&quot;;</span><br><span class="line"></span><br><span class="line">	managed-keys-directory &quot;/var/named/dynamic&quot;;</span><br><span class="line">	</span><br><span class="line">	pid-file &quot;/run/named/named.pid&quot;;</span><br><span class="line">	session-keyfile &quot;/run/named/session.key&quot;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">logging &#123;</span><br><span class="line">        channel default_debug &#123;</span><br><span class="line">                file &quot;data/named.run&quot;;</span><br><span class="line">                severity dynamic;</span><br><span class="line">        &#125;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">zone &quot;.&quot; IN &#123;</span><br><span class="line">	type hint;</span><br><span class="line">	file &quot;named.ca&quot;;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">include &quot;/etc/named.rfc1912.zones&quot;;</span><br><span class="line">include &quot;/etc/named.root.key&quot;;</span><br></pre></td></tr></table></figure>
+
+<h1 id="使用dnssec技术维护一个业务域"><a href="#使用dnssec技术维护一个业务域" class="headerlink" title="使用dnssec技术维护一个业务域"></a>使用dnssec技术维护一个业务域</h1><p>在公网上使用BIND9维护的业务域，最好使用dnssec技术对该域添加数字签名<br>DNSSEC（DNS Security Extension）—-DNS安全扩展，主要是为了解决DNS欺骗和缓存污染问题而设计的一种安全机制。</p>
+<p><a href="https://www.cloudxns.net/Support/detail/id/1309.html" target="_blank" rel="noopener">DNSSEC技术参考文献1</a><br><a href="https://blog.csdn.net/zhu_tianwei/article/details/45082015" target="_blank" rel="noopener">DNSSEC技术参考文献2</a></p>
+<h2 id="打开dnssec支持选项"><a href="#打开dnssec支持选项" class="headerlink" title="打开dnssec支持选项"></a>打开dnssec支持选项</h2><figure class="highlight plain"><figcaption><span>/etc/named.conf</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">dnssec-enable yes;</span><br><span class="line">dnssec-validation yes;</span><br><span class="line">dnssec-lookaside auto;</span><br></pre></td></tr></table></figure>
+
+<h2 id="配置一个业务域bkjf-inc-com"><a href="#配置一个业务域bkjf-inc-com" class="headerlink" title="配置一个业务域bkjf-inc.com"></a>配置一个业务域bkjf-inc.com</h2><figure class="highlight plain"><figcaption><span>/etc/named.rfc1912.zones</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">zone &quot;bkjf-inc.com&quot; IN &#123;</span><br><span class="line">        type master;</span><br><span class="line">        file &quot;bkjf-inc.com.zone&quot;;</span><br><span class="line">        key-directory &quot;dnssec-key/bkjf-inc.com&quot;;</span><br><span class="line">        inline-signing yes;</span><br><span class="line">        auto-dnssec maintain;</span><br><span class="line">        allow-update &#123; none; &#125;;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="创建数字签名证书"><a href="#创建数字签名证书" class="headerlink" title="创建数字签名证书"></a>创建数字签名证书</h2><figure class="highlight plain"><figcaption><span>/var/named/chroot/var/named/dnssec-key</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">[root@VM_0_13_centos dnssec-key]# mkdir bkjf-inc.com</span><br><span class="line">[root@VM_0_13_centos dnssec-key]# chgrp named bkjf-inc.com</span><br><span class="line">[root@VM_0_13_centos dnssec-key]# cd bkjf-inc.com</span><br><span class="line">[root@VM_0_13_centos bkjf-inc.com]# dnssec-keygen -a RSASHA256 -b 1024 bkjf-inc.com</span><br><span class="line">Generating key pair..................................++++++ .++++++ </span><br><span class="line">Kbkjf-inc.com.+008+53901</span><br><span class="line">[root@VM_0_13_centos bkjf-inc.com]# dnssec-keygen -a RSASHA256 -b 2048 -f KSK bkjf-inc.com                                                                           KSK bkjf-inc.com</span><br><span class="line">Generating key pair..........................................................................................+++ ............................................</span><br><span class="line">.....+++ </span><br><span class="line">Kbkjf-inc.com.+008+40759</span><br><span class="line"></span><br><span class="line">[root@VM_0_13_centos bkjf-inc.com]# chgrp named *</span><br><span class="line">[root@VM_0_13_centos bkjf-inc.com]# chmod g+r *.private</span><br><span class="line">[root@VM_0_13_centos bkjf-inc.com]# ll</span><br><span class="line">total 16</span><br><span class="line">-rw-r--r-- 1 root named  607 Feb 28 14:10 Kbkjf-inc.com.+008+40759.key</span><br><span class="line">-rw-r----- 1 root named 1776 Feb 28 14:10 Kbkjf-inc.com.+008+40759.private</span><br><span class="line">-rw-r--r-- 1 root named  433 Feb 28 14:10 Kbkjf-inc.com.+008+53901.key</span><br><span class="line">-rw-r----- 1 root named 1012 Feb 28 14:10 Kbkjf-inc.com.+008+53901.private</span><br></pre></td></tr></table></figure>
+
+<p>这里如果生成密钥的速度很慢，需要yum安装一下haveged软件并开启</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># systemctl start haveged.service</span><br></pre></td></tr></table></figure>
+
+<h2 id="创建区域数据库文件"><a href="#创建区域数据库文件" class="headerlink" title="创建区域数据库文件"></a>创建区域数据库文件</h2><figure class="highlight plain"><figcaption><span>/var/named/chroot/var/named/bkjf-inc.com.zone</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">[root@VM_0_13_centos named]# cat bkjf-inc.com.zone</span><br><span class="line">$TTL 600	; 10 minutes</span><br><span class="line">@               IN SOA	ns1.bkjf-inc.com. 87527941.qq.com. (</span><br><span class="line">                2018121605 ; serial</span><br><span class="line">                10800      ; refresh (3 hours)</span><br><span class="line">                900        ; retry (15 minutes)</span><br><span class="line">                604800     ; expire (1 week)</span><br><span class="line">                86400      ; minimum (1 day)</span><br><span class="line">                )</span><br><span class="line">                NS     ns1.bkjf-inc.com.</span><br><span class="line">                NS     ns2.bkjf-inc.com.</span><br><span class="line">$ORIGIN bkjf-inc.com.</span><br><span class="line">$TTL 60	; 1 minute</span><br><span class="line">ns1             A     192.144.198.128</span><br><span class="line">ns2             A     192.144.198.128</span><br><span class="line">www             A     192.144.198.128</span><br><span class="line">eshop           CNAME www</span><br></pre></td></tr></table></figure>
+
+<h2 id="启动bind-chroot服务"><a href="#启动bind-chroot服务" class="headerlink" title="启动bind-chroot服务"></a>启动bind-chroot服务</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># systemctl start named-chroot</span><br></pre></td></tr></table></figure>
+
+<h2 id="自动生成了签名zone"><a href="#自动生成了签名zone" class="headerlink" title="自动生成了签名zone"></a>自动生成了签名zone</h2><p>如果启动成功且配置无误，应该自动生成了带签名的zone</p>
+<figure class="highlight plain"><figcaption><span>/var/named/chroot/var/named/</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[root@VM_0_13_centos named]# ll</span><br><span class="line">total 60</span><br><span class="line">-rw-r--r-- 1 root  named  507 Feb 28 14:34 bkjf-inc.com.zone</span><br><span class="line">-rw-r--r-- 1 named named  512 Feb 28 14:26 bkjf-inc.com.zone.jbk</span><br><span class="line">-rw-r--r-- 1 named named  742 Feb 28 14:35 bkjf-inc.com.zone.jnl</span><br><span class="line">-rw-r--r-- 1 named named 4102 Feb 28 14:44 bkjf-inc.com.zone.signed</span><br><span class="line">-rw-r--r-- 1 named named 7481 Feb 28 14:35 bkjf-inc.com.zone.signed.jnl</span><br></pre></td></tr></table></figure>
+
+<p>检查签名区需要用到完全区域传送命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">[root@VM_0_13_centos named]# dig -t AXFR bkjf-inc.com @localhost</span><br><span class="line"></span><br><span class="line">; &lt;&lt;&gt;&gt; DiG 9.9.4-RedHat-9.9.4-73.el7_6 &lt;&lt;&gt;&gt; -t AXFR bkjf-inc.com @localhost</span><br><span class="line">;; global options: +cmd</span><br><span class="line">bkjf-inc.com.		600	IN	SOA	ns1.bkjf-inc.com. 87527941.qq.com. 2018121608 10800 900 604800 86400</span><br><span class="line">bkjf-inc.com.		86400	IN	RRSIG	NSEC 8 2 86400 20190330063503 20190228053503 53901 bkjf-inc.com. 0fyLJXxaDOI+RWnYjK2tGpd6WgbWmgeIADtjpPQFQLrv1X9fuDLi2MFR q0+csg5P22eVUdasKi3q5tMmFW8GZtLEBBVtOtSba3/FvtoitvyBGcG6 KJ155dPbhEFe/eR0/JhWtFsIsyj/UHtgELB4eGYJYCeEI+WzUopT7voz 4UE=</span><br><span class="line">bkjf-inc.com.		86400	IN	NSEC	eshop.bkjf-inc.com. NS SOA RRSIG NSEC DNSKEY TYPE65534</span><br><span class="line">bkjf-inc.com.		600	IN	RRSIG	NS 8 2 600 20190330063017 20190228053309 53901 bkjf-inc.com. Y/T0m4p0yNrJwJiHc0mjDgit/9E4h7MXPb5F2WgBd+huXYgL0pS0vOb3 c2aRvHHW/zngPjShOfy3sYY5203SzPS15tN6E/RAs36/I33sZE7jZBFo 9q0KjEdKHNsoC9XISSdbLPCX879/B1rKZcmhpPNmhpAK6P351nWWgd9L jtU=</span><br><span class="line">bkjf-inc.com.		600	IN	RRSIG	SOA 8 2 600 20190330063503 20190228053503 53901 bkjf-inc.com. eE3nKlCmAZrjJ3DwdzPStYmrC38X6VCqCxIc6otLJDX65Uk2uSqGSPre WIu16zEsbuuxq7/38ABrupQNwkPAgaSaiLIRC/000PXzKsUPhll0xO4x u9tLg2LBRATQ+4dHpKtLsoBTX0nXVHlz09YeAAA82r5wyQye2/ebesxH +A4=</span><br><span class="line">bkjf-inc.com.		0	IN	RRSIG	TYPE65534 8 2 0 20190330054441 20190228053309 53901 bkjf-inc.com. sEX7jpdTbUZ3hlIR2CRWHbgceAQFVOVKnVl6CXvyQhavIFjUyBMMhXTw hKYwXd2Hc0LGg9koWJqlt0oYS8YbXacKbeBUrLovmcbYP46Uhm05zaVo jswG7oYYsYDE3ekbl5ImnAEyjksSNOgk8if/WoUvXfF5QH6Rdl+6Q3qG cEI=</span><br><span class="line">bkjf-inc.com.		600	IN	RRSIG	DNSKEY 8 2 600 20190330063309 20190228053309 53901 bkjf-inc.com. rUGjMTxmbthB6UbmemoorQOfuen8u0xeOosl7lPRNLV2Hk7KsAZzUD2/ tRAJaY9NRZ1JhZHkmX/N5hncuVpPxZnrp8UB7qOoairqgjA73IFGoT0F 00KIU0FZaqsQAbBSzpzfbwr9KVbn1hTAq6/5Q/wrWZvQOASMYrF5Xhr9 lW4=</span><br><span class="line">bkjf-inc.com.		600	IN	RRSIG	DNSKEY 8 2 600 20190330063309 20190228053309 40759 bkjf-inc.com. lBXWXbTshdeH/oOkBGdwIspet0ABbhUZfzAXUjOP3ivCMW5sse3ZayEA qPe6mZncURqomWNA/xQKemoJJjtlAwc5F4CjmtrUierdy3EVVKS0NFnz 9L3PxiJcOxl1VVtSBX+XAOPa0xkS3cpEbFVOym4NaKsoLgcqKKBjjBu4 dhWoXoxXk7PE5fogo9/BM0heGI4XpnixUSTbucMw4bcnNYPY0qKUBs2o alt1CvrGz78oOO10//pXpw/ml89UwWo28/FDvxeuXS7soeImDRklTLlE xV/Q3//v7o73ZosAdSR+9xFdcZtVs43Jjo3Cy8WL1Zjz6BdRd59Fyu6h WghEKg==</span><br><span class="line">bkjf-inc.com.		0	IN	TYPE65534 \# 5 08D28D0001</span><br><span class="line">bkjf-inc.com.		0	IN	TYPE65534 \# 5 089F370001</span><br><span class="line">bkjf-inc.com.		600	IN	DNSKEY	256 3 8 AwEAAflXAWLXAVJUEj29iidwVvZALuQr03hLn1bEl81XDtD63H7wwHS9 i9fNDYL0q0FkRDkuzXEQpb3UUleu/RYtSd9w6Ads0RWNUyB6X1E4Djmv sPwFwvo570svZSVky2rjEHnySgVI2ywqhcRYLMKjxE6pXuzXrqecQcF2 qrMq2xmJ</span><br><span class="line">bkjf-inc.com.		600	IN	DNSKEY	257 3 8 AwEAAbxFYlbq+R8y/hGg/xL8xDBasZGYtgPOqVd3bP68p98YHsFwHyG8 u3svatzRoq8STNjKKZEluDC2bcUIn9/mRHyorTYPtwyePxPEgVE4yhBy 9xqD4ES+ty7kuHOUz/WEHdNdYRhYyHe+SGf4dHnmU49pHIBCE8xFX6fs t270webjuXs4Pt6qRlyoFC3XmpRDiMNVwtM+doUxo/MRK4mw5zTeHyyf dFLVOvE3mW/ZKgBfnrsj0zE71bnD5nTxJIjDv1bUppbiRy5RK40jPhHu zaa3quxg1yS/BceYcjJpZJUc3LS55HGzatfuK799KvukuDKf7u71ylW+ 5ynT7Sxhbt0=</span><br><span class="line">bkjf-inc.com.		600	IN	NS	ns1.bkjf-inc.com.</span><br><span class="line">bkjf-inc.com.		600	IN	NS	ns2.bkjf-inc.com.</span><br><span class="line">eshop.bkjf-inc.com.	86400	IN	RRSIG	NSEC 8 3 86400 20190330063503 20190228053503 53901 bkjf-inc.com. dHM2PhYs7BVuhD//iGhcwPZGZmHDkBCfWKju6ZZlvSx3I+QmWWvVdKCj 8YCw2AkWhgARxFfRMzhxRwDjgEgHhxUr4UGPH9+kJpvGi+UpFBVoBvPw iL43qCn/4J2f6URuAY8Dcq0DFpR0QLVJgIXBZpyhUYu5hZNWI2tzfyhO GlM=</span><br><span class="line">eshop.bkjf-inc.com.	86400	IN	NSEC	ns1.bkjf-inc.com. CNAME RRSIG NSEC</span><br><span class="line">eshop.bkjf-inc.com.	60	IN	RRSIG	CNAME 8 3 60 20190330063503 20190228053503 53901 bkjf-inc.com. 9ONt81AjpHFrM8YwDm7pQAg62oDBgaNzdtDIqtBHt5h/BPl83fOP/dOp P0Xi+y/OsFjDzHBSBDU4sy3fJwHBqm8uuMc6m33pIZfTq15fxFXF+2hU ift1bc0b0dk/L7ANZ5haEsDcl+hSVjwru2o2ISJtvp5zySZ61pdMvA6y ktg=</span><br><span class="line">eshop.bkjf-inc.com.	60	IN	CNAME	www.bkjf-inc.com.</span><br><span class="line">ns1.bkjf-inc.com.	60	IN	RRSIG	A 8 3 60 20190330063017 20190228053309 53901 bkjf-inc.com. 9MUZhsTxlmn5B6QXg/iCQoFyilRh8H4OJcTgpu1KgSyMTiBoEwJGdhIx k2XimlJZr9/MrSeRbuLwMZOnwFJ7w9fcIunrYHiE1T71y0BcLnQOKaJf SkJI5VKUam80+J6unkscCj0i/Y1kXTjXWLODKsZzw4+zLz5cGJk6hvsn XP4=</span><br><span class="line">ns1.bkjf-inc.com.	86400	IN	RRSIG	NSEC 8 3 86400 20190330063017 20190228053309 53901 bkjf-inc.com. EFeX2LsEd/flN2/5lCgKlSTtC93WH0LDw9GW1RAlLIfxFAptPsXkmy7y B0Blt7tOuaxA/cTNbnFZBnyo8G3YW90LnYagqeuNzl+90gjUxsbbhE4f pTkQkRXRsvcagYDKQjs9nkN1SAF13SagnupR8D2crHADICjy8RHjHtgA byM=</span><br><span class="line">ns1.bkjf-inc.com.	86400	IN	NSEC	ns2.bkjf-inc.com. A RRSIG NSEC</span><br><span class="line">ns1.bkjf-inc.com.	60	IN	A	192.144.198.128</span><br><span class="line">ns2.bkjf-inc.com.	60	IN	RRSIG	A 8 3 60 20190330063017 20190228053309 53901 bkjf-inc.com. N2ssp0Eh6SyHBYHskedxUpfIp29DETt2g74sCuhrXwMuwLjOdVwuB02i /LqzDLyDbVZnMZncqoQ367AV2b/ttU/FJZcHiAlI2tLRTxVuNyj/E2YN BIDAtIqueNdJzsyE7n1yz9sPcsTrOidrIqqbM3qom5tMQvdo+2jrnhR3 UoY=</span><br><span class="line">ns2.bkjf-inc.com.	86400	IN	RRSIG	NSEC 8 3 86400 20190330063017 20190228053309 53901 bkjf-inc.com. sTTRnUQxPBbeAG0WrQpn4iK/U62D2s8umLwx8w8bx+bwxQdhR8Yyz8Ke tSelkffgctCtyUi5i7ibSTnvUJTcvOcvWWteMOQfQqXJmAngADx87cba /M+OJqRwp8tu3PEniPpTYN3msGSEFILyxLCO/2cyBzK+8jhFFKYyMOn/ ViQ=</span><br><span class="line">ns2.bkjf-inc.com.	86400	IN	NSEC	www.bkjf-inc.com. A RRSIG NSEC</span><br><span class="line">ns2.bkjf-inc.com.	60	IN	A	192.144.198.128</span><br><span class="line">www.bkjf-inc.com.	60	IN	RRSIG	A 8 3 60 20190330063017 20190228053309 53901 bkjf-inc.com. aKI5N4y6eqN/xunC7+4vYa3cSHyXcW533iGA6/q34/ahvq0sTgYN36aF oBO0t8fRvwS3chZaPxwuqbk6hGSW+tRhJ8x/Nnwtbcn004W0ZxI1k046 JW/ePLhq1Cw2GPHXJTsfCjYmAOcwssX2yUv6q9/vocXx/mipuTMljrId yhE=</span><br><span class="line">www.bkjf-inc.com.	86400	IN	RRSIG	NSEC 8 3 86400 20190330063017 20190228053309 53901 bkjf-inc.com. 0q3C+xMKE1p586q+p8U4AHGiNjzzI899TcmL2P4x8x1B7rkc22rsakX9 AnNFAzkPOTVLr81GQtBraI1K6El2QDKcPkE9+0e+34tirpuUzVlzjYB2 f4WHGxTscdOMpCestqnmspQpmXm37+EBWS0alBBq3Db8T+F/3CSEGRS7 Ao0=</span><br><span class="line">www.bkjf-inc.com.	86400	IN	NSEC	bkjf-inc.com. A RRSIG NSEC</span><br><span class="line">www.bkjf-inc.com.	60	IN	A	192.144.198.128</span><br><span class="line">bkjf-inc.com.		600	IN	SOA	ns1.bkjf-inc.com. 87527941.qq.com. 2018121608 10800 900 604800 86400</span><br><span class="line">;; Query time: 1 msec</span><br><span class="line">;; SERVER: 127.0.0.1#53(127.0.0.1)</span><br><span class="line">;; WHEN: Thu Feb 28 15:22:46 CST 2019</span><br><span class="line">;; XFR size: 31 records (messages 1, bytes 3433)</span><br></pre></td></tr></table></figure>
+
+<p>这里看到了每个记录都附带了一个<code>RRSIG</code>记录，说明已经进行了数字签名</p>
+<h2 id="检查本地解析"><a href="#检查本地解析" class="headerlink" title="检查本地解析"></a>检查本地解析</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[root@VM_0_13_centos named]# dig -t A www.bkjf-inc.com @localhost +dnssec +short</span><br><span class="line">192.144.198.128</span><br><span class="line">A 8 3 60 20190330063017 20190228053309 53901 bkjf-inc.com. aKI5N4y6eqN/xunC7+4vYa3cSHyXcW533iGA6/q34/ahvq0sTgYN36aF oBO0t8fRvwS3chZaPxwuqbk6hGSW+tRhJ8x/Nnwtbcn004W0ZxI1k046 JW/ePLhq1Cw2GPHXJTsfCjYmAOcwssX2yUv6q9/vocXx/mipuTMljrId yhE=</span><br></pre></td></tr></table></figure>
+
+<h2 id="DS记录"><a href="#DS记录" class="headerlink" title="DS记录"></a>DS记录</h2><p>在生成证书的目录对<code>ZSK</code>执行<code>dnssec-dsfromkey</code>命令，得到<code>bkjf-inc.com</code>的DS记录，这里我们使用比较长的那个</p>
+<figure class="highlight plain"><figcaption><span>/var/named/chroot/var/named/dnssec-key/bkjf-inc.com</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[root@VM_0_13_centos bkjf-inc.com]#  dnssec-dsfromkey `grep -l zone-signing *key`</span><br><span class="line">bkjf-inc.com. IN DS 53901 8 1 5E13F6C0ECEE84248C2543693CE7D8617920983B</span><br><span class="line">bkjf-inc.com. IN DS 53901 8 2 3006068B784AFBBC67133F123A0C389514959FCB6CAB0032DB200F08E6E5C384</span><br></pre></td></tr></table></figure>
+
+<p>其中：</p>
+<ul>
+<li>53901：关键标签，用于标识域名的DNSSEC记录，一个小于65535的整数值</li>
+<li>8：生成签名的加密算法，8对应RSA/SHA-256</li>
+<li>2：构建摘要的加密算法，2对应SHA-256</li>
+<li>最后一段：摘要值，就是DS记录值</li>
+</ul>
+<p>参考万网（阿里云）上关于dnssec配置的文档：<a href="https://help.aliyun.com/document_detail/101717.html?spm=a2c4g.11186623.6.626.37c01e9bzbyBGq" target="_blank" rel="noopener">参考文档</a></p>
+<p>DS记录需要通过运营商提交到上级DNS的信任锚中，这里是通过万网的配置页面，提交到<code>.com</code>域</p>
+<p><strong>注意：</strong>要在阿里云上将该域名的dns服务器指向自定义DNS服务器：<a href="https://help.aliyun.com/knowledge_detail/39846.html" target="_blank" rel="noopener">参考文档</a></p>
+<h2 id="后续维护"><a href="#后续维护" class="headerlink" title="后续维护"></a>后续维护</h2><p>dnssec需要定期轮转，所以需要经常变更签名，其中</p>
+<ul>
+<li>ZSK轮转<blockquote>
+<p>建议每年轮转</p>
+</blockquote>
+</li>
+<li>KSK轮转<blockquote>
+<p>建议更新ssl证书后尽快轮转？</p>
+</blockquote>
+</li>
+</ul>
+<p>轮转方法：</p>
+<ul>
+<li><p>ZSK(zone-signing key)</p>
+<figure class="highlight plain"><figcaption><span>/var/named/chroot/var/named/dnssec-key/bkjf-inc.com</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ cd /var/named/chroot/var/named/dnssec-key/bkjf-inc.com</span><br><span class="line">$ dnssec-settime -I yyyy0101 -D yyyy0201 Kbkjf-inc.com.+008+53901</span><br><span class="line">$ dnssec-keygen -S Kbkjf-inc.com.+008+53901</span><br><span class="line">$ chgrp bind *</span><br><span class="line">$ chmod g+r *.private</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>KSK轮转(key-signing key)</p>
+<figure class="highlight plain"><figcaption><span>/var/named/chroot/var/named/dnssec-key/bkjf-inc.com</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ cd /var/named/chroot/var/named/dnssec-key/bkjf-inc.com</span><br><span class="line">$ dnssec-settime -I yyyy0101 -D yyyy0201 Kbkjf-inc.com.+008+40759</span><br><span class="line">$ dnssec-keygen -S Kbkjf-inc.com.+008+40759</span><br><span class="line">$ chgrp bind *</span><br><span class="line">$ chmod g+r *.private</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<p><strong>注意：</strong>KSK轮转需要同步在万网上更新DS记录</p>
+<h2 id="在任意客户端验证解析"><a href="#在任意客户端验证解析" class="headerlink" title="在任意客户端验证解析"></a>在任意客户端验证解析</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">#dig -t A www.bkjf-inc.com @8.8.8.8 +dnssec +short</span><br><span class="line">192.144.198.128</span><br><span class="line">A 8 3 60 20190330063017 20190228053309 53901 bkjf-inc.com. aKI5N4y6eqN/xunC7+4vYa3cSHyXcW533iGA6/q34/ahvq0sTgYN36aF oBO0t8fRvwS3chZaPxwuqbk6hGSW+tRhJ8x/Nnwtbcn004W0ZxI1k046 JW/ePLhq1Cw2GPHXJTsfCjYmAOcwssX2yUv6q9/vocXx/mipuTMljrId yhE=</span><br><span class="line"></span><br><span class="line">#dig CNAME eshop.bkjf-inc.com @8.8.8.8 +dnssec +short</span><br><span class="line">www.bkjf-inc.com.</span><br><span class="line">CNAME 8 3 60 20190330063503 20190228053503 53901 bkjf-inc.com. 9ONt81AjpHFrM8YwDm7pQAg62oDBgaNzdtDIqtBHt5h/BPl83fOP/dOp P0Xi+y/OsFjDzHBSBDU4sy3fJwHBqm8uuMc6m33pIZfTq15fxFXF+2hU ift1bc0b0dk/L7ANZ5haEsDcl+hSVjwru2o2ISJtvp5zySZ61pdMvA6y ktg=</span><br></pre></td></tr></table></figure>
+
+<h2 id="在第三方网站验证"><a href="#在第三方网站验证" class="headerlink" title="在第三方网站验证"></a>在第三方网站验证</h2><p><a href="https://en.internet.nl/site/www.bkjf-inc.com/473349/" target="_blank" rel="noopener">https://en.internet.nl/site/www.bkjf-inc.com/473349/</a></p>
+<h2 id="浏览器插件"><a href="#浏览器插件" class="headerlink" title="浏览器插件"></a>浏览器插件</h2><p><a href="https://www.dnssec-validator.cz/" target="_blank" rel="noopener">https://www.dnssec-validator.cz/</a></p>
+<p><a href="https://ftp.isc.org/isc/kb-files/DNSSEC-QR-B4.pdf" target="_blank" rel="noopener">参考文献</a></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById(&quot;QR&quot;); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechat.png" alt="Stanley Wang 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.2yuan.png" alt="Stanley Wang 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/12/16/实验文档8：企业级Web DNS实战/" rel="next" title="实验文档8：企业级Web DNS实战">
+                <i class="fa fa-chevron-left"></i> 实验文档8：企业级Web DNS实战
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/12/16/实验文档6：智能DNS实战/" rel="prev" title="实验文档6：智能DNS实战">
+                实验文档6：智能DNS实战 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.jpg" alt="Stanley Wang">
+            
+              <p class="site-author-name" itemprop="name">Stanley Wang</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">19</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://gitee.com/stanleywang" title="GitHub &rarr; https://gitee.com/stanleywang" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="mailto:stanley.wang.m@qq.com" title="E-Mail &rarr; mailto:stanley.wang.m@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#安装部署bind-chroot"><span class="nav-number">1.</span> <span class="nav-text">安装部署bind-chroot</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#系统环境"><span class="nav-number">1.1.</span> <span class="nav-text">系统环境</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#yum-安装"><span class="nav-number">1.2.</span> <span class="nav-text">yum 安装</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#配置bind-chroot"><span class="nav-number">1.3.</span> <span class="nav-text">配置bind-chroot</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#etc-named-conf主配置文件"><span class="nav-number">1.4.</span> <span class="nav-text">/etc/named.conf主配置文件</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#使用dnssec技术维护一个业务域"><span class="nav-number">2.</span> <span class="nav-text">使用dnssec技术维护一个业务域</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#打开dnssec支持选项"><span class="nav-number">2.1.</span> <span class="nav-text">打开dnssec支持选项</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#配置一个业务域bkjf-inc-com"><span class="nav-number">2.2.</span> <span class="nav-text">配置一个业务域bkjf-inc.com</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#创建数字签名证书"><span class="nav-number">2.3.</span> <span class="nav-text">创建数字签名证书</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#创建区域数据库文件"><span class="nav-number">2.4.</span> <span class="nav-text">创建区域数据库文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#启动bind-chroot服务"><span class="nav-number">2.5.</span> <span class="nav-text">启动bind-chroot服务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#自动生成了签名zone"><span class="nav-number">2.6.</span> <span class="nav-text">自动生成了签名zone</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#检查本地解析"><span class="nav-number">2.7.</span> <span class="nav-text">检查本地解析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DS记录"><span class="nav-number">2.8.</span> <span class="nav-text">DS记录</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#后续维护"><span class="nav-number">2.9.</span> <span class="nav-text">后续维护</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#在任意客户端验证解析"><span class="nav-number">2.10.</span> <span class="nav-text">在任意客户端验证解析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#在第三方网站验证"><span class="nav-number">2.11.</span> <span class="nav-text">在第三方网站验证</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#浏览器插件"><span class="nav-number">2.12.</span> <span class="nav-text">浏览器插件</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Stanley Wang</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+    <span title="站点总字数">278k</span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    
+    <span title="站点阅读时长">4:13</span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+    
+    
+  
+  <script color="0,0,255" opacity="0.5" zindex="-1" count="99" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/src/utils.js?v=7.0.0"></script>
+
+  <script src="/js/src/motion.js?v=7.0.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/src/schemes/muse.js?v=7.0.0"></script>
+
+
+
+
+  
+  <script src="/js/src/scrollspy.js?v=7.0.0"></script>
+<script src="/js/src/post-details.js?v=7.0.0"></script>
+
+
+
+  
+
+
+  <script src="/js/src/bootstrap.js?v=7.0.0"></script>
+
+
+
+  
+
+
+  
+
+
+  
+  <script>
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url).replace(/\/{2,}/g, '/');
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x"></i></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x"></i></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+  
+
+  
+  
+
+  
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  <style>
+    .copy-btn {
+      display: inline-block;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 20px;
+      color: #333;
+      white-space: nowrap;
+      vertical-align: middle;
+      cursor: pointer;
+      background-color: #eee;
+      background-image: linear-gradient(#fcfcfc, #eee);
+      border: 1px solid #d5d5d5;
+      border-radius: 3px;
+      user-select: none;
+      outline: 0;
+    }
+
+    .highlight-wrap .copy-btn {
+      transition: opacity .3s ease-in-out;
+      opacity: 0;
+      padding: 2px 6px;
+      position: absolute;
+      right: 4px;
+      top: 8px;
+    }
+
+    .highlight-wrap:hover .copy-btn,
+    .highlight-wrap .copy-btn:focus {
+      opacity: 1
+    }
+
+    .highlight-wrap {
+      position: relative;
+    }
+  </style>
+  <script>
+    $('.highlight').each(function(i, e) {
+      var $wrap = $('<div>').addClass('highlight-wrap');
+      $(e).after($wrap);
+      $wrap.append($('<button>').addClass('copy-btn').append('复制').on('click', function(e) {
+        var code = $(this).parent().find('.code').find('.line').map(function(i, e) {
+          return $(e).text();
+        }).toArray().join('\n');
+        var ta = document.createElement('textarea');
+        var range = document.createRange(); //For Chrome
+        var sel = window.getSelection(); //For Chrome
+        var yPosition = window.pageYOffset || document.documentElement.scrollTop;
+        ta.style.top = yPosition + 'px'; //Prevent page scroll
+        ta.style.position = 'absolute';
+        ta.style.opacity = '0';
+        ta.value = code;
+        ta.textContent = code; //For FireFox
+        ta.contentEditable = true;
+        ta.readOnly = false;
+        document.body.appendChild(ta);
+        range.selectNode(ta);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        ta.setSelectionRange(0, code.length);
+        var result = document.execCommand('copy');
+        
+          if (result) $(this).text('复制成功');
+          else $(this).text('复制失败');
+        
+        ta.blur(); //For iOS
+        $(this).blur();
+      })).on('mouseleave', function(e) {
+        var $b = $(this).find('.copy-btn');
+        setTimeout(function() {
+          $b.text('复制');
+        }, 300);
+      }).append(e);
+    })
+  </script>
+
+
+</body>
+</html>

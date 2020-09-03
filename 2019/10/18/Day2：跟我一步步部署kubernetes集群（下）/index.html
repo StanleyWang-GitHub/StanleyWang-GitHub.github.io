@@ -1,0 +1,1592 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+  
+  
+    
+    
+  <script src="/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css?v=1.0.2">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.0.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon32.ico?v=7.0.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon16.ico?v=7.0.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.0.0" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '7.0.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="欢迎加入王导的VIP学习qq群：==&amp;gt;932194668&amp;lt;==   K8S的核心资源管理方法陈述式资源管理方法任意K8S运算节点上： 管理名称空间资源查看名称空间123456[root@hdss7-21 ~]# kubectl get namespacesNAME              STATUS   AGEdefault           Active   23hkube-">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Day2：跟我一步步部署kubernetes集群（下）">
+<meta property="og:url" content="https://StanleyWang-GitHub.github.io/2019/10/18/Day2：跟我一步步部署kubernetes集群（下）/index.html">
+<meta property="og:site_name" content="Stanley&#39;s Blog">
+<meta property="og:description" content="欢迎加入王导的VIP学习qq群：==&amp;gt;932194668&amp;lt;==   K8S的核心资源管理方法陈述式资源管理方法任意K8S运算节点上： 管理名称空间资源查看名称空间123456[root@hdss7-21 ~]# kubectl get namespacesNAME              STATUS   AGEdefault           Active   23hkube-">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://stanleywang-github.github.io/images/traefik.png">
+<meta property="og:image" content="https://stanleywang-github.github.io/images/heapster.png">
+<meta property="og:updated_time" content="2020-09-03T08:33:09.878Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Day2：跟我一步步部署kubernetes集群（下）">
+<meta name="twitter:description" content="欢迎加入王导的VIP学习qq群：==&amp;gt;932194668&amp;lt;==   K8S的核心资源管理方法陈述式资源管理方法任意K8S运算节点上： 管理名称空间资源查看名称空间123456[root@hdss7-21 ~]# kubectl get namespacesNAME              STATUS   AGEdefault           Active   23hkube-">
+<meta name="twitter:image" content="https://stanleywang-github.github.io/images/traefik.png">
+
+
+
+
+
+
+  <link rel="canonical" href="https://StanleyWang-GitHub.github.io/2019/10/18/Day2：跟我一步步部署kubernetes集群（下）/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Day2：跟我一步步部署kubernetes集群（下） | Stanley's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Stanley's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://StanleyWang-GitHub.github.io/2019/10/18/Day2：跟我一步步部署kubernetes集群（下）/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Stanley Wang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Stanley's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Day2：跟我一步步部署kubernetes集群（下）
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-10-18 21:12:56" itemprop="dateCreated datePublished" datetime="2019-10-18T21:12:56+08:00">2019-10-18</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-09-03 16:33:09" itemprop="dateModified" datetime="2020-09-03T16:33:09+08:00">2020-09-03</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-symbolscount">
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">本文字数：</span>
+                
+                <span title="本文字数">43k</span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">39 分钟</span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <hr>
+<blockquote class="blockquote-center"><p>欢迎加入王导的VIP学习qq群：==&gt;<a href="http://shang.qq.com/wpa/qunwpa?idkey=78869fddc5a661acb0639315eb52997c108de6625df5f0ee2f0372f176a032a6" target="_blank" rel="noopener"><font color="FF7F50">932194668</font></a>&lt;==</p>
+</blockquote>
+<hr>
+<h1 id="K8S的核心资源管理方法"><a href="#K8S的核心资源管理方法" class="headerlink" title="K8S的核心资源管理方法"></a>K8S的核心资源管理方法</h1><h2 id="陈述式资源管理方法"><a href="#陈述式资源管理方法" class="headerlink" title="陈述式资源管理方法"></a>陈述式资源管理方法</h2><p>任意K8S运算节点上：</p>
+<h3 id="管理名称空间资源"><a href="#管理名称空间资源" class="headerlink" title="管理名称空间资源"></a>管理名称空间资源</h3><h4 id="查看名称空间"><a href="#查看名称空间" class="headerlink" title="查看名称空间"></a>查看名称空间</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl get namespaces</span><br><span class="line">NAME              STATUS   AGE</span><br><span class="line">default           Active   23h</span><br><span class="line">kube-node-lease   Active   23h</span><br><span class="line">kube-public       Active   23h</span><br><span class="line">kube-system       Active   23h</span><br></pre></td></tr></table></figure>
+
+<h4 id="查看名称空间内的资源"><a href="#查看名称空间内的资源" class="headerlink" title="查看名称空间内的资源"></a>查看名称空间内的资源</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl get all -n default</span><br><span class="line">NAME                 READY   STATUS    RESTARTS   AGE</span><br><span class="line">pod/nginx-ds-j78mb   1/1     Running   0          21h</span><br><span class="line">pod/nginx-ds-w5bht   1/1     Running   0          21h</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">NAME                 TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)   AGE</span><br><span class="line">service/kubernetes   ClusterIP   192.168.0.1   &lt;none&gt;        443/TCP   23h</span><br><span class="line"></span><br><span class="line">NAME                      DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE</span><br><span class="line">daemonset.apps/nginx-ds   2         2         2       2            2           &lt;none&gt;          21h</span><br></pre></td></tr></table></figure>
+
+<h4 id="创建名称空间"><a href="#创建名称空间" class="headerlink" title="创建名称空间"></a>创建名称空间</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl create namespace app</span><br><span class="line">namespace/app created</span><br><span class="line">[root@hdss7-21 ~]# kubectl get namespaces</span><br><span class="line">NAME              STATUS   AGE</span><br><span class="line">app               Active   7s</span><br><span class="line">default           Active   23h</span><br><span class="line">kube-node-lease   Active   23h</span><br><span class="line">kube-public       Active   23h</span><br><span class="line">kube-system       Active   23h</span><br></pre></td></tr></table></figure>
+
+<h4 id="删除名称空间"><a href="#删除名称空间" class="headerlink" title="删除名称空间"></a>删除名称空间</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl delete namespace app</span><br><span class="line">namespace &quot;app&quot; deleted</span><br><span class="line">[root@hdss7-21 ~]# kubectl get namespaces</span><br><span class="line">NAME              STATUS   AGE</span><br><span class="line">default           Active   23h</span><br><span class="line">kube-node-lease   Active   23h</span><br><span class="line">kube-public       Active   23h</span><br><span class="line">kube-system       Active   23h</span><br></pre></td></tr></table></figure>
+
+<h3 id="管理Deployment资源"><a href="#管理Deployment资源" class="headerlink" title="管理Deployment资源"></a>管理Deployment资源</h3><h4 id="创建deployment"><a href="#创建deployment" class="headerlink" title="创建deployment"></a>创建deployment</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl create deployment nginx-dp --image=harbor.od.com/public/nginx:v1.7.9 -n kube-public</span><br><span class="line">deployment.apps/nginx-dp created</span><br></pre></td></tr></table></figure>
+
+<h4 id="查看deployment"><a href="#查看deployment" class="headerlink" title="查看deployment"></a>查看deployment</h4><ul>
+<li>简单查看</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl get deployment</span><br><span class="line">No resources found.</span><br><span class="line">[root@hdss7-21 ~]# kubectl get deployment -n kube-public</span><br><span class="line">NAME       READY   UP-TO-DATE   AVAILABLE   AGE</span><br><span class="line">nginx-dp   1/1     1            1           41s</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>扩展查看</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl get deployment -o wide -n kube-public</span><br><span class="line">NAME       READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                              SELECTOR</span><br><span class="line">nginx-dp   1/1     1            1           76s   nginx        harbor.od.com/public/nginx:v1.7.9   app=nginx-dp</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>详细查看</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl describe deployment nginx-dp -n kube-public</span><br><span class="line">Name:                   nginx-dp</span><br><span class="line">Namespace:              kube-public</span><br><span class="line">CreationTimestamp:      Wed, 07 Aug 2019 15:18:51 +0800</span><br><span class="line">Labels:                 app=nginx-dp</span><br><span class="line">Annotations:            deployment.kubernetes.io/revision: 1</span><br><span class="line">Selector:               app=nginx-dp</span><br><span class="line">Replicas:               1 desired | 1 updated | 1 total | 1 available | 0 unavailable</span><br><span class="line">StrategyType:           RollingUpdate</span><br><span class="line">MinReadySeconds:        0</span><br><span class="line">RollingUpdateStrategy:  25% max unavailable, 25% max surge</span><br><span class="line">Pod Template:</span><br><span class="line">  Labels:  app=nginx-dp</span><br><span class="line">  Containers:</span><br><span class="line">   nginx:</span><br><span class="line">    Image:        harbor.od.com/public/nginx:v1.7.9</span><br><span class="line">    Port:         &lt;none&gt;</span><br><span class="line">    Host Port:    &lt;none&gt;</span><br><span class="line">    Environment:  &lt;none&gt;</span><br><span class="line">    Mounts:       &lt;none&gt;</span><br><span class="line">  Volumes:        &lt;none&gt;</span><br><span class="line">Conditions:</span><br><span class="line">  Type           Status  Reason</span><br><span class="line">  ----           ------  ------</span><br><span class="line">  Available      True    MinimumReplicasAvailable</span><br><span class="line">  Progressing    True    NewReplicaSetAvailable</span><br><span class="line">OldReplicaSets:  &lt;none&gt;</span><br><span class="line">NewReplicaSet:   nginx-dp-5dfc689474 (1/1 replicas created)</span><br><span class="line">Events:</span><br><span class="line">  Type    Reason             Age   From                   Message</span><br><span class="line">  ----    ------             ----  ----                   -------</span><br><span class="line">  Normal  ScalingReplicaSet  2m4s  deployment-controller  Scaled up replica set nginx-dp-5dfc689474 to 1</span><br></pre></td></tr></table></figure>
+
+<h4 id="查看pod资源"><a href="#查看pod资源" class="headerlink" title="查看pod资源"></a>查看pod资源</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl get pods -n kube-public</span><br><span class="line">NAME                        READY   STATUS    RESTARTS   AGE</span><br><span class="line">nginx-dp-5dfc689474-gtfvv   1/1     Running   0          2m50s</span><br></pre></td></tr></table></figure>
+
+<h4 id="进入pod资源"><a href="#进入pod资源" class="headerlink" title="进入pod资源"></a>进入pod资源</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl exec -ti nginx-dp-5dfc689474-gtfvv bash -n kube-public</span><br><span class="line">root@nginx-dp-5dfc689474-gtfvv:/# ip add</span><br><span class="line">1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN qlen 1000</span><br><span class="line">    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span><br><span class="line">    inet 127.0.0.1/8 scope host lo</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br><span class="line">8: eth0@if9: &lt;BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN&gt; mtu 1500 qdisc noqueue state UP </span><br><span class="line">    link/ether 02:42:ac:07:16:03 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">    inet 172.7.22.3/24 brd 172.7.22.255 scope global eth0</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>当然你也可以通过docker exec进入容器</p>
+</blockquote>
+<h4 id="删除pod资源（重启）"><a href="#删除pod资源（重启）" class="headerlink" title="删除pod资源（重启）"></a>删除pod资源（重启）</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl delete pod nginx-dp-5dfc689474-gtfvv -n kube-public</span><br><span class="line">pod &quot;nginx-dp-5dfc689474-gtfvv&quot; deleted</span><br><span class="line">[root@hdss7-21 ~]# kubectl get pods -n kube-public</span><br><span class="line">NAME                        READY   STATUS    RESTARTS   AGE</span><br><span class="line">nginx-dp-5dfc689474-2wj2j   1/1     Running   0          15s</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>使用watch观察pod重建状态变化<br>强制删除参数：--force --grace-period=0</p>
+</blockquote>
+<h4 id="删除deployment"><a href="#删除deployment" class="headerlink" title="删除deployment"></a>删除deployment</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl delete deployment nginx-dp -n kube-public</span><br><span class="line">deployment.extensions &quot;nginx-dp&quot; deleted</span><br><span class="line">[root@hdss7-21 ~]# kubectl get deployment -n kube-public</span><br><span class="line">No resources found.</span><br><span class="line">[root@hdss7-21 ~]# kubectl get pods -n kube-public</span><br><span class="line">No resources found.</span><br></pre></td></tr></table></figure>
+
+<h3 id="管理Service资源"><a href="#管理Service资源" class="headerlink" title="管理Service资源"></a>管理Service资源</h3><h4 id="创建servic"><a href="#创建servic" class="headerlink" title="创建servic"></a>创建servic</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl create deployment nginx-dp --image=harbor.od.com/public/nginx:v1.7.9 -n kube-public</span><br><span class="line">deployment.apps/nginx-dp created</span><br><span class="line">[root@hdss7-21 ~]# kubectl expose deployment nginx-dp --port=80 -n kube-public</span><br><span class="line">service/nginx-dp exposed</span><br><span class="line">[root@hdss7-21 ~]# kubectl get svc -n kube-public</span><br><span class="line">NAME       TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE</span><br><span class="line">nginx-dp   ClusterIP   192.168.23.113   &lt;none&gt;        80/TCP    17s</span><br></pre></td></tr></table></figure>
+
+<h4 id="查看service"><a href="#查看service" class="headerlink" title="查看service"></a>查看service</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl describe svc nginx-dp -n kube-public</span><br><span class="line">Name:              nginx-dp</span><br><span class="line">Namespace:         kube-public</span><br><span class="line">Labels:            app=nginx-dp</span><br><span class="line">Annotations:       &lt;none&gt;</span><br><span class="line">Selector:          app=nginx-dp</span><br><span class="line">Type:              ClusterIP</span><br><span class="line">IP:                192.168.23.113</span><br><span class="line">Port:              &lt;unset&gt;  80/TCP</span><br><span class="line">TargetPort:        80/TCP</span><br><span class="line">Endpoints:         172.7.22.3:80</span><br><span class="line">Session Affinity:  None</span><br><span class="line">Events:            &lt;none&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="kubectl用法总结"><a href="#kubectl用法总结" class="headerlink" title="kubectl用法总结"></a>kubectl用法总结</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl --help</span><br><span class="line">kubectl controls the Kubernetes cluster manager.</span><br><span class="line"></span><br><span class="line"> Find more information at: https://kubernetes.io/docs/reference/kubectl/overview/</span><br><span class="line"></span><br><span class="line">Basic Commands (Beginner):</span><br><span class="line">  create         Create a resource from a file or from stdin.</span><br><span class="line">  expose         Take a replication controller, service, deployment or pod and expose it as a new Kubernetes Service</span><br><span class="line">  run            Run a particular image on the cluster</span><br><span class="line">  set            Set specific features on objects</span><br><span class="line"></span><br><span class="line">Basic Commands (Intermediate):</span><br><span class="line">  explain        Documentation of resources</span><br><span class="line">  get            Display one or many resources</span><br><span class="line">  edit           Edit a resource on the server</span><br><span class="line">  delete         Delete resources by filenames, stdin, resources and names, or by resources and label selector</span><br><span class="line"></span><br><span class="line">Deploy Commands:</span><br><span class="line">  rollout        Manage the rollout of a resource</span><br><span class="line">  scale          Set a new size for a Deployment, ReplicaSet, Replication Controller, or Job</span><br><span class="line">  autoscale      Auto-scale a Deployment, ReplicaSet, or ReplicationController</span><br><span class="line"></span><br><span class="line">Cluster Management Commands:</span><br><span class="line">  certificate    Modify certificate resources.</span><br><span class="line">  cluster-info   Display cluster info</span><br><span class="line">  top            Display Resource (CPU/Memory/Storage) usage.</span><br><span class="line">  cordon         Mark node as unschedulable</span><br><span class="line">  uncordon       Mark node as schedulable</span><br><span class="line">  drain          Drain node in preparation for maintenance</span><br><span class="line">  taint          Update the taints on one or more nodes</span><br><span class="line"></span><br><span class="line">Troubleshooting and Debugging Commands:</span><br><span class="line">  describe       Show details of a specific resource or group of resources</span><br><span class="line">  logs           Print the logs for a container in a pod</span><br><span class="line">  attach         Attach to a running container</span><br><span class="line">  exec           Execute a command in a container</span><br><span class="line">  port-forward   Forward one or more local ports to a pod</span><br><span class="line">  proxy          Run a proxy to the Kubernetes API server</span><br><span class="line">  cp             Copy files and directories to and from containers.</span><br><span class="line">  auth           Inspect authorization</span><br><span class="line"></span><br><span class="line">Advanced Commands:</span><br><span class="line">  diff           Diff live version against would-be applied version</span><br><span class="line">  apply          Apply a configuration to a resource by filename or stdin</span><br><span class="line">  patch          Update field(s) of a resource using strategic merge patch</span><br><span class="line">  replace        Replace a resource by filename or stdin</span><br><span class="line">  wait           Experimental: Wait for a specific condition on one or many resources.</span><br><span class="line">  convert        Convert config files between different API versions</span><br><span class="line">  kustomize      Build a kustomization target from a directory or a remote url.</span><br><span class="line"></span><br><span class="line">Settings Commands:</span><br><span class="line">  label          Update the labels on a resource</span><br><span class="line">  annotate       Update the annotations on a resource</span><br><span class="line">  completion     Output shell completion code for the specified shell (bash or zsh)</span><br><span class="line"></span><br><span class="line">Other Commands:</span><br><span class="line">  api-resources  Print the supported API resources on the server</span><br><span class="line">  api-versions   Print the supported API versions on the server, in the form of &quot;group/version&quot;</span><br><span class="line">  config         Modify kubeconfig files</span><br><span class="line">  plugin         Provides utilities for interacting with plugins.</span><br><span class="line">  version        Print the client and server version information</span><br><span class="line"></span><br><span class="line">Usage:</span><br><span class="line">  kubectl [flags] [options]</span><br><span class="line"></span><br><span class="line">Use &quot;kubectl &lt;command&gt; --help&quot; for more information about a given command.</span><br><span class="line">Use &quot;kubectl options&quot; for a list of global command-line options (applies to all commands).</span><br></pre></td></tr></table></figure>
+
+<h3 id="kubectl命令自动补全"><a href="#kubectl命令自动补全" class="headerlink" title="kubectl命令自动补全"></a>kubectl命令自动补全</h3><p>各运算节点上：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">~]# yum install bash-completion -y</span><br><span class="line"></span><br><span class="line">~]# kubectl completion bash &gt; /etc/bash_completion.d/kubectl</span><br></pre></td></tr></table></figure>
+
+<p>重新登录终端即可</p>
+<h2 id="声明式资源管理方法"><a href="#声明式资源管理方法" class="headerlink" title="声明式资源管理方法"></a>声明式资源管理方法</h2><h3 id="陈述式资源管理方法的局限性"><a href="#陈述式资源管理方法的局限性" class="headerlink" title="陈述式资源管理方法的局限性"></a>陈述式资源管理方法的局限性</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl expose daemonset nginx-ds --port=80</span><br><span class="line">error: cannot expose a DaemonSet.extensions</span><br></pre></td></tr></table></figure>
+
+<h3 id="查看资源配置清单"><a href="#查看资源配置清单" class="headerlink" title="查看资源配置清单"></a>查看资源配置清单</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl get svc nginx-dp -o yaml -n kube-public</span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  creationTimestamp: &quot;2019-08-07T07:46:32Z&quot;</span><br><span class="line">  labels:</span><br><span class="line">    app: nginx-dp</span><br><span class="line">  name: nginx-dp</span><br><span class="line">  namespace: kube-public</span><br><span class="line">  resourceVersion: &quot;55619&quot;</span><br><span class="line">  selfLink: /api/v1/namespaces/kube-public/services/nginx-dp</span><br><span class="line">  uid: b7b6ddc9-808a-4c7d-b49c-fca1f847efe9</span><br><span class="line">spec:</span><br><span class="line">  clusterIP: 192.168.23.113</span><br><span class="line">  ports:</span><br><span class="line">  - port: 80</span><br><span class="line">    protocol: TCP</span><br><span class="line">    targetPort: 80</span><br><span class="line">  selector:</span><br><span class="line">    app: nginx-dp</span><br><span class="line">  sessionAffinity: None</span><br><span class="line">  type: ClusterIP</span><br><span class="line">status:</span><br><span class="line">  loadBalancer: &#123;&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="解释资源配置清单"><a href="#解释资源配置清单" class="headerlink" title="解释资源配置清单"></a>解释资源配置清单</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl explain service</span><br><span class="line">KIND:     Service</span><br><span class="line">VERSION:  v1</span><br><span class="line"></span><br><span class="line">DESCRIPTION:</span><br><span class="line">     Service is a named abstraction of software service (for example, mysql)</span><br><span class="line">     consisting of local port (for example 3306) that the proxy listens on, and</span><br><span class="line">     the selector that determines which pods will answer requests sent through</span><br><span class="line">     the proxy.</span><br><span class="line"></span><br><span class="line">FIELDS:</span><br><span class="line">   apiVersion	&lt;string&gt;</span><br><span class="line">     APIVersion defines the versioned schema of this representation of an</span><br><span class="line">     object. Servers should convert recognized schemas to the latest internal</span><br><span class="line">     value, and may reject unrecognized values. More info:</span><br><span class="line">     https://git.k8s.io/community/contributors/devel/api-conventions.md#resources</span><br><span class="line"></span><br><span class="line">   kind	&lt;string&gt;</span><br><span class="line">     Kind is a string value representing the REST resource this object</span><br><span class="line">     represents. Servers may infer this from the endpoint the client submits</span><br><span class="line">     requests to. Cannot be updated. In CamelCase. More info:</span><br><span class="line">     https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds</span><br><span class="line"></span><br><span class="line">   metadata	&lt;Object&gt;</span><br><span class="line">     Standard object&apos;s metadata. More info:</span><br><span class="line">     https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata</span><br><span class="line"></span><br><span class="line">   spec	&lt;Object&gt;</span><br><span class="line">     Spec defines the behavior of a service.</span><br><span class="line">     https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status</span><br><span class="line"></span><br><span class="line">   status	&lt;Object&gt;</span><br><span class="line">     Most recently observed status of the service. Populated by the system.</span><br><span class="line">     Read-only. More info:</span><br><span class="line">     https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status</span><br></pre></td></tr></table></figure>
+
+<h3 id="创建资源配置清单"><a href="#创建资源配置清单" class="headerlink" title="创建资源配置清单"></a>创建资源配置清单</h3><figure class="highlight plain"><figcaption><span>/root/nginx-ds-svc.yaml</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    app: nginx-ds</span><br><span class="line">  name: nginx-ds</span><br><span class="line">  namespace: default</span><br><span class="line">spec:</span><br><span class="line">  ports:</span><br><span class="line">  - port: 80</span><br><span class="line">    protocol: TCP</span><br><span class="line">    targetPort: 80</span><br><span class="line">  selector:</span><br><span class="line">    app: nginx-ds</span><br><span class="line">  sessionAffinity: None</span><br><span class="line">  type: ClusterIP</span><br></pre></td></tr></table></figure>
+
+<h3 id="应用资源配置清单"><a href="#应用资源配置清单" class="headerlink" title="应用资源配置清单"></a>应用资源配置清单</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl apply -f nginx-ds-svc.yaml </span><br><span class="line">service/nginx-ds created</span><br></pre></td></tr></table></figure>
+
+<h3 id="修改资源配置清单并应用"><a href="#修改资源配置清单并应用" class="headerlink" title="修改资源配置清单并应用"></a>修改资源配置清单并应用</h3><ul>
+<li><p>离线修改</p>
+<blockquote>
+<p>修改nginx-ds-svc.yaml文件，并用kubectl apply -f nginx-ds-svc.yaml文件使之生效。</p>
+</blockquote>
+</li>
+<li><p>在线修改</p>
+<blockquote>
+<p>直接使用kubectl edit service nginx-ds 在线编辑资源配置清单并保存生效。</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="删除资源配置清单"><a href="#删除资源配置清单" class="headerlink" title="删除资源配置清单"></a>删除资源配置清单</h3><ul>
+<li><p>陈述式删除</p>
+<blockquote>
+<p>kubectl delete service nginx-ds -n kube-public</p>
+</blockquote>
+</li>
+<li><p>声明式删除</p>
+<blockquote>
+<p>kubectl delete -f nginx-ds-svc.yaml</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="查看并使用Servic资源"><a href="#查看并使用Servic资源" class="headerlink" title="查看并使用Servic资源"></a>查看并使用Servic资源</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl get svc -o wide</span><br><span class="line">NAME         TYPE        CLUSTER-IP        EXTERNAL-IP   PORT(S)   AGE   SELECTOR</span><br><span class="line">kubernetes   ClusterIP   192.168.0.1       &lt;none&gt;        443/TCP   24h   &lt;none&gt;</span><br><span class="line">nginx-ds     ClusterIP   192.168.240.194   &lt;none&gt;        80/TCP    28s   app=nginx-ds</span><br><span class="line"></span><br><span class="line">[root@hdss7-21 ~]# curl 192.168.240.194</span><br><span class="line">&lt;!DOCTYPE html&gt;</span><br><span class="line">&lt;html&gt;</span><br><span class="line">&lt;head&gt;</span><br><span class="line">&lt;title&gt;Welcome to nginx!&lt;/title&gt;</span><br><span class="line">&lt;style&gt;</span><br><span class="line">    body &#123;</span><br><span class="line">        width: 35em;</span><br><span class="line">        margin: 0 auto;</span><br><span class="line">        font-family: Tahoma, Verdana, Arial, sans-serif;</span><br><span class="line">    &#125;</span><br><span class="line">&lt;/style&gt;</span><br><span class="line">&lt;/head&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">&lt;h1&gt;Welcome to nginx!&lt;/h1&gt;</span><br><span class="line">&lt;p&gt;If you see this page, the nginx web server is successfully installed and</span><br><span class="line">working. Further configuration is required.&lt;/p&gt;</span><br><span class="line"></span><br><span class="line">&lt;p&gt;For online documentation and support please refer to</span><br><span class="line">&lt;a href=&quot;http://nginx.org/&quot;&gt;nginx.org&lt;/a&gt;.&lt;br/&gt;</span><br><span class="line">Commercial support is available at</span><br><span class="line">&lt;a href=&quot;http://nginx.com/&quot;&gt;nginx.com&lt;/a&gt;.&lt;/p&gt;</span><br><span class="line"></span><br><span class="line">&lt;p&gt;&lt;em&gt;Thank you for using nginx.&lt;/em&gt;&lt;/p&gt;</span><br><span class="line">&lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br><span class="line"></span><br><span class="line">[root@hdss7-21 ~]# curl 192.168.240.194</span><br><span class="line">curl: (7) Failed connect to 192.168.240.194:80; Connection timed out</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>这里注意把kube-proxy的ipvs轮询算法调整为rr，才能出效果</p>
+</blockquote>
+<h1 id="K8S的核心插件（addons）"><a href="#K8S的核心插件（addons）" class="headerlink" title="K8S的核心插件（addons）"></a>K8S的核心插件（addons）</h1><h2 id="K8S的CNI网络插件–Flannel"><a href="#K8S的CNI网络插件–Flannel" class="headerlink" title="K8S的CNI网络插件–Flannel"></a>K8S的CNI网络插件–Flannel</h2><h3 id="集群规划"><a href="#集群规划" class="headerlink" title="集群规划"></a>集群规划</h3><table>
+<thead>
+<tr>
+<th>主机名</th>
+<th>角色</th>
+<th>ip</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>HDSS7-21.host.com</td>
+<td>flannel</td>
+<td>10.4.7.21</td>
+</tr>
+<tr>
+<td>HDSS7-22.host.com</td>
+<td>flannel</td>
+<td>10.4.7.22</td>
+</tr>
+</tbody></table>
+<p><strong>注意：</strong>这里部署文档以<code>HDSS7-21.host.com</code>主机为例，另外一台运算节点安装部署方法类似</p>
+<h3 id="下载软件，解压，做软连接"><a href="#下载软件，解压，做软连接" class="headerlink" title="下载软件，解压，做软连接"></a>下载软件，解压，做软连接</h3><p><a href="https://github.com/coreos/flannel/releases" target="_blank" rel="noopener">flannel官方下载地址</a><br><code>HDSS7-21.host.com</code>上：</p>
+<figure class="highlight plain"><figcaption><span>/opt/src</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 src]# ls -l|grep flannel</span><br><span class="line">-rw-r--r-- 1 root root 417761204 Jan 17 18:46 flannel-v0.11.0-linux-amd64.tar.gz</span><br><span class="line">[root@hdss7-21 src]# mkdir -p /opt/flannel-v0.11.0-linux-amd64/cert</span><br><span class="line">[root@hdss7-21 src]# tar xf flannel-v0.11.0-linux-amd64.tar.gz -C /opt/flannel-v0.11.0-linux-amd64</span><br><span class="line">[root@hdss7-21 src]# ln -s /opt/flannel-v0.11.0-linux-amd64 /opt/flannel</span><br><span class="line">[root@hdss7-21 src]# ls -l /opt|grep flannel</span><br><span class="line">lrwxrwxrwx 1 root   root         31 Jan 17 18:49 flannel -&gt; flannel-v0.11.0-linux-amd64/</span><br><span class="line">drwxr-xr-x 4 root   root         50 Jan 17 18:47 flannel-v0.11.0-linux-amd64</span><br></pre></td></tr></table></figure>
+
+<h3 id="最终目录结构"><a href="#最终目录结构" class="headerlink" title="最终目录结构"></a>最终目录结构</h3><figure class="highlight plain"><figcaption><span>/opt</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 opt]# tree -L 2</span><br><span class="line">.</span><br><span class="line">|-- etcd -&gt; etcd-v3.1.20-linux-amd64</span><br><span class="line">|-- etcd-v3.1.20-linux-amd64</span><br><span class="line">|   |-- Documentation</span><br><span class="line">|   |-- README-etcdctl.md</span><br><span class="line">|   |-- README.md</span><br><span class="line">|   |-- READMEv2-etcdctl.md</span><br><span class="line">|   |-- certs</span><br><span class="line">|   |-- etcd</span><br><span class="line">|   |-- etcd-server-startup.sh</span><br><span class="line">|   `-- etcdctl</span><br><span class="line">|-- flannel -&gt; flannel-v0.11.0/</span><br><span class="line">|-- flannel-v0.11.0</span><br><span class="line">|   |-- README.md</span><br><span class="line">|   |-- cert</span><br><span class="line">|   |-- flanneld</span><br><span class="line">|   `-- mk-docker-opts.sh</span><br><span class="line">|-- kubernetes -&gt; kubernetes-v1.15.2-linux-amd64/</span><br><span class="line">|-- kubernetes-v1.15.2-linux-amd64</span><br><span class="line">|   |-- LICENSES</span><br><span class="line">|   |-- addons</span><br><span class="line">|   `-- server</span><br><span class="line">`-- src</span><br><span class="line">    |-- docker</span><br><span class="line">    |-- etcd</span><br><span class="line">    |-- flannel</span><br><span class="line">    `-- kubernetes</span><br></pre></td></tr></table></figure>
+
+<h3 id="拷贝证书"><a href="#拷贝证书" class="headerlink" title="拷贝证书"></a>拷贝证书</h3><p>各运算节点上：</p>
+<figure class="highlight plain"><figcaption><span>/opt/flannel/cert</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 cert]# scp hdss7-200:/opt/certs/ca.pem .</span><br><span class="line">[root@hdss7-21 cert]# scp hdss7-200:/opt/certs/client.pem .</span><br><span class="line">[root@hdss7-21 cert]# scp hdss7-200:/opt/certs/client-key.pem .</span><br></pre></td></tr></table></figure>
+
+<h3 id="创建配置"><a href="#创建配置" class="headerlink" title="创建配置"></a>创建配置</h3><p><code>HDSS7-21.host.com</code>上：</p>
+<figure class="highlight plain"><figcaption><span>/opt/flannel/subnet.env</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">FLANNEL_NETWORK=172.7.0.0/16</span><br><span class="line">FLANNEL_SUBNET=172.7.21.1/24</span><br><span class="line">FLANNEL_MTU=1500</span><br><span class="line">FLANNEL_IPMASQ=false</span><br></pre></td></tr></table></figure>
+
+<p><strong>注意：</strong>flannel集群各主机的配置略有不同，部署其他节点时注意修改。</p>
+<h3 id="创建启动脚本"><a href="#创建启动脚本" class="headerlink" title="创建启动脚本"></a>创建启动脚本</h3><p><code>HDSS7-21.host.com</code>上：</p>
+<figure class="highlight plain"><figcaption><span>/opt/flannel/flanneld.sh</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">#!/bin/sh</span><br><span class="line">./flanneld \</span><br><span class="line">  --public-ip=10.4.7.21 \</span><br><span class="line">  --etcd-endpoints=https://10.4.7.12:2379,https://10.4.7.21:2379,https://10.4.7.22:2379 \</span><br><span class="line">  --etcd-keyfile=./cert/client-key.pem \</span><br><span class="line">  --etcd-certfile=./cert/client.pem \</span><br><span class="line">  --etcd-cafile=./cert/ca.pem \</span><br><span class="line">  --iface=eth0 \</span><br><span class="line">  --subnet-file=./subnet.env \</span><br><span class="line">  --healthz-port=2401</span><br></pre></td></tr></table></figure>
+
+<p><strong>注意：</strong>flannel集群各主机的启动脚本略有不同，部署其他节点时注意修改。</p>
+<h3 id="检查配置，权限，创建日志目录"><a href="#检查配置，权限，创建日志目录" class="headerlink" title="检查配置，权限，创建日志目录"></a>检查配置，权限，创建日志目录</h3><p><code>HDSS7-21.host.com</code>上：</p>
+<figure class="highlight plain"><figcaption><span>/opt/flannel</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 flannel]# chmod +x /opt/flannel/flanneld.sh </span><br><span class="line"></span><br><span class="line">[root@hdss7-21 flannel]# mkdir -p /data/logs/flanneld</span><br></pre></td></tr></table></figure>
+
+<h3 id="创建supervisor配置"><a href="#创建supervisor配置" class="headerlink" title="创建supervisor配置"></a>创建supervisor配置</h3><p><code>HDSS7-21.host.com</code>上：</p>
+<figure class="highlight plain"><figcaption><span>/etc/supervisord.d/flanneld.ini</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">[program:flanneld-7-21]</span><br><span class="line">command=/opt/flannel/flanneld.sh                             ; the program (relative uses PATH, can take args)</span><br><span class="line">numprocs=1                                                   ; number of processes copies to start (def 1)</span><br><span class="line">directory=/opt/flannel                                       ; directory to cwd to before exec (def no cwd)</span><br><span class="line">autostart=true                                               ; start at supervisord start (default: true)</span><br><span class="line">autorestart=true                                             ; retstart at unexpected quit (default: true)</span><br><span class="line">startsecs=30                                                 ; number of secs prog must stay running (def. 1)</span><br><span class="line">startretries=3                                               ; max # of serial start failures (default 3)</span><br><span class="line">exitcodes=0,2                                                ; &apos;expected&apos; exit codes for process (default 0,2)</span><br><span class="line">stopsignal=QUIT                                              ; signal used to kill process (default TERM)</span><br><span class="line">stopwaitsecs=10                                              ; max num secs to wait b4 SIGKILL (default 10)</span><br><span class="line">user=root                                                    ; setuid to this UNIX account to run the program</span><br><span class="line">killasgroup=true                                             ; kill all process in a group</span><br><span class="line">stopasgroup=true                                             ; stop all process in a group</span><br><span class="line">redirect_stderr=true                                         ; redirect proc stderr to stdout (default false)</span><br><span class="line">stdout_logfile=/data/logs/flanneld/flanneld.stdout.log       ; stderr log path, NONE for none; default AUTO</span><br><span class="line">stdout_logfile_maxbytes=64MB                                 ; max # logfile bytes b4 rotation (default 50MB)</span><br><span class="line">stdout_logfile_backups=4                                     ; # of stdout logfile backups (default 10)</span><br><span class="line">stdout_capture_maxbytes=1MB                                  ; number of bytes in &apos;capturemode&apos; (default 0)</span><br><span class="line">stdout_events_enabled=false                                  ; emit events on stdout writes (default false)</span><br></pre></td></tr></table></figure>
+
+<h3 id="操作etcd，增加host-gw"><a href="#操作etcd，增加host-gw" class="headerlink" title="操作etcd，增加host-gw"></a>操作etcd，增加host-gw</h3><p><code>HDSS7-21.host.com</code>上：</p>
+<figure class="highlight plain"><figcaption><span>/opt/etcd</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 etcd]# ./etcdctl set /coreos.com/network/config &apos;&#123;&quot;Network&quot;: &quot;172.7.0.0/16&quot;, &quot;Backend&quot;: &#123;&quot;Type&quot;: &quot;host-gw&quot;&#125;&#125;&apos;</span><br><span class="line">&#123;&quot;Network&quot;: &quot;172.7.0.0/16&quot;, &quot;Backend&quot;: &#123;&quot;Type&quot;: &quot;host-gw&quot;&#125;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>附：flannel的其他网络模型：</p>
+<blockquote>
+<p>VxLAN模型</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&apos;&#123;&quot;Network&quot;: &quot;172.7.0.0/16&quot;, &quot;Backend&quot;: &#123;&quot;Type&quot;: &quot;VxLAN&quot;&#125;&#125;&apos;</span><br></pre></td></tr></table></figure>
+</blockquote>
+<blockquote>
+<p>直接路由模型</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&apos;&#123;&quot;Network&quot;: &quot;172.7.0.0/16&quot;, &quot;Backend&quot;: &#123;&quot;Type&quot;: &quot;VxLAN&quot;,&quot;Directrouting&quot;: true&#125;&#125;&apos;</span><br></pre></td></tr></table></figure>
+</blockquote>
+<h3 id="启动服务并检查"><a href="#启动服务并检查" class="headerlink" title="启动服务并检查"></a>启动服务并检查</h3><p><code>HDSS7-21.host.com</code>上：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 flanneld]# supervisorctl update</span><br><span class="line">flanneld: added process group</span><br><span class="line">[root@hdss7-21 flanneld]# supervisorctl status</span><br><span class="line">etcd-server-7-21                 RUNNING   pid 9507, uptime 1 day, 20:35:42</span><br><span class="line">flanneld                         STARTING  </span><br><span class="line">kube-apiserver                   RUNNING   pid 9770, uptime 1 day, 19:01:43</span><br><span class="line">kube-controller-manager          RUNNING   pid 37646, uptime 0:58:48</span><br><span class="line">kube-kubelet                     RUNNING   pid 32640, uptime 17:16:36</span><br><span class="line">kube-proxy                       RUNNING   pid 15097, uptime 17:55:36</span><br><span class="line">kube-scheduler                   RUNNING   pid 37803, uptime 0:55:47</span><br></pre></td></tr></table></figure>
+
+<h3 id="安装部署启动检查所有集群规划主机上的flannel服务"><a href="#安装部署启动检查所有集群规划主机上的flannel服务" class="headerlink" title="安装部署启动检查所有集群规划主机上的flannel服务"></a>安装部署启动检查所有集群规划主机上的flannel服务</h3><p>略</p>
+<h3 id="再次验证集群，POD之间网络互通"><a href="#再次验证集群，POD之间网络互通" class="headerlink" title="再次验证集群，POD之间网络互通"></a>再次验证集群，POD之间网络互通</h3><h3 id="在各运算节点上优化iptables规则"><a href="#在各运算节点上优化iptables规则" class="headerlink" title="在各运算节点上优化iptables规则"></a>在各运算节点上优化iptables规则</h3><p><strong>注意：</strong>iptables规则各主机的略有不同，其他运算节点上执行时注意修改。</p>
+<ul>
+<li>优化SNAT规则，各运算节点之间的各POD之间的网络通信不再出网</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># iptables -t nat -D POSTROUTING -s 172.7.21.0/24 ! -o docker0 -j MASQUERADE</span><br><span class="line"># iptables -t nat -I POSTROUTING -s 172.7.21.0/24 ! -d 172.7.0.0/16 ! -o docker0 -j MASQUERADE</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>10.4.7.21主机上的，来源是172.7.21.0/24段的docker的ip，目标ip不是172.7.0.0/16段，网络发包不从docker0桥设备出站的，才进行SNAT转换</p>
+</blockquote>
+<h3 id="各运算节点保存iptables规则"><a href="#各运算节点保存iptables规则" class="headerlink" title="各运算节点保存iptables规则"></a>各运算节点保存iptables规则</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# iptables-save &gt; /etc/sysconfig/iptables</span><br></pre></td></tr></table></figure>
+
+<h2 id="K8S的服务发现插件–CoreDNS"><a href="#K8S的服务发现插件–CoreDNS" class="headerlink" title="K8S的服务发现插件–CoreDNS"></a>K8S的服务发现插件–CoreDNS</h2><h3 id="部署K8S的内网资源配置清单http服务"><a href="#部署K8S的内网资源配置清单http服务" class="headerlink" title="部署K8S的内网资源配置清单http服务"></a>部署K8S的内网资源配置清单http服务</h3><blockquote>
+<p>在运维主机<code>HDSS7-200.host.com</code>上，配置一个nginx虚拟主机，用以提供k8s统一的资源配置清单访问入口</p>
+</blockquote>
+<ul>
+<li>配置nginx</li>
+</ul>
+<figure class="highlight plain"><figcaption><span>/etc/nginx/conf.d/k8s-yaml.od.com.conf</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">server &#123;</span><br><span class="line">    listen       80;</span><br><span class="line">    server_name  k8s-yaml.od.com;</span><br><span class="line"></span><br><span class="line">    location / &#123;</span><br><span class="line">        autoindex on;</span><br><span class="line">        default_type text/plain;</span><br><span class="line">        root /data/k8s-yaml;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>配置内网DNS解析</li>
+</ul>
+<p><code>HDSS7-11.host.com</code>上</p>
+<figure class="highlight plain"><figcaption><span>/var/named/od.com.zone</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">k8s-yaml           A    10.4.7.200</span><br></pre></td></tr></table></figure>
+
+<p>以后所有的资源配置清单统一放置在运维主机的<code>/data/k8s-yaml</code>目录下即可</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-200 ~]# nginx -s reload</span><br></pre></td></tr></table></figure>
+
+<h3 id="部署coredns"><a href="#部署coredns" class="headerlink" title="部署coredns"></a>部署coredns</h3><p><a href="https://github.com/coredns/coredns" target="_blank" rel="noopener">coredns官方GitHub</a><br><a href="https://hub.docker.com/r/coredns/coredns" target="_blank" rel="noopener">coredns官方DockerHub</a></p>
+<h4 id="准备coredns-v1-6-1镜像"><a href="#准备coredns-v1-6-1镜像" class="headerlink" title="准备coredns-v1.6.1镜像"></a>准备coredns-v1.6.1镜像</h4><p>运维主机<code>HDSS7-200.host.com</code>上：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-200 ~]# docker pull coredns/coredns:1.6.1</span><br><span class="line">1.6.1: Pulling from coredns/coredns</span><br><span class="line">e0daa8927b68: Pull complete </span><br><span class="line">3928e47de029: Pull complete </span><br><span class="line">Digest: sha256:02382353821b12c21b062c59184e227e001079bb13ebd01f9d3270ba0fcbf1e4</span><br><span class="line">Status: Downloaded newer image for coredns/coredns:1.6.1</span><br><span class="line">[root@hdss7-200 ~]# docker tag eb516548c180 harbor.od.com/public/coredns:v1.6.1</span><br><span class="line">[root@hdss7-200 ~]# docker push harbor.od.com/public/coredns:v1.6.1</span><br><span class="line">docker push harbor.od.com/public/coredns:v1.6.1</span><br><span class="line">The push refers to a repository [harbor.od.com/public/coredns]</span><br><span class="line">c6a5fc8a3f01: Pushed </span><br><span class="line">fb61a074724d: Pushed </span><br><span class="line">v1.6.1: digest: sha256:e077b9680c32be06fc9652d57f64aa54770dd6554eb87e7a00b97cf8e9431fda size: 739</span><br></pre></td></tr></table></figure>
+
+<h4 id="准备资源配置清单"><a href="#准备资源配置清单" class="headerlink" title="准备资源配置清单"></a>准备资源配置清单</h4><p>运维主机<code>HDSS7-200.host.com</code>上：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-200 ~]# mkdir -p /data/k8s-yaml/coredns &amp;&amp; cd /data/k8s-yaml/coredns</span><br></pre></td></tr></table></figure>
+
+<div class="tabs" id="coredns"><ul class="nav-tabs"><li class="tab active"><a href="#coredns-1">RBAC</a></li><li class="tab"><a href="#coredns-2">ConfigMap</a></li><li class="tab"><a href="#coredns-3">Deployment</a></li><li class="tab"><a href="#coredns-4">Service</a></li></ul><div class="tab-content"><div class="tab-pane active" id="coredns-1"><p>vi /data/k8s-yaml/coredns/rbac.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: ServiceAccount</span><br><span class="line">metadata:</span><br><span class="line">  name: coredns</span><br><span class="line">  namespace: kube-system</span><br><span class="line">  labels:</span><br><span class="line">      kubernetes.io/cluster-service: &quot;true&quot;</span><br><span class="line">      addonmanager.kubernetes.io/mode: Reconcile</span><br><span class="line">---</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">kind: ClusterRole</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    kubernetes.io/bootstrapping: rbac-defaults</span><br><span class="line">    addonmanager.kubernetes.io/mode: Reconcile</span><br><span class="line">  name: system:coredns</span><br><span class="line">rules:</span><br><span class="line">- apiGroups:</span><br><span class="line">  - &quot;&quot;</span><br><span class="line">  resources:</span><br><span class="line">  - endpoints</span><br><span class="line">  - services</span><br><span class="line">  - pods</span><br><span class="line">  - namespaces</span><br><span class="line">  verbs:</span><br><span class="line">  - list</span><br><span class="line">  - watch</span><br><span class="line">---</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">kind: ClusterRoleBinding</span><br><span class="line">metadata:</span><br><span class="line">  annotations:</span><br><span class="line">    rbac.authorization.kubernetes.io/autoupdate: &quot;true&quot;</span><br><span class="line">  labels:</span><br><span class="line">    kubernetes.io/bootstrapping: rbac-defaults</span><br><span class="line">    addonmanager.kubernetes.io/mode: EnsureExists</span><br><span class="line">  name: system:coredns</span><br><span class="line">roleRef:</span><br><span class="line">  apiGroup: rbac.authorization.k8s.io</span><br><span class="line">  kind: ClusterRole</span><br><span class="line">  name: system:coredns</span><br><span class="line">subjects:</span><br><span class="line">- kind: ServiceAccount</span><br><span class="line">  name: coredns</span><br><span class="line">  namespace: kube-system</span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="coredns-2"><p>vi /data/k8s-yaml/coredns/cm.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: ConfigMap</span><br><span class="line">metadata:</span><br><span class="line">  name: coredns</span><br><span class="line">  namespace: kube-system</span><br><span class="line">data:</span><br><span class="line">  Corefile: |</span><br><span class="line">    .:53 &#123;</span><br><span class="line">        errors</span><br><span class="line">        log</span><br><span class="line">        health</span><br><span class="line">        ready</span><br><span class="line">        kubernetes cluster.local 192.168.0.0/16</span><br><span class="line">        forward . 10.4.7.11</span><br><span class="line">        cache 30</span><br><span class="line">        loop</span><br><span class="line">        reload</span><br><span class="line">        loadbalance</span><br><span class="line">       &#125;</span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="coredns-3"><p>vi /data/k8s-yaml/coredns/dp.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  name: coredns</span><br><span class="line">  namespace: kube-system</span><br><span class="line">  labels:</span><br><span class="line">    k8s-app: coredns</span><br><span class="line">    kubernetes.io/name: &quot;CoreDNS&quot;</span><br><span class="line">spec:</span><br><span class="line">  replicas: 1</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      k8s-app: coredns</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        k8s-app: coredns</span><br><span class="line">    spec:</span><br><span class="line">      priorityClassName: system-cluster-critical</span><br><span class="line">      serviceAccountName: coredns</span><br><span class="line">      containers:</span><br><span class="line">      - name: coredns</span><br><span class="line">        image: harbor.od.com/public/coredns:v1.6.1</span><br><span class="line">        args:</span><br><span class="line">        - -conf</span><br><span class="line">        - /etc/coredns/Corefile</span><br><span class="line">        volumeMounts:</span><br><span class="line">        - name: config-volume</span><br><span class="line">          mountPath: /etc/coredns</span><br><span class="line">        ports:</span><br><span class="line">        - containerPort: 53</span><br><span class="line">          name: dns</span><br><span class="line">          protocol: UDP</span><br><span class="line">        - containerPort: 53</span><br><span class="line">          name: dns-tcp</span><br><span class="line">          protocol: TCP</span><br><span class="line">        - containerPort: 9153</span><br><span class="line">          name: metrics</span><br><span class="line">          protocol: TCP</span><br><span class="line">        livenessProbe:</span><br><span class="line">          httpGet:</span><br><span class="line">            path: /health</span><br><span class="line">            port: 8080</span><br><span class="line">            scheme: HTTP</span><br><span class="line">          initialDelaySeconds: 60</span><br><span class="line">          timeoutSeconds: 5</span><br><span class="line">          successThreshold: 1</span><br><span class="line">          failureThreshold: 5</span><br><span class="line">      dnsPolicy: Default</span><br><span class="line">      volumes:</span><br><span class="line">        - name: config-volume</span><br><span class="line">          configMap:</span><br><span class="line">            name: coredns</span><br><span class="line">            items:</span><br><span class="line">            - key: Corefile</span><br><span class="line">              path: Corefile</span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="coredns-4"><p>vi /data/k8s-yaml/coredns/svc.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  name: coredns</span><br><span class="line">  namespace: kube-system</span><br><span class="line">  labels:</span><br><span class="line">    k8s-app: coredns</span><br><span class="line">    kubernetes.io/cluster-service: &quot;true&quot;</span><br><span class="line">    kubernetes.io/name: &quot;CoreDNS&quot;</span><br><span class="line">spec:</span><br><span class="line">  selector:</span><br><span class="line">    k8s-app: coredns</span><br><span class="line">  clusterIP: 192.168.0.2</span><br><span class="line">  ports:</span><br><span class="line">  - name: dns</span><br><span class="line">    port: 53</span><br><span class="line">    protocol: UDP</span><br><span class="line">  - name: dns-tcp</span><br><span class="line">    port: 53</span><br><span class="line">  - name: metrics</span><br><span class="line">    port: 9153</span><br><span class="line">    protocol: TCP</span><br></pre></td></tr></table></figure></div></div></div>
+
+<h4 id="依次执行创建"><a href="#依次执行创建" class="headerlink" title="依次执行创建"></a>依次执行创建</h4><p>浏览器打开：<a href="http://k8s-yaml.od.com/coredns" target="_blank" rel="noopener">http://k8s-yaml.od.com/coredns</a> 检查资源配置清单文件是否正确创建<br>在任意运算节点上应用资源配置清单</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/coredns/rbac.yaml</span><br><span class="line">serviceaccount/coredns created</span><br><span class="line">clusterrole.rbac.authorization.k8s.io/system:coredns created</span><br><span class="line">clusterrolebinding.rbac.authorization.k8s.io/system:coredns created</span><br><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/coredns/cm.yaml</span><br><span class="line">configmap/coredns created</span><br><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/coredns/dp.yaml</span><br><span class="line">deployment.extensions/coredns created</span><br><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/coredns/svc.yaml</span><br><span class="line">service/coredns created</span><br></pre></td></tr></table></figure>
+
+<h4 id="检查"><a href="#检查" class="headerlink" title="检查"></a>检查</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl get pods -n kube-system -o wide</span><br><span class="line">NAME                       READY   STATUS    RESTARTS   AGE</span><br><span class="line">coredns-7ccccdf57c-5b9ch   1/1     Running   0          3m4s</span><br><span class="line"></span><br><span class="line">[root@hdss7-21 coredns]# kubectl get svc -n kube-system</span><br><span class="line">NAME      TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)         AGE</span><br><span class="line">coredns   ClusterIP   192.168.0.2   &lt;none&gt;        53/UDP,53/TCP   29s</span><br><span class="line"></span><br><span class="line">[root@hdss7-21 ~]# dig -t A nginx-ds.default.svc.cluster.local. @192.168.0.2 +short</span><br><span class="line">192.168.0.3</span><br></pre></td></tr></table></figure>
+
+<h2 id="K8S的服务暴露插件–Traefik"><a href="#K8S的服务暴露插件–Traefik" class="headerlink" title="K8S的服务暴露插件–Traefik"></a>K8S的服务暴露插件–Traefik</h2><h3 id="使用NodePort型Service暴露服务"><a href="#使用NodePort型Service暴露服务" class="headerlink" title="使用NodePort型Service暴露服务"></a>使用NodePort型Service暴露服务</h3><p><strong>注意：</strong>使用这种方法暴露服务，要求kube-proxy的代理类型改为：iptables</p>
+<h4 id="修改nginx-ds的service资源配置清单"><a href="#修改nginx-ds的service资源配置清单" class="headerlink" title="修改nginx-ds的service资源配置清单"></a>修改nginx-ds的service资源配置清单</h4><figure class="highlight plain"><figcaption><span>/root/nginx-ds-svc.yaml</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    app: nginx-ds</span><br><span class="line">  name: nginx-ds</span><br><span class="line">  namespace: default</span><br><span class="line">spec:</span><br><span class="line">  ports:</span><br><span class="line">  - port: 80</span><br><span class="line">    protocol: TCP</span><br><span class="line">    nodePort: 8000</span><br><span class="line">  selector:</span><br><span class="line">    app: nginx-ds</span><br><span class="line">  sessionAffinity: None</span><br><span class="line">  type: NodePort</span><br></pre></td></tr></table></figure>
+
+<h4 id="重建nginx-ds的service资源"><a href="#重建nginx-ds的service资源" class="headerlink" title="重建nginx-ds的service资源"></a>重建nginx-ds的service资源</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl delete -f nginx-ds-svc.yaml </span><br><span class="line">service &quot;nginx-ds&quot; deleted</span><br><span class="line">[root@hdss7-21 ~]# kubectl apply -f nginx-ds-svc.yaml </span><br><span class="line">service/nginx-ds created</span><br></pre></td></tr></table></figure>
+
+<h4 id="查看service-1"><a href="#查看service-1" class="headerlink" title="查看service"></a>查看service</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl get svc -o wide</span><br><span class="line">NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)       AGE   SELECTOR</span><br><span class="line">kubernetes   ClusterIP   192.168.0.1      &lt;none&gt;        443/TCP       47h   &lt;none&gt;</span><br><span class="line">nginx-ds     NodePort    192.168.65.119   &lt;none&gt;        80:8000/TCP   9s    app=nginx-ds</span><br></pre></td></tr></table></figure>
+
+<h4 id="浏览器访问"><a href="#浏览器访问" class="headerlink" title="浏览器访问"></a>浏览器访问</h4><p><a href="http://10.4.7.21:8000" target="_blank" rel="noopener">http://10.4.7.21:8000</a><br><a href="http://10.4.7.22:8000" target="_blank" rel="noopener">http://10.4.7.22:8000</a></p>
+<h3 id="部署traefik（ingress控制器）"><a href="#部署traefik（ingress控制器）" class="headerlink" title="部署traefik（ingress控制器）"></a>部署traefik（ingress控制器）</h3><p><a href="https://github.com/containous/traefik" target="_blank" rel="noopener">traefik官方GitHub</a><br><a href="https://hub.docker.com/_/traefik" target="_blank" rel="noopener">traefik官方DockerHub</a></p>
+<h4 id="准备traefik镜像"><a href="#准备traefik镜像" class="headerlink" title="准备traefik镜像"></a>准备traefik镜像</h4><p>运维主机<code>HDSS7-200.host.com</code>上：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-200 ~]# docker pull traefik:v1.7.2-alpine</span><br><span class="line">v1.7.2-alpine: Pulling from library/traefik</span><br><span class="line">bdf0201b3a05: Pull complete </span><br><span class="line">9dfd896cc066: Pull complete </span><br><span class="line">de06b5685128: Pull complete </span><br><span class="line">c4d82a21fa27: Pull complete </span><br><span class="line">Digest: sha256:0531581bde9da0670fc2c7a4e419e1cc38abff74e7ba06410bf2b1b55c70ef15</span><br><span class="line">Status: Downloaded newer image for traefik:v1.7.2-alpine</span><br><span class="line">[root@hdss7-200 ~]# docker tag 1930b7508541 harbor.od.com/public/traefik:v1.7.2       </span><br><span class="line">[root@hdss7-200 ~]# docker push harbor.od.com/public/traefik:v1.7.2</span><br><span class="line">The push refers to a repository [harbor.od.com/public/traefik]</span><br><span class="line">a3e3d574f6ae: Pushed </span><br><span class="line">a7c355c1a104: Pushed </span><br><span class="line">e89059911fc9: Pushed </span><br><span class="line">a464c54f93a9: Pushed</span><br><span class="line">v1.7.2: digest: sha256:8f92899f5feb08db600c89d3016145e838fa7ff0d316ee21ecd63d9623643410 size: 1157</span><br></pre></td></tr></table></figure>
+
+<h4 id="准备资源配置清单-1"><a href="#准备资源配置清单-1" class="headerlink" title="准备资源配置清单"></a>准备资源配置清单</h4><p>运维主机<code>HDSS7-200.host.com</code>上：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-200 ~]# mkdir -p /data/k8s-yaml/traefik &amp;&amp; cd /data/k8s-yaml/traefik</span><br></pre></td></tr></table></figure>
+
+<div class="tabs" id="traefik"><ul class="nav-tabs"><li class="tab active"><a href="#traefik-1">RBAC</a></li><li class="tab"><a href="#traefik-2">DaemonSet</a></li><li class="tab"><a href="#traefik-3">Service</a></li><li class="tab"><a href="#traefik-4">Ingress</a></li></ul><div class="tab-content"><div class="tab-pane active" id="traefik-1"><p>vi /data/k8s-yaml/traefik/rbac.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: ServiceAccount</span><br><span class="line">metadata:</span><br><span class="line">  name: traefik-ingress-controller</span><br><span class="line">  namespace: kube-system</span><br><span class="line">---</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1beta1</span><br><span class="line">kind: ClusterRole</span><br><span class="line">metadata:</span><br><span class="line">  name: traefik-ingress-controller</span><br><span class="line">rules:</span><br><span class="line">  - apiGroups:</span><br><span class="line">      - &quot;&quot;</span><br><span class="line">    resources:</span><br><span class="line">      - services</span><br><span class="line">      - endpoints</span><br><span class="line">      - secrets</span><br><span class="line">    verbs:</span><br><span class="line">      - get</span><br><span class="line">      - list</span><br><span class="line">      - watch</span><br><span class="line">  - apiGroups:</span><br><span class="line">      - extensions</span><br><span class="line">    resources:</span><br><span class="line">      - ingresses</span><br><span class="line">    verbs:</span><br><span class="line">      - get</span><br><span class="line">      - list</span><br><span class="line">      - watch</span><br><span class="line">---</span><br><span class="line">kind: ClusterRoleBinding</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1beta1</span><br><span class="line">metadata:</span><br><span class="line">  name: traefik-ingress-controller</span><br><span class="line">roleRef:</span><br><span class="line">  apiGroup: rbac.authorization.k8s.io</span><br><span class="line">  kind: ClusterRole</span><br><span class="line">  name: traefik-ingress-controller</span><br><span class="line">subjects:</span><br><span class="line">- kind: ServiceAccount</span><br><span class="line">  name: traefik-ingress-controller</span><br><span class="line">  namespace: kube-system</span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="traefik-2"><p>vi /data/k8s-yaml/traefik/ds.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: extensions/v1beta1</span><br><span class="line">kind: DaemonSet</span><br><span class="line">metadata:</span><br><span class="line">  name: traefik-ingress</span><br><span class="line">  namespace: kube-system</span><br><span class="line">  labels:</span><br><span class="line">    k8s-app: traefik-ingress</span><br><span class="line">spec:</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        k8s-app: traefik-ingress</span><br><span class="line">        name: traefik-ingress</span><br><span class="line">    spec:</span><br><span class="line">      serviceAccountName: traefik-ingress-controller</span><br><span class="line">      terminationGracePeriodSeconds: 60</span><br><span class="line">      containers:</span><br><span class="line">      - image: harbor.od.com/public/traefik:v1.7.2</span><br><span class="line">        name: traefik-ingress</span><br><span class="line">        ports:</span><br><span class="line">        - name: controller</span><br><span class="line">          containerPort: 80</span><br><span class="line">          hostPort: 81</span><br><span class="line">        - name: admin-web</span><br><span class="line">          containerPort: 8080</span><br><span class="line">        securityContext:</span><br><span class="line">          capabilities:</span><br><span class="line">            drop:</span><br><span class="line">            - ALL</span><br><span class="line">            add:</span><br><span class="line">            - NET_BIND_SERVICE</span><br><span class="line">        args:</span><br><span class="line">        - --api</span><br><span class="line">        - --kubernetes</span><br><span class="line">        - --logLevel=INFO</span><br><span class="line">        - --insecureskipverify=true</span><br><span class="line">        - --kubernetes.endpoint=https://10.4.7.10:7443</span><br><span class="line">        - --accesslog</span><br><span class="line">        - --accesslog.filepath=/var/log/traefik_access.log</span><br><span class="line">        - --traefiklog</span><br><span class="line">        - --traefiklog.filepath=/var/log/traefik.log</span><br><span class="line">        - --metrics.prometheus</span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="traefik-3"><p>vi /data/k8s-yaml/traefik/svc.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">kind: Service</span><br><span class="line">apiVersion: v1</span><br><span class="line">metadata:</span><br><span class="line">  name: traefik-ingress-service</span><br><span class="line">  namespace: kube-system</span><br><span class="line">spec:</span><br><span class="line">  selector:</span><br><span class="line">    k8s-app: traefik-ingress</span><br><span class="line">  ports:</span><br><span class="line">    - protocol: TCP</span><br><span class="line">      port: 80</span><br><span class="line">      name: controller</span><br><span class="line">    - protocol: TCP</span><br><span class="line">      port: 8080</span><br><span class="line">      name: admin-web</span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="traefik-4"><p>vi /data/k8s-yaml/traefik/ingress.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: extensions/v1beta1</span><br><span class="line">kind: Ingress</span><br><span class="line">metadata:</span><br><span class="line">  name: traefik-web-ui</span><br><span class="line">  namespace: kube-system</span><br><span class="line">  annotations:</span><br><span class="line">    kubernetes.io/ingress.class: traefik</span><br><span class="line">spec:</span><br><span class="line">  rules:</span><br><span class="line">  - host: traefik.od.com</span><br><span class="line">    http:</span><br><span class="line">      paths:</span><br><span class="line">      - backend:</span><br><span class="line">          serviceName: traefik-ingress-service</span><br><span class="line">          servicePort: 8080</span><br></pre></td></tr></table></figure></div></div></div>
+
+<h4 id="依次执行创建-1"><a href="#依次执行创建-1" class="headerlink" title="依次执行创建"></a>依次执行创建</h4><p>浏览器打开：<a href="http://k8s-yaml.od.com/traefik" target="_blank" rel="noopener">http://k8s-yaml.od.com/traefik</a> 检查资源配置清单文件是否正确创建<br>在任意运算节点应用资源配置清单</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/traefik/rbac.yaml </span><br><span class="line">serviceaccount/traefik-ingress-controller created</span><br><span class="line">clusterrole.rbac.authorization.k8s.io/traefik-ingress-controller created</span><br><span class="line">clusterrolebinding.rbac.authorization.k8s.io/traefik-ingress-controller created</span><br><span class="line"></span><br><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/traefik/ds.yaml </span><br><span class="line">daemonset.extensions/traefik-ingress-controller created</span><br><span class="line"></span><br><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/traefik/svc.yaml </span><br><span class="line">service/traefik-ingress-service created</span><br><span class="line"></span><br><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/traefik/ingress.yaml </span><br><span class="line">ingress.extensions/traefik-web-ui created</span><br></pre></td></tr></table></figure>
+
+<h3 id="解析域名"><a href="#解析域名" class="headerlink" title="解析域名"></a>解析域名</h3><p><code>HDSS7-11.host.com</code>上</p>
+<figure class="highlight plain"><figcaption><span>/var/named/od.com.zone</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">traefik            A    10.4.7.10</span><br></pre></td></tr></table></figure>
+
+<h3 id="配置反代"><a href="#配置反代" class="headerlink" title="配置反代"></a>配置反代</h3><p><code>HDSS7-11.host.com</code>和<code>HDSS7-12.host.com</code>两台主机上的nginx均需要配置，这里可以考虑使用saltstack或者ansible进行统一配置管理</p>
+<figure class="highlight plain"><figcaption><span>/etc/nginx/conf.d/od.com.conf</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">upstream default_backend_traefik &#123;</span><br><span class="line">    server 10.4.7.21:81    max_fails=3 fail_timeout=10s;</span><br><span class="line">    server 10.4.7.22:81    max_fails=3 fail_timeout=10s;</span><br><span class="line">&#125;</span><br><span class="line">server &#123;</span><br><span class="line">    server_name *.od.com;</span><br><span class="line">  </span><br><span class="line">    location / &#123;</span><br><span class="line">        proxy_pass http://default_backend_traefik;</span><br><span class="line">        proxy_set_header Host       $http_host;</span><br><span class="line">        proxy_set_header x-forwarded-for $proxy_add_x_forwarded_for;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="浏览器访问-1"><a href="#浏览器访问-1" class="headerlink" title="浏览器访问"></a>浏览器访问</h3><p><a href="http://traefik.od.com" target="_blank" rel="noopener">http://traefik.od.com</a></p>
+<p><img src="/images/traefik.png" alt="traefik" title="traefik"></p>
+<h2 id="K8S的GUI资源管理插件–仪表盘"><a href="#K8S的GUI资源管理插件–仪表盘" class="headerlink" title="K8S的GUI资源管理插件–仪表盘"></a>K8S的GUI资源管理插件–仪表盘</h2><h3 id="部署kubernetes-dashboard"><a href="#部署kubernetes-dashboard" class="headerlink" title="部署kubernetes-dashboard"></a>部署kubernetes-dashboard</h3><p><a href="https://github.com/kubernetes/dashboard" target="_blank" rel="noopener">dashboard官方GitHub</a></p>
+<h4 id="准备dashboard镜像"><a href="#准备dashboard镜像" class="headerlink" title="准备dashboard镜像"></a>准备dashboard镜像</h4><p>运维主机<code>HDSS7-200.host.com</code>上：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-200 ~]# docker pull k8scn/kubernetes-dashboard-amd64:v1.8.3</span><br><span class="line">v1.8.3: Pulling from k8scn/kubernetes-dashboard-amd64</span><br><span class="line">a4026007c47e: Pull complete </span><br><span class="line">Digest: sha256:ebc993303f8a42c301592639770bd1944d80c88be8036e2d4d0aa116148264ff</span><br><span class="line">Status: Downloaded newer image for k8scn/kubernetes-dashboard-amd64:v1.8.3</span><br><span class="line">[root@hdss7-200 ~]# docker tag 0c60bcf89900 harbor.od.com/public/dashboard:v1.8.3</span><br><span class="line">[root@hdss7-200 ~]# docker push harbor.od.com/public/dashboard:v1.8.3</span><br><span class="line">docker push harbor.od.com/public/dashboard:v1.8.3</span><br><span class="line">The push refers to a repository [harbor.od.com/public/dashboard]</span><br><span class="line">23ddb8cbb75a: Pushed </span><br><span class="line">v1.8.3: digest: sha256:e76c5fe6886c99873898e4c8c0945261709024c4bea773fc477629455631e472 size: 529</span><br></pre></td></tr></table></figure>
+
+<h4 id="准备资源配置清单-2"><a href="#准备资源配置清单-2" class="headerlink" title="准备资源配置清单"></a>准备资源配置清单</h4><p>运维主机<code>HDSS7-200.host.com</code>上：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-200 ~]# mkdir -p /data/k8s-yaml/dashboard &amp;&amp; cd /data/k8s-yaml/dashboard</span><br></pre></td></tr></table></figure>
+
+<div class="tabs" id="dashboard"><ul class="nav-tabs"><li class="tab active"><a href="#dashboard-1">RBAC</a></li><li class="tab"><a href="#dashboard-2">Deployment</a></li><li class="tab"><a href="#dashboard-3">Service</a></li><li class="tab"><a href="#dashboard-4">Ingress</a></li></ul><div class="tab-content"><div class="tab-pane active" id="dashboard-1"><p>vi /data/k8s-yaml/dashboard/rbac.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: ServiceAccount</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    k8s-app: kubernetes-dashboard</span><br><span class="line">    addonmanager.kubernetes.io/mode: Reconcile</span><br><span class="line">  name: kubernetes-dashboard-admin</span><br><span class="line">  namespace: kube-system</span><br><span class="line">---</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1</span><br><span class="line">kind: ClusterRoleBinding</span><br><span class="line">metadata:</span><br><span class="line">  name: kubernetes-dashboard-admin</span><br><span class="line">  namespace: kube-system</span><br><span class="line">  labels:</span><br><span class="line">    k8s-app: kubernetes-dashboard</span><br><span class="line">    addonmanager.kubernetes.io/mode: Reconcile</span><br><span class="line">roleRef:</span><br><span class="line">  apiGroup: rbac.authorization.k8s.io</span><br><span class="line">  kind: ClusterRole</span><br><span class="line">  name: cluster-admin</span><br><span class="line">subjects:</span><br><span class="line">- kind: ServiceAccount</span><br><span class="line">  name: kubernetes-dashboard-admin</span><br><span class="line">  namespace: kube-system</span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="dashboard-2"><p>vi /data/k8s-yaml/dashboard/dp.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  name: kubernetes-dashboard</span><br><span class="line">  namespace: kube-system</span><br><span class="line">  labels:</span><br><span class="line">    k8s-app: kubernetes-dashboard</span><br><span class="line">    kubernetes.io/cluster-service: &quot;true&quot;</span><br><span class="line">    addonmanager.kubernetes.io/mode: Reconcile</span><br><span class="line">spec:</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      k8s-app: kubernetes-dashboard</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        k8s-app: kubernetes-dashboard</span><br><span class="line">      annotations:</span><br><span class="line">        scheduler.alpha.kubernetes.io/critical-pod: &apos;&apos;</span><br><span class="line">    spec:</span><br><span class="line">      priorityClassName: system-cluster-critical</span><br><span class="line">      containers:</span><br><span class="line">      - name: kubernetes-dashboard</span><br><span class="line">        image: harbor.od.com/public/dashboard:v1.8.3</span><br><span class="line">        resources:</span><br><span class="line">          limits:</span><br><span class="line">            cpu: 100m</span><br><span class="line">            memory: 300Mi</span><br><span class="line">          requests:</span><br><span class="line">            cpu: 50m</span><br><span class="line">            memory: 100Mi</span><br><span class="line">        ports:</span><br><span class="line">        - containerPort: 8443</span><br><span class="line">          protocol: TCP</span><br><span class="line">        args:</span><br><span class="line">          # PLATFORM-SPECIFIC ARGS HERE</span><br><span class="line">          - --auto-generate-certificates</span><br><span class="line">        volumeMounts:</span><br><span class="line">        - name: tmp-volume</span><br><span class="line">          mountPath: /tmp</span><br><span class="line">        livenessProbe:</span><br><span class="line">          httpGet:</span><br><span class="line">            scheme: HTTPS</span><br><span class="line">            path: /</span><br><span class="line">            port: 8443</span><br><span class="line">          initialDelaySeconds: 30</span><br><span class="line">          timeoutSeconds: 30</span><br><span class="line">      volumes:</span><br><span class="line">      - name: tmp-volume</span><br><span class="line">        emptyDir: &#123;&#125;</span><br><span class="line">      serviceAccountName: kubernetes-dashboard-admin</span><br><span class="line">      tolerations:</span><br><span class="line">      - key: &quot;CriticalAddonsOnly&quot;</span><br><span class="line">        operator: &quot;Exists&quot;</span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="dashboard-3"><p>vi /data/k8s-yaml/dashboard/svc.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  name: kubernetes-dashboard</span><br><span class="line">  namespace: kube-system</span><br><span class="line">  labels:</span><br><span class="line">    k8s-app: kubernetes-dashboard</span><br><span class="line">    kubernetes.io/cluster-service: &quot;true&quot;</span><br><span class="line">    addonmanager.kubernetes.io/mode: Reconcile</span><br><span class="line">spec:</span><br><span class="line">  selector:</span><br><span class="line">    k8s-app: kubernetes-dashboard</span><br><span class="line">  ports:</span><br><span class="line">  - port: 443</span><br><span class="line">    targetPort: 8443</span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="dashboard-4"><p>vi /data/k8s-yaml/dashboard/ingress.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: extensions/v1beta1</span><br><span class="line">kind: Ingress</span><br><span class="line">metadata:</span><br><span class="line">  name: kubernetes-dashboard</span><br><span class="line">  namespace: kube-system</span><br><span class="line">  annotations:</span><br><span class="line">    kubernetes.io/ingress.class: traefik</span><br><span class="line">spec:</span><br><span class="line">  rules:</span><br><span class="line">  - host: dashboard.od.com</span><br><span class="line">    http:</span><br><span class="line">      paths:</span><br><span class="line">      - backend:</span><br><span class="line">          serviceName: kubernetes-dashboard</span><br><span class="line">          servicePort: 443</span><br></pre></td></tr></table></figure></div></div></div>
+
+<h4 id="依次执行创建-2"><a href="#依次执行创建-2" class="headerlink" title="依次执行创建"></a>依次执行创建</h4><p>浏览器打开：<a href="http://k8s-yaml.od.com/dashboard" target="_blank" rel="noopener">http://k8s-yaml.od.com/dashboard</a> 检查资源配置清单文件是否正确创建<br>在任意运算节点应用资源配置清单</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dashboard/rbac.yaml </span><br><span class="line">serviceaccount/kubernetes-dashboard created</span><br><span class="line">role.rbac.authorization.k8s.io/kubernetes-dashboard-admin created</span><br><span class="line">rolebinding.rbac.authorization.k8s.io/kubernetes-dashboard-admin created</span><br><span class="line"></span><br><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dashboard/dp.yaml </span><br><span class="line">deployment.apps/kubernetes-dashboard created</span><br><span class="line"></span><br><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dashboard/svc.yaml </span><br><span class="line">service/kubernetes-dashboard created</span><br><span class="line"></span><br><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dashboard/ingress.yaml </span><br><span class="line">ingress.extensions/kubernetes-dashboard created</span><br></pre></td></tr></table></figure>
+
+<h3 id="解析域名-1"><a href="#解析域名-1" class="headerlink" title="解析域名"></a>解析域名</h3><p><code>HDSS7-11.host.com</code>上</p>
+<figure class="highlight plain"><figcaption><span>/var/named/od.com.zone</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dashboard          A    10.4.7.10</span><br></pre></td></tr></table></figure>
+
+<h3 id="浏览器访问-2"><a href="#浏览器访问-2" class="headerlink" title="浏览器访问"></a>浏览器访问</h3><p><a href="http://dashboard.od.com" target="_blank" rel="noopener">http://dashboard.od.com</a></p>
+<h3 id="配置认证"><a href="#配置认证" class="headerlink" title="配置认证"></a>配置认证</h3><ul>
+<li>下载新版dashboard</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-200 ~]# docker pull hexun/kubernetes-dashboard-amd64:v1.10.1</span><br><span class="line">[root@hdss7-200 ~]# docker tag f9aed6605b81 harbor.od.com/public/dashboard:v1.10.1</span><br><span class="line">[root@hdss7-200 ~]# docker push harbor.od.com/public/dashboard:v1.10.1</span><br><span class="line">The push refers to a repository [harbor.od.com/public/dashboard]</span><br><span class="line">fbdfe08b001c: Pushed </span><br><span class="line">v1.10.1: digest: sha256:d6b4e5d77c1cdcb54cd5697a9fe164bc08581a7020d6463986fe1366d36060e8 size: 529</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>应用新版dashboard</p>
+</li>
+<li><p>自签ssl证书</p>
+</li>
+</ul>
+<p>运维主机<code>HDSS7-200.host.com</code>上：</p>
+<figure class="highlight plain"><figcaption><span>/opt/certs</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-200 certs]# (umask 077; openssl genrsa -out dashboard.od.com.key 2048)</span><br><span class="line">Generating RSA private key, 2048 bit long modulus</span><br><span class="line">.........................................................................................................................................................+++</span><br><span class="line">.......................................................................+++</span><br><span class="line"></span><br><span class="line">[root@hdss7-200 certs]# openssl req -new -key dashboard.od.com.key -out dashboard.od.com.csr -subj &quot;/CN=*.od.com/ST=Beijing/L=beijing/O=od/OU=ops&quot;</span><br><span class="line">[root@hdss7-200 certs]# openssl x509 -req -in dashboard.od.com.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out dashboard.od.com.crt -days 365</span><br><span class="line">Signature ok</span><br><span class="line">subject=/CN=*.od.com/ST=Beijing/L=beijing/O=od/OU=ops</span><br><span class="line">Getting CA Private Key</span><br><span class="line">[root@hdss7-200 certs]# ls -l|grep dashboard.od.com</span><br><span class="line">-rw-r--r-- 1 root root 1168 Jun 24 14:21 dashboard.od.com.crt</span><br><span class="line">-rw-r--r-- 1 root root  976 Jun 24 14:21 dashboard.od.com.csr</span><br><span class="line">-rw------- 1 root root 1679 Jun 24 14:21 dashboard.od.com.key</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>修改nginx配置，走https</li>
+</ul>
+<p>代理节点<code>HDSS7-11.host.com</code>和<code>HDSS7-12.host.com</code>上：</p>
+<figure class="highlight plain"><figcaption><span>/etc/nginx/conf.d/dashboard.od.com.conf</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">server &#123;</span><br><span class="line">    listen       80;</span><br><span class="line">    server_name  dashboard.od.com;</span><br><span class="line"></span><br><span class="line">    rewrite ^(.*)$ https://$&#123;server_name&#125;$1 permanent;</span><br><span class="line">&#125;</span><br><span class="line">server &#123;</span><br><span class="line">    listen       443 ssl;</span><br><span class="line">    server_name  dashboard.od.com;</span><br><span class="line"></span><br><span class="line">    ssl_certificate &quot;certs/dashboard.od.com.crt&quot;;</span><br><span class="line">    ssl_certificate_key &quot;certs/dashboard.od.com.key&quot;;</span><br><span class="line">    ssl_session_cache shared:SSL:1m;</span><br><span class="line">    ssl_session_timeout  10m;</span><br><span class="line">    ssl_ciphers HIGH:!aNULL:!MD5;</span><br><span class="line">    ssl_prefer_server_ciphers on;</span><br><span class="line"></span><br><span class="line">    location / &#123;</span><br><span class="line">        proxy_pass http://default_backend_traefik;</span><br><span class="line">        proxy_set_header Host       $http_host;</span><br><span class="line">        proxy_set_header x-forwarded-for $proxy_add_x_forwarded_for;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>获取token</li>
+</ul>
+<p>运算节点<code>HDSS7-21.host.com</code>上：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">[root@hdsss7-21 ~]# kubectl describe secret kubernetes-dashboard-admin-token-rhr62 -n kube-system</span><br><span class="line">Name:         kubernetes-dashboard-admin-token-rhr62</span><br><span class="line">Namespace:    kube-system</span><br><span class="line">Labels:       &lt;none&gt;</span><br><span class="line">Annotations:  kubernetes.io/service-account.name: kubernetes-dashboard-admin</span><br><span class="line">              kubernetes.io/service-account.uid: cdd3c552-856d-11e9-ae34-782bcb321c07</span><br><span class="line"></span><br><span class="line">Type:  kubernetes.io/service-account-token</span><br><span class="line"></span><br><span class="line">Data</span><br><span class="line">====</span><br><span class="line">ca.crt:     1354 bytes</span><br><span class="line">namespace:  11 bytes</span><br><span class="line">token:      eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJrdWJlcm5ldGVzLWRhc2hib2FyZC1hZG1pbi10b2tlbi1yaHI2MiIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50Lm5hbWUiOiJrdWJlcm5ldGVzLWRhc2hib2FyZC1hZG1pbiIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6ImNkZDNjNTUyLTg1NmQtMTFlOS1hZTM0LTc4MmJjYjMyMWMwNyIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDprdWJlLXN5c3RlbTprdWJlcm5ldGVzLWRhc2hib2FyZC1hZG1pbiJ9.72OcJZCm_3I-7QZcEJTRPyIJSxQwSwZfVsB6Bx_RAZRJLOv3-BXy88PclYgxRy2dDqeX6cpjvFPBrmNOGQoxT9oD8_H49pvBnqdCdNuoJbXK7aBIZdkZxATzXd-63zmhHhUBsM3Ybgwy5XxD3vj8VUYfux5c5Mr4TzU_rnGLCj1H5mq_JJ3hNabv0rwil-ZAV-3HLikOMiIRhEK7RdMs1bfXF2yvse4VOabe9xv47TvbEYns97S4OlZvsurmOk0B8dD85OSaREEtqa8n_ND9GrHeeL4CcALqWYJHLrr7vLfndXi1QHDVrUzFKvgkAeYpDVAzGwIWL7rgHwp3sQguGA</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>使用token登录dashboard</li>
+</ul>
+<h3 id="部署heapster"><a href="#部署heapster" class="headerlink" title="部署heapster"></a>部署heapster</h3><p><a href="https://github.com/kubernetes-retired/heapster" target="_blank" rel="noopener">heapster官方github地址</a></p>
+<h4 id="准备heapster镜像"><a href="#准备heapster镜像" class="headerlink" title="准备heapster镜像"></a>准备heapster镜像</h4><p>运维主机<code>HDSS7-200.host.com</code>上</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-200 ~]# docker pull quay.io/bitnami/heapster:1.5.4</span><br><span class="line">1.5.4: Pulling from bitnami/heapster</span><br><span class="line">4018396ca1ba: Pull complete </span><br><span class="line">0e4723f815c4: Pull complete </span><br><span class="line">d8569f30adeb: Pull complete </span><br><span class="line">Digest: sha256:6d891479611ca06a5502bc36e280802cbf9e0426ce4c008dd2919c2294ce0324</span><br><span class="line">Status: Downloaded newer image for quay.io/bitnami/heapster:1.5.4</span><br><span class="line">[root@hdss7--200 ~]# docker tag c359b95ad38b harbor.od.com/public/heapster:v1.5.4</span><br><span class="line">[root@hdss7--200 ~]# docker push harbor.od.com/public/heapster:v1.5.4</span><br><span class="line">docker push harbor.od.com/public/heapster:v1.5.4</span><br><span class="line">The push refers to a repository [harbor.od.com/public/heapster]</span><br><span class="line">20d37d828804: Pushed </span><br><span class="line">b9b192015e25: Pushed </span><br><span class="line">b76dba5a0109: Pushed </span><br><span class="line">v1.5.4: digest: sha256:1203b49f2b2b07e02e77263bce8bb30563a91e1d7ee7c6742e9d125abcb3abe6 size: 952</span><br></pre></td></tr></table></figure>
+
+<h4 id="准备资源配置清单-3"><a href="#准备资源配置清单-3" class="headerlink" title="准备资源配置清单"></a>准备资源配置清单</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-200 ~]# mkdir -p /data/k8s-yaml/dashboard/heapster &amp;&amp; cd /data/k8s-yaml/dashboard/heapster</span><br></pre></td></tr></table></figure>
+
+<div class="tabs" id="heapster"><ul class="nav-tabs"><li class="tab active"><a href="#heapster-1">RBAC</a></li><li class="tab"><a href="#heapster-2">Deployment</a></li><li class="tab"><a href="#heapster-3">Service</a></li></ul><div class="tab-content"><div class="tab-pane active" id="heapster-1"><p>vi /data/k8s-yaml/dashboard/heapster/rbac.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: ServiceAccount</span><br><span class="line">metadata:</span><br><span class="line">  name: heapster</span><br><span class="line">  namespace: kube-system</span><br><span class="line">---</span><br><span class="line">kind: ClusterRoleBinding</span><br><span class="line">apiVersion: rbac.authorization.k8s.io/v1beta1</span><br><span class="line">metadata:</span><br><span class="line">  name: heapster</span><br><span class="line">roleRef:</span><br><span class="line">  apiGroup: rbac.authorization.k8s.io</span><br><span class="line">  kind: ClusterRole</span><br><span class="line">  name: system:heapster</span><br><span class="line">subjects:</span><br><span class="line">- kind: ServiceAccount</span><br><span class="line">  name: heapster</span><br><span class="line">  namespace: kube-system</span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="heapster-2"><p>vi /data/k8s-yaml/dashboard/heapster/dp.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: extensions/v1beta1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  name: heapster</span><br><span class="line">  namespace: kube-system</span><br><span class="line">spec:</span><br><span class="line">  replicas: 1</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        task: monitoring</span><br><span class="line">        k8s-app: heapster</span><br><span class="line">    spec:</span><br><span class="line">      serviceAccountName: heapster</span><br><span class="line">      containers:</span><br><span class="line">      - name: heapster</span><br><span class="line">        image: harbor.od.com/public/heapster:v1.5.4</span><br><span class="line">        imagePullPolicy: IfNotPresent</span><br><span class="line">        command:</span><br><span class="line">        - /opt/bitnami/heapster/bin/heapster</span><br><span class="line">        - --source=kubernetes:https://kubernetes.default</span><br></pre></td></tr></table></figure></div><div class="tab-pane" id="heapster-3"><p>vi /data/k8s-yaml/dashboard/heapster/svc.yaml</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    task: monitoring</span><br><span class="line">    # For use as a Cluster add-on (https://github.com/kubernetes/kubernetes/tree/master/cluster/addons)</span><br><span class="line">    # If you are NOT using this as an addon, you should comment out this line.</span><br><span class="line">    kubernetes.io/cluster-service: &apos;true&apos;</span><br><span class="line">    kubernetes.io/name: Heapster</span><br><span class="line">  name: heapster</span><br><span class="line">  namespace: kube-system</span><br><span class="line">spec:</span><br><span class="line">  ports:</span><br><span class="line">  - port: 80</span><br><span class="line">    targetPort: 8082</span><br><span class="line">  selector:</span><br><span class="line">    k8s-app: heapster</span><br></pre></td></tr></table></figure></div></div></div>
+
+<h4 id="应用资源配置清单-1"><a href="#应用资源配置清单-1" class="headerlink" title="应用资源配置清单"></a>应用资源配置清单</h4><p>任意运算节点上：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dashboard/heapster/rbac.yaml </span><br><span class="line">serviceaccount/heapster created</span><br><span class="line">clusterrolebinding.rbac.authorization.k8s.io/heapster created</span><br><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dashboard/heapster/dp.yaml </span><br><span class="line">deployment.extensions/heapster created</span><br><span class="line">[root@hdss7-21 ~]# kubectl apply -f http://k8s-yaml.od.com/dashboard/heapster/svc.yaml </span><br><span class="line">service/heapster created</span><br></pre></td></tr></table></figure>
+
+<h4 id="重启dashboard"><a href="#重启dashboard" class="headerlink" title="重启dashboard"></a>重启dashboard</h4><p>浏览器访问：<a href="http://dashboard.od.com" target="_blank" rel="noopener">http://dashboard.od.com</a><br><img src="/images/heapster.png" alt="加入heapster插件的dashboard" title="加入heapster插件的dashboard"></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById(&quot;QR&quot;); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechat.png" alt="Stanley Wang 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.2yuan.png" alt="Stanley Wang 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/10/18/Day3：实战交付一套dubbo微服务到kubernetes集群/" rel="next" title="Day3：实战交付一套dubbo微服务到kubernetes集群">
+                <i class="fa fa-chevron-left"></i> Day3：实战交付一套dubbo微服务到kubernetes集群
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/10/18/Day1：跟我一步步部署kubernetes集群（上）/" rel="prev" title="Day1：跟我一步步部署kubernetes集群（上）">
+                Day1：跟我一步步部署kubernetes集群（上） <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.jpg" alt="Stanley Wang">
+            
+              <p class="site-author-name" itemprop="name">Stanley Wang</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">29</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://gitee.com/stanleywang" title="GitHub &rarr; https://gitee.com/stanleywang" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="mailto:stanley.wang.m@qq.com" title="E-Mail &rarr; mailto:stanley.wang.m@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#K8S的核心资源管理方法"><span class="nav-number">1.</span> <span class="nav-text">K8S的核心资源管理方法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#陈述式资源管理方法"><span class="nav-number">1.1.</span> <span class="nav-text">陈述式资源管理方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#管理名称空间资源"><span class="nav-number">1.1.1.</span> <span class="nav-text">管理名称空间资源</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#查看名称空间"><span class="nav-number">1.1.1.1.</span> <span class="nav-text">查看名称空间</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#查看名称空间内的资源"><span class="nav-number">1.1.1.2.</span> <span class="nav-text">查看名称空间内的资源</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#创建名称空间"><span class="nav-number">1.1.1.3.</span> <span class="nav-text">创建名称空间</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#删除名称空间"><span class="nav-number">1.1.1.4.</span> <span class="nav-text">删除名称空间</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#管理Deployment资源"><span class="nav-number">1.1.2.</span> <span class="nav-text">管理Deployment资源</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#创建deployment"><span class="nav-number">1.1.2.1.</span> <span class="nav-text">创建deployment</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#查看deployment"><span class="nav-number">1.1.2.2.</span> <span class="nav-text">查看deployment</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#查看pod资源"><span class="nav-number">1.1.2.3.</span> <span class="nav-text">查看pod资源</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#进入pod资源"><span class="nav-number">1.1.2.4.</span> <span class="nav-text">进入pod资源</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#删除pod资源（重启）"><span class="nav-number">1.1.2.5.</span> <span class="nav-text">删除pod资源（重启）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#删除deployment"><span class="nav-number">1.1.2.6.</span> <span class="nav-text">删除deployment</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#管理Service资源"><span class="nav-number">1.1.3.</span> <span class="nav-text">管理Service资源</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#创建servic"><span class="nav-number">1.1.3.1.</span> <span class="nav-text">创建servic</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#查看service"><span class="nav-number">1.1.3.2.</span> <span class="nav-text">查看service</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#kubectl用法总结"><span class="nav-number">1.1.4.</span> <span class="nav-text">kubectl用法总结</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#kubectl命令自动补全"><span class="nav-number">1.1.5.</span> <span class="nav-text">kubectl命令自动补全</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#声明式资源管理方法"><span class="nav-number">1.2.</span> <span class="nav-text">声明式资源管理方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#陈述式资源管理方法的局限性"><span class="nav-number">1.2.1.</span> <span class="nav-text">陈述式资源管理方法的局限性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#查看资源配置清单"><span class="nav-number">1.2.2.</span> <span class="nav-text">查看资源配置清单</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#解释资源配置清单"><span class="nav-number">1.2.3.</span> <span class="nav-text">解释资源配置清单</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#创建资源配置清单"><span class="nav-number">1.2.4.</span> <span class="nav-text">创建资源配置清单</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#应用资源配置清单"><span class="nav-number">1.2.5.</span> <span class="nav-text">应用资源配置清单</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#修改资源配置清单并应用"><span class="nav-number">1.2.6.</span> <span class="nav-text">修改资源配置清单并应用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#删除资源配置清单"><span class="nav-number">1.2.7.</span> <span class="nav-text">删除资源配置清单</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#查看并使用Servic资源"><span class="nav-number">1.2.8.</span> <span class="nav-text">查看并使用Servic资源</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#K8S的核心插件（addons）"><span class="nav-number">2.</span> <span class="nav-text">K8S的核心插件（addons）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#K8S的CNI网络插件–Flannel"><span class="nav-number">2.1.</span> <span class="nav-text">K8S的CNI网络插件–Flannel</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#集群规划"><span class="nav-number">2.1.1.</span> <span class="nav-text">集群规划</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#下载软件，解压，做软连接"><span class="nav-number">2.1.2.</span> <span class="nav-text">下载软件，解压，做软连接</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#最终目录结构"><span class="nav-number">2.1.3.</span> <span class="nav-text">最终目录结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#拷贝证书"><span class="nav-number">2.1.4.</span> <span class="nav-text">拷贝证书</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#创建配置"><span class="nav-number">2.1.5.</span> <span class="nav-text">创建配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#创建启动脚本"><span class="nav-number">2.1.6.</span> <span class="nav-text">创建启动脚本</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#检查配置，权限，创建日志目录"><span class="nav-number">2.1.7.</span> <span class="nav-text">检查配置，权限，创建日志目录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#创建supervisor配置"><span class="nav-number">2.1.8.</span> <span class="nav-text">创建supervisor配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#操作etcd，增加host-gw"><span class="nav-number">2.1.9.</span> <span class="nav-text">操作etcd，增加host-gw</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#启动服务并检查"><span class="nav-number">2.1.10.</span> <span class="nav-text">启动服务并检查</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#安装部署启动检查所有集群规划主机上的flannel服务"><span class="nav-number">2.1.11.</span> <span class="nav-text">安装部署启动检查所有集群规划主机上的flannel服务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#再次验证集群，POD之间网络互通"><span class="nav-number">2.1.12.</span> <span class="nav-text">再次验证集群，POD之间网络互通</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#在各运算节点上优化iptables规则"><span class="nav-number">2.1.13.</span> <span class="nav-text">在各运算节点上优化iptables规则</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#各运算节点保存iptables规则"><span class="nav-number">2.1.14.</span> <span class="nav-text">各运算节点保存iptables规则</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#K8S的服务发现插件–CoreDNS"><span class="nav-number">2.2.</span> <span class="nav-text">K8S的服务发现插件–CoreDNS</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#部署K8S的内网资源配置清单http服务"><span class="nav-number">2.2.1.</span> <span class="nav-text">部署K8S的内网资源配置清单http服务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#部署coredns"><span class="nav-number">2.2.2.</span> <span class="nav-text">部署coredns</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#准备coredns-v1-6-1镜像"><span class="nav-number">2.2.2.1.</span> <span class="nav-text">准备coredns-v1.6.1镜像</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#准备资源配置清单"><span class="nav-number">2.2.2.2.</span> <span class="nav-text">准备资源配置清单</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#依次执行创建"><span class="nav-number">2.2.2.3.</span> <span class="nav-text">依次执行创建</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#检查"><span class="nav-number">2.2.2.4.</span> <span class="nav-text">检查</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#K8S的服务暴露插件–Traefik"><span class="nav-number">2.3.</span> <span class="nav-text">K8S的服务暴露插件–Traefik</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#使用NodePort型Service暴露服务"><span class="nav-number">2.3.1.</span> <span class="nav-text">使用NodePort型Service暴露服务</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#修改nginx-ds的service资源配置清单"><span class="nav-number">2.3.1.1.</span> <span class="nav-text">修改nginx-ds的service资源配置清单</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#重建nginx-ds的service资源"><span class="nav-number">2.3.1.2.</span> <span class="nav-text">重建nginx-ds的service资源</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#查看service-1"><span class="nav-number">2.3.1.3.</span> <span class="nav-text">查看service</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#浏览器访问"><span class="nav-number">2.3.1.4.</span> <span class="nav-text">浏览器访问</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#部署traefik（ingress控制器）"><span class="nav-number">2.3.2.</span> <span class="nav-text">部署traefik（ingress控制器）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#准备traefik镜像"><span class="nav-number">2.3.2.1.</span> <span class="nav-text">准备traefik镜像</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#准备资源配置清单-1"><span class="nav-number">2.3.2.2.</span> <span class="nav-text">准备资源配置清单</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#依次执行创建-1"><span class="nav-number">2.3.2.3.</span> <span class="nav-text">依次执行创建</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#解析域名"><span class="nav-number">2.3.3.</span> <span class="nav-text">解析域名</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#配置反代"><span class="nav-number">2.3.4.</span> <span class="nav-text">配置反代</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#浏览器访问-1"><span class="nav-number">2.3.5.</span> <span class="nav-text">浏览器访问</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#K8S的GUI资源管理插件–仪表盘"><span class="nav-number">2.4.</span> <span class="nav-text">K8S的GUI资源管理插件–仪表盘</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#部署kubernetes-dashboard"><span class="nav-number">2.4.1.</span> <span class="nav-text">部署kubernetes-dashboard</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#准备dashboard镜像"><span class="nav-number">2.4.1.1.</span> <span class="nav-text">准备dashboard镜像</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#准备资源配置清单-2"><span class="nav-number">2.4.1.2.</span> <span class="nav-text">准备资源配置清单</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#依次执行创建-2"><span class="nav-number">2.4.1.3.</span> <span class="nav-text">依次执行创建</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#解析域名-1"><span class="nav-number">2.4.2.</span> <span class="nav-text">解析域名</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#浏览器访问-2"><span class="nav-number">2.4.3.</span> <span class="nav-text">浏览器访问</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#配置认证"><span class="nav-number">2.4.4.</span> <span class="nav-text">配置认证</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#部署heapster"><span class="nav-number">2.4.5.</span> <span class="nav-text">部署heapster</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#准备heapster镜像"><span class="nav-number">2.4.5.1.</span> <span class="nav-text">准备heapster镜像</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#准备资源配置清单-3"><span class="nav-number">2.4.5.2.</span> <span class="nav-text">准备资源配置清单</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#应用资源配置清单-1"><span class="nav-number">2.4.5.3.</span> <span class="nav-text">应用资源配置清单</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#重启dashboard"><span class="nav-number">2.4.5.4.</span> <span class="nav-text">重启dashboard</span></a></li></ol></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Stanley Wang</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+    <span title="站点总字数">890k</span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    
+    <span title="站点阅读时长">13:29</span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+    
+    
+  
+  <script color="0,0,255" opacity="0.5" zindex="-1" count="99" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/src/utils.js?v=7.0.0"></script>
+
+  <script src="/js/src/motion.js?v=7.0.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/src/schemes/muse.js?v=7.0.0"></script>
+
+
+
+
+  
+  <script src="/js/src/scrollspy.js?v=7.0.0"></script>
+<script src="/js/src/post-details.js?v=7.0.0"></script>
+
+
+
+  
+
+
+  <script src="/js/src/bootstrap.js?v=7.0.0"></script>
+
+
+
+  
+
+
+  
+
+
+  
+  <script>
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url).replace(/\/{2,}/g, '/');
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x"></i></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x"></i></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+  
+
+  
+  
+
+  
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  <style>
+    .copy-btn {
+      display: inline-block;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 20px;
+      color: #333;
+      white-space: nowrap;
+      vertical-align: middle;
+      cursor: pointer;
+      background-color: #eee;
+      background-image: linear-gradient(#fcfcfc, #eee);
+      border: 1px solid #d5d5d5;
+      border-radius: 3px;
+      user-select: none;
+      outline: 0;
+    }
+
+    .highlight-wrap .copy-btn {
+      transition: opacity .3s ease-in-out;
+      opacity: 0;
+      padding: 2px 6px;
+      position: absolute;
+      right: 4px;
+      top: 8px;
+    }
+
+    .highlight-wrap:hover .copy-btn,
+    .highlight-wrap .copy-btn:focus {
+      opacity: 1
+    }
+
+    .highlight-wrap {
+      position: relative;
+    }
+  </style>
+  <script>
+    $('.highlight').each(function(i, e) {
+      var $wrap = $('<div>').addClass('highlight-wrap');
+      $(e).after($wrap);
+      $wrap.append($('<button>').addClass('copy-btn').append('复制').on('click', function(e) {
+        var code = $(this).parent().find('.code').find('.line').map(function(i, e) {
+          return $(e).text();
+        }).toArray().join('\n');
+        var ta = document.createElement('textarea');
+        var range = document.createRange(); //For Chrome
+        var sel = window.getSelection(); //For Chrome
+        var yPosition = window.pageYOffset || document.documentElement.scrollTop;
+        ta.style.top = yPosition + 'px'; //Prevent page scroll
+        ta.style.position = 'absolute';
+        ta.style.opacity = '0';
+        ta.value = code;
+        ta.textContent = code; //For FireFox
+        ta.contentEditable = true;
+        ta.readOnly = false;
+        document.body.appendChild(ta);
+        range.selectNode(ta);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        ta.setSelectionRange(0, code.length);
+        var result = document.execCommand('copy');
+        
+          if (result) $(this).text('复制成功');
+          else $(this).text('复制失败');
+        
+        ta.blur(); //For iOS
+        $(this).blur();
+      })).on('mouseleave', function(e) {
+        var $b = $(this).find('.copy-btn');
+        setTimeout(function() {
+          $b.text('复制');
+        }, 300);
+      }).append(e);
+    })
+  </script>
+
+
+</body>
+</html>

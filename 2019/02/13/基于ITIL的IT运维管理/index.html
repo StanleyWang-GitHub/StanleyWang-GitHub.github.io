@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+  
+  
+    
+    
+  <script src="/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css?v=1.0.2">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.0.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon32.ico?v=7.0.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon16.ico?v=7.0.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.0.0" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '7.0.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="欢迎加入王导的VIP学习qq群：==&amp;gt;932194668&amp;lt;==   IT管理中的PPT 人，流程，技术  服务是什么？ 服务是向客户提供价值的一种手段，使客户不用承担特定的成本和风险就可以获得所期望的结果。  服务管理 服务管理是一套特定的组织能力，以服务的形式为客户提供价值。  ITIL简介是什么？ Information Technology Infrastructure Lib">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于ITIL的IT运维管理">
+<meta property="og:url" content="https://StanleyWang-GitHub.github.io/2019/02/13/基于ITIL的IT运维管理/index.html">
+<meta property="og:site_name" content="Stanley&#39;s Blog">
+<meta property="og:description" content="欢迎加入王导的VIP学习qq群：==&amp;gt;932194668&amp;lt;==   IT管理中的PPT 人，流程，技术  服务是什么？ 服务是向客户提供价值的一种手段，使客户不用承担特定的成本和风险就可以获得所期望的结果。  服务管理 服务管理是一套特定的组织能力，以服务的形式为客户提供价值。  ITIL简介是什么？ Information Technology Infrastructure Lib">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2020-09-03T08:33:09.890Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="基于ITIL的IT运维管理">
+<meta name="twitter:description" content="欢迎加入王导的VIP学习qq群：==&amp;gt;932194668&amp;lt;==   IT管理中的PPT 人，流程，技术  服务是什么？ 服务是向客户提供价值的一种手段，使客户不用承担特定的成本和风险就可以获得所期望的结果。  服务管理 服务管理是一套特定的组织能力，以服务的形式为客户提供价值。  ITIL简介是什么？ Information Technology Infrastructure Lib">
+
+
+
+
+
+
+  <link rel="canonical" href="https://StanleyWang-GitHub.github.io/2019/02/13/基于ITIL的IT运维管理/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>基于ITIL的IT运维管理 | Stanley's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Stanley's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://StanleyWang-GitHub.github.io/2019/02/13/基于ITIL的IT运维管理/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Stanley Wang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Stanley's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">基于ITIL的IT运维管理
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-02-13 15:27:57" itemprop="dateCreated datePublished" datetime="2019-02-13T15:27:57+08:00">2019-02-13</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2020-09-03 16:33:09" itemprop="dateModified" datetime="2020-09-03T16:33:09+08:00">2020-09-03</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/运维技术管理/" itemprop="url" rel="index"><span itemprop="name">运维技术管理</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-symbolscount">
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">本文字数：</span>
+                
+                <span title="本文字数">1k</span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">1 分钟</span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <hr>
+<blockquote class="blockquote-center"><p>欢迎加入王导的VIP学习qq群：==&gt;<a href="http://shang.qq.com/wpa/qunwpa?idkey=78869fddc5a661acb0639315eb52997c108de6625df5f0ee2f0372f176a032a6" target="_blank" rel="noopener"><font color="FF7F50">932194668</font></a>&lt;==</p>
+</blockquote>
+<hr>
+<h1 id="IT管理中的PPT"><a href="#IT管理中的PPT" class="headerlink" title="IT管理中的PPT"></a>IT管理中的PPT</h1><ul>
+<li>人，流程，技术</li>
+</ul>
+<h1 id="服务是什么？"><a href="#服务是什么？" class="headerlink" title="服务是什么？"></a>服务是什么？</h1><ul>
+<li>服务是向客户提供价值的一种手段，使客户不用承担特定的成本和风险就可以获得所期望的结果。</li>
+</ul>
+<h1 id="服务管理"><a href="#服务管理" class="headerlink" title="服务管理"></a>服务管理</h1><ul>
+<li>服务管理是一套特定的组织能力，以服务的形式为客户提供价值。</li>
+</ul>
+<h1 id="ITIL简介"><a href="#ITIL简介" class="headerlink" title="ITIL简介"></a>ITIL简介</h1><h2 id="是什么？"><a href="#是什么？" class="headerlink" title="是什么？"></a>是什么？</h2><ul>
+<li>Information Technology Infrastructure Library<blockquote>
+<p>IT基础架构库，一个可以直接使用的标准，已于2005年12月15日被ISO接受为国际标准 – ISO20000</p>
+</blockquote>
+</li>
+</ul>
+<h2 id="与ISO20000的区别"><a href="#与ISO20000的区别" class="headerlink" title="与ISO20000的区别"></a>与ISO20000的区别</h2><table>
+<thead>
+<tr>
+<th>ITIL</th>
+<th>ISO20000</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>提供最佳实践指导</td>
+<td>提供衡量ITSM的指标</td>
+</tr>
+<tr>
+<td>没有固定的能力衡量指标</td>
+<td>全球统一</td>
+</tr>
+<tr>
+<td>对人员</td>
+<td>对机构</td>
+</tr>
+</tbody></table>
+<h2 id="目标"><a href="#目标" class="headerlink" title="目标"></a>目标</h2><ul>
+<li>将IT管理工作标准化、模式化，减少人为误操作带来的隐患</li>
+<li>通过服务目录，服务报告，告诉业务部门，我们可以做什么，做了什么</li>
+<li>通过系列流程，知识库减轻对英雄式工程师的依赖。把经验积累下来</li>
+<li>通过对流程的管控，减少成本，降低风险，提供客户满意度</li>
+</ul>
+<h2 id="IT-Service-CMM"><a href="#IT-Service-CMM" class="headerlink" title="IT Service CMM"></a>IT Service CMM</h2><h3 id="初始级"><a href="#初始级" class="headerlink" title="初始级"></a>初始级</h3><p>个人英雄式工程师</p>
+<h3 id="可重复级"><a href="#可重复级" class="headerlink" title="可重复级"></a>可重复级</h3><p>潜规则</p>
+<h3 id="定义级"><a href="#定义级" class="headerlink" title="定义级"></a>定义级</h3><ul>
+<li>已将IT服务过程文档话，标准化，并综合成标准服务过程</li>
+<li>根据客户需求调整服务产品和服务战略</li>
+<li>适当的工具和信息报告</li>
+</ul>
+<h3 id="管理级"><a href="#管理级" class="headerlink" title="管理级"></a>管理级</h3><ul>
+<li>受监督、可测量的IT服务体系</li>
+<li>根据业务战略调整服务体系</li>
+</ul>
+<h3 id="优化级"><a href="#优化级" class="headerlink" title="优化级"></a>优化级</h3><ul>
+<li>持续改进的IT服务体系</li>
+<li>IT与业务指标建立关系</li>
+<li>IT与业务协作改进流程</li>
+</ul>
+<h2 id="ITIL-v3"><a href="#ITIL-v3" class="headerlink" title="ITIL v3"></a>ITIL v3</h2><h3 id="服务战略"><a href="#服务战略" class="headerlink" title="服务战略"></a>服务战略</h3><p>从组织能力和战略资产两个角度出发，为组织进行服务战略方面的决策和战略设计提供了一套结构化的方法</p>
+<ul>
+<li>我们的业务是什么？</li>
+<li>我们的客户是谁？</li>
+<li>客户重视什么？</li>
+<li>谁依赖我们的服务？</li>
+<li>他们怎样使用我们的服务？</li>
+<li>服务为什么对他们有价值？</li>
+</ul>
+<h3 id="4P"><a href="#4P" class="headerlink" title="4P"></a>4P</h3><h4 id="观念"><a href="#观念" class="headerlink" title="观念"></a>观念</h4><p>面向其目标客户的业务定位或服务提供方式</p>
+<h4 id="定位"><a href="#定位" class="headerlink" title="定位"></a>定位</h4><p>描述了采纳和中立场的决策</p>
+<h4 id="计划"><a href="#计划" class="headerlink" title="计划"></a>计划</h4><p>描述了将蓝图转化为现实的手段</p>
+<h4 id="模式"><a href="#模式" class="headerlink" title="模式"></a>模式</h4><p>描述了一系列的稳定的决策和行动</p>
+<h3 id="服务设计"><a href="#服务设计" class="headerlink" title="服务设计"></a>服务设计</h3><p>对服务及服务管理流程设计和开发的指导</p>
+<h4 id="服务目录管理"><a href="#服务目录管理" class="headerlink" title="服务目录管理"></a>服务目录管理</h4><h4 id="服务级别管理"><a href="#服务级别管理" class="headerlink" title="服务级别管理"></a>服务级别管理</h4><h4 id="容量管理"><a href="#容量管理" class="headerlink" title="容量管理"></a>容量管理</h4><h5 id="商业容量管理：吞吐量"><a href="#商业容量管理：吞吐量" class="headerlink" title="商业容量管理：吞吐量"></a>商业容量管理：吞吐量</h5><h5 id="服务容量管理：响应时间"><a href="#服务容量管理：响应时间" class="headerlink" title="服务容量管理：响应时间"></a>服务容量管理：响应时间</h5><h5 id="资源容量管理：CPU"><a href="#资源容量管理：CPU" class="headerlink" title="资源容量管理：CPU"></a>资源容量管理：CPU</h5><h4 id="可用性管理"><a href="#可用性管理" class="headerlink" title="可用性管理"></a>可用性管理</h4><p>正常运行时间、宕机时间</p>
+<h4 id="IT服务持续性管理"><a href="#IT服务持续性管理" class="headerlink" title="IT服务持续性管理"></a>IT服务持续性管理</h4><p>灾备</p>
+<h4 id="信息安全管理"><a href="#信息安全管理" class="headerlink" title="信息安全管理"></a>信息安全管理</h4><h3 id="服务转换"><a href="#服务转换" class="headerlink" title="服务转换"></a>服务转换</h3><h3 id="服务运营"><a href="#服务运营" class="headerlink" title="服务运营"></a>服务运营</h3><h3 id="持续服务改进"><a href="#持续服务改进" class="headerlink" title="持续服务改进"></a>持续服务改进</h3><h2 id="RACI模型"><a href="#RACI模型" class="headerlink" title="RACI模型"></a>RACI模型</h2><p>谁负责，谁批准，咨询谁，通知谁</p>
+<h2 id="角色"><a href="#角色" class="headerlink" title="角色"></a>角色</h2><ul>
+<li>服务所有者</li>
+<li>流程所有者</li>
+</ul>
+<h2 id="流程"><a href="#流程" class="headerlink" title="流程"></a>流程</h2><ul>
+<li>简单问题复杂化，多元化 </li>
+<li>效率、成本、质量、风险、稳定性、可持续性、用户体验</li>
+</ul>
+<h3 id="项目"><a href="#项目" class="headerlink" title="项目"></a>项目</h3><p>临时性</p>
+<h3 id="运营"><a href="#运营" class="headerlink" title="运营"></a>运营</h3><p>持续性</p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById(&quot;QR&quot;); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechat.png" alt="Stanley Wang 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.2yuan.png" alt="Stanley Wang 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/01/18/实验文档1：跟我一步步安装部署kubernetes集群/" rel="next" title="实验文档1：跟我一步步安装部署kubernetes集群">
+                <i class="fa fa-chevron-left"></i> 实验文档1：跟我一步步安装部署kubernetes集群
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/02/13/运维安全管理/" rel="prev" title="运维安全管理">
+                运维安全管理 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.jpg" alt="Stanley Wang">
+            
+              <p class="site-author-name" itemprop="name">Stanley Wang</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">19</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="https://gitee.com/stanleywang" title="GitHub &rarr; https://gitee.com/stanleywang" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                    
+                  
+                  
+                    
+                  
+                  <a href="mailto:stanley.wang.m@qq.com" title="E-Mail &rarr; mailto:stanley.wang.m@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#IT管理中的PPT"><span class="nav-number">1.</span> <span class="nav-text">IT管理中的PPT</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#服务是什么？"><span class="nav-number">2.</span> <span class="nav-text">服务是什么？</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#服务管理"><span class="nav-number">3.</span> <span class="nav-text">服务管理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ITIL简介"><span class="nav-number">4.</span> <span class="nav-text">ITIL简介</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#是什么？"><span class="nav-number">4.1.</span> <span class="nav-text">是什么？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#与ISO20000的区别"><span class="nav-number">4.2.</span> <span class="nav-text">与ISO20000的区别</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#目标"><span class="nav-number">4.3.</span> <span class="nav-text">目标</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#IT-Service-CMM"><span class="nav-number">4.4.</span> <span class="nav-text">IT Service CMM</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#初始级"><span class="nav-number">4.4.1.</span> <span class="nav-text">初始级</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#可重复级"><span class="nav-number">4.4.2.</span> <span class="nav-text">可重复级</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#定义级"><span class="nav-number">4.4.3.</span> <span class="nav-text">定义级</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#管理级"><span class="nav-number">4.4.4.</span> <span class="nav-text">管理级</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#优化级"><span class="nav-number">4.4.5.</span> <span class="nav-text">优化级</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ITIL-v3"><span class="nav-number">4.5.</span> <span class="nav-text">ITIL v3</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#服务战略"><span class="nav-number">4.5.1.</span> <span class="nav-text">服务战略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4P"><span class="nav-number">4.5.2.</span> <span class="nav-text">4P</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#观念"><span class="nav-number">4.5.2.1.</span> <span class="nav-text">观念</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#定位"><span class="nav-number">4.5.2.2.</span> <span class="nav-text">定位</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#计划"><span class="nav-number">4.5.2.3.</span> <span class="nav-text">计划</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#模式"><span class="nav-number">4.5.2.4.</span> <span class="nav-text">模式</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#服务设计"><span class="nav-number">4.5.3.</span> <span class="nav-text">服务设计</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#服务目录管理"><span class="nav-number">4.5.3.1.</span> <span class="nav-text">服务目录管理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#服务级别管理"><span class="nav-number">4.5.3.2.</span> <span class="nav-text">服务级别管理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#容量管理"><span class="nav-number">4.5.3.3.</span> <span class="nav-text">容量管理</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#商业容量管理：吞吐量"><span class="nav-number">4.5.3.3.1.</span> <span class="nav-text">商业容量管理：吞吐量</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#服务容量管理：响应时间"><span class="nav-number">4.5.3.3.2.</span> <span class="nav-text">服务容量管理：响应时间</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#资源容量管理：CPU"><span class="nav-number">4.5.3.3.3.</span> <span class="nav-text">资源容量管理：CPU</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#可用性管理"><span class="nav-number">4.5.3.4.</span> <span class="nav-text">可用性管理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#IT服务持续性管理"><span class="nav-number">4.5.3.5.</span> <span class="nav-text">IT服务持续性管理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#信息安全管理"><span class="nav-number">4.5.3.6.</span> <span class="nav-text">信息安全管理</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#服务转换"><span class="nav-number">4.5.4.</span> <span class="nav-text">服务转换</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#服务运营"><span class="nav-number">4.5.5.</span> <span class="nav-text">服务运营</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#持续服务改进"><span class="nav-number">4.5.6.</span> <span class="nav-text">持续服务改进</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RACI模型"><span class="nav-number">4.6.</span> <span class="nav-text">RACI模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#角色"><span class="nav-number">4.7.</span> <span class="nav-text">角色</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#流程"><span class="nav-number">4.8.</span> <span class="nav-text">流程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#项目"><span class="nav-number">4.8.1.</span> <span class="nav-text">项目</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#运营"><span class="nav-number">4.8.2.</span> <span class="nav-text">运营</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Stanley Wang</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+    <span title="站点总字数">278k</span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    
+    <span title="站点阅读时长">4:13</span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+    
+    
+  
+  <script color="0,0,255" opacity="0.5" zindex="-1" count="99" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/src/utils.js?v=7.0.0"></script>
+
+  <script src="/js/src/motion.js?v=7.0.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/src/schemes/muse.js?v=7.0.0"></script>
+
+
+
+
+  
+  <script src="/js/src/scrollspy.js?v=7.0.0"></script>
+<script src="/js/src/post-details.js?v=7.0.0"></script>
+
+
+
+  
+
+
+  <script src="/js/src/bootstrap.js?v=7.0.0"></script>
+
+
+
+  
+
+
+  
+
+
+  
+  <script>
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url).replace(/\/{2,}/g, '/');
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x"></i></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x"></i></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+  
+
+  
+  
+
+  
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  <style>
+    .copy-btn {
+      display: inline-block;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 20px;
+      color: #333;
+      white-space: nowrap;
+      vertical-align: middle;
+      cursor: pointer;
+      background-color: #eee;
+      background-image: linear-gradient(#fcfcfc, #eee);
+      border: 1px solid #d5d5d5;
+      border-radius: 3px;
+      user-select: none;
+      outline: 0;
+    }
+
+    .highlight-wrap .copy-btn {
+      transition: opacity .3s ease-in-out;
+      opacity: 0;
+      padding: 2px 6px;
+      position: absolute;
+      right: 4px;
+      top: 8px;
+    }
+
+    .highlight-wrap:hover .copy-btn,
+    .highlight-wrap .copy-btn:focus {
+      opacity: 1
+    }
+
+    .highlight-wrap {
+      position: relative;
+    }
+  </style>
+  <script>
+    $('.highlight').each(function(i, e) {
+      var $wrap = $('<div>').addClass('highlight-wrap');
+      $(e).after($wrap);
+      $wrap.append($('<button>').addClass('copy-btn').append('复制').on('click', function(e) {
+        var code = $(this).parent().find('.code').find('.line').map(function(i, e) {
+          return $(e).text();
+        }).toArray().join('\n');
+        var ta = document.createElement('textarea');
+        var range = document.createRange(); //For Chrome
+        var sel = window.getSelection(); //For Chrome
+        var yPosition = window.pageYOffset || document.documentElement.scrollTop;
+        ta.style.top = yPosition + 'px'; //Prevent page scroll
+        ta.style.position = 'absolute';
+        ta.style.opacity = '0';
+        ta.value = code;
+        ta.textContent = code; //For FireFox
+        ta.contentEditable = true;
+        ta.readOnly = false;
+        document.body.appendChild(ta);
+        range.selectNode(ta);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        ta.setSelectionRange(0, code.length);
+        var result = document.execCommand('copy');
+        
+          if (result) $(this).text('复制成功');
+          else $(this).text('复制失败');
+        
+        ta.blur(); //For iOS
+        $(this).blur();
+      })).on('mouseleave', function(e) {
+        var $b = $(this).find('.copy-btn');
+        setTimeout(function() {
+          $b.text('复制');
+        }, 300);
+      }).append(e);
+    })
+  </script>
+
+
+</body>
+</html>
